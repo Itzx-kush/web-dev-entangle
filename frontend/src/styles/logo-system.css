@@ -1,0 +1,347 @@
+/* EntangleX opening brand system — restrained, lightweight and intentionally short. */
+html.brand-intro-active,
+body.brand-intro-active { overflow:hidden; }
+
+.brand-intro{
+  position:fixed;
+  inset:0;
+  z-index:var(--qh-z-intro,1000);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  min-height:100dvh;
+  background:
+    radial-gradient(circle at 50% 47%,rgba(88,72,180,.12),transparent 26%),
+    radial-gradient(circle at 18% 14%,rgba(48,74,145,.07),transparent 28%),
+    linear-gradient(145deg,#050507 0%,#08080d 48%,#050507 100%);
+  color:#f7f8fb;
+  opacity:1;
+  isolation:isolate;
+  transition:opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),visibility 400ms ease;
+}
+.brand-intro::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:8;
+  background:radial-gradient(circle at 50% 48%,rgba(179,165,255,.13),transparent 31%);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.brand-intro.is-exiting{opacity:0;visibility:hidden;pointer-events:none;}
+.brand-intro.is-exiting::after{opacity:1;}
+
+.brand-intro-grid{
+  position:absolute;
+  inset:-1px;
+  z-index:-3;
+  opacity:.18;
+  background-image:
+    linear-gradient(rgba(167,156,255,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(167,156,255,.055) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(circle at center,#000 0%,transparent 72%);
+  pointer-events:none;
+}
+
+.brand-intro-vignette{
+  position:absolute;
+  inset:-10%;
+  z-index:-1;
+  background:radial-gradient(circle at 50% 47%,transparent 0 25%,rgba(4,4,8,.24) 58%,rgba(0,0,0,.74) 100%);
+  pointer-events:none;
+}
+
+.brand-intro-aura{
+  position:absolute;
+  z-index:-2;
+  width:min(66vw,720px);
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(130,108,255,.1),rgba(63,80,179,.055) 38%,transparent 69%);
+  filter:blur(34px);
+  opacity:0;
+  animation:intro-aura 1500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.brand-intro-stage{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:min(calc(100vw - 48px),680px);
+  min-height:360px;
+  padding:72px 0 58px;
+  isolation:isolate;
+}
+
+.brand-intro-network{
+  position:absolute;
+  inset:clamp(28px,5vw,72px);
+  z-index:-1;
+  pointer-events:none;
+  opacity:0;
+  animation:intro-network-in 1400ms 120ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.intro-connection{
+  position:absolute;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(164,148,255,.18),rgba(81,158,214,.1),transparent);
+  transform-origin:left center;
+  opacity:.8;
+}
+.connection-a{left:9%;top:34%;width:36%;transform:rotate(17deg)}
+.connection-b{left:38%;top:48%;width:45%;transform:rotate(-12deg)}
+.connection-c{left:19%;top:70%;width:35%;transform:rotate(-28deg)}
+.connection-d{left:58%;top:24%;width:30%;transform:rotate(38deg)}
+
+.intro-node{
+  position:absolute;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#a99bff;
+  box-shadow:0 0 0 3px rgba(169,155,255,.055),0 0 16px rgba(137,115,255,.34);
+  opacity:.7;
+  animation:intro-node-breathe 2400ms ease-in-out infinite alternate;
+}
+.intro-node-a{left:8%;top:34%;animation-delay:-700ms}
+.intro-node-b{left:39%;top:44%;background:#7ecce2;animation-delay:-1400ms}
+.intro-node-c{left:82%;top:38%;animation-delay:-200ms}
+.intro-node-d{left:21%;top:69%;background:#718bc8;animation-delay:-1800ms}
+.intro-node-e{left:55%;top:54%;animation-delay:-900ms}
+.intro-node-f{left:69%;top:18%;background:#8fc7db;animation-delay:-1200ms}
+.intro-node-g{left:88%;top:72%;animation-delay:-400ms}
+
+.intro-tracer{
+  position:absolute;
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:#e8e3ff;
+  box-shadow:0 0 10px rgba(186,171,255,.8);
+  opacity:0;
+}
+.intro-tracer-a{left:13%;top:37%;animation:intro-tracer-a 1900ms 260ms cubic-bezier(.2,.65,.3,1) both}
+.intro-tracer-b{left:43%;top:47%;animation:intro-tracer-b 1800ms 420ms cubic-bezier(.2,.65,.3,1) both}
+
+.brand-intro-kicker{
+  position:absolute;
+  top:66px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:rgba(205,202,222,.48);
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.22em;
+  opacity:0;
+  transform:translateY(5px);
+  animation:intro-copy-in 420ms 440ms ease-out forwards;
+}
+.brand-intro-kicker span{width:26px;height:1px;background:rgba(181,168,255,.2)}
+
+.brand-intro-halo{
+  position:absolute;
+  width:min(42vw,300px);
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(148,126,255,.09),rgba(95,105,197,.035) 42%,transparent 70%);
+  filter:blur(16px);
+  opacity:0;
+  animation:intro-halo 1100ms 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.brand-intro-logo-wrap{
+  position:relative;
+  overflow:hidden;
+  border-radius:8px;
+  z-index:5;
+  width:min(78vw,500px);
+  animation:intro-logo-enter 800ms 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change:transform,opacity;
+}
+.brand-intro-logo{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+}
+.brand-intro-shine{
+  position:absolute;
+  inset:8% 0;
+  width:18%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.18),transparent);
+  mix-blend-mode:screen;
+  transform:translateX(-160%) skewX(-12deg);
+  pointer-events:none;
+  animation:intro-shine 760ms 930ms cubic-bezier(.2,.75,.2,1) both;
+}
+
+.brand-intro-identity{
+  position:absolute;
+  bottom:70px;
+  z-index:6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  color:#a8b0c1;
+  opacity:0;
+  animation:intro-copy-in 440ms 900ms ease-out forwards;
+  white-space:nowrap;
+}
+.brand-intro-product{
+  color:#f2f1f8;
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:.25em;
+}
+.brand-intro-description{
+  color:rgba(198,202,216,.62);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.04em;
+}
+.brand-intro-divider{width:1px;height:13px;background:rgba(184,170,255,.3)}
+
+.brand-intro-accent{
+  position:absolute;
+  bottom:44px;
+  width:112px;
+  height:1px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  opacity:0;
+  animation:intro-accent-in 360ms 1080ms ease forwards;
+}
+.brand-intro-accent span{
+  display:block;
+  width:42%;
+  height:100%;
+  background:linear-gradient(90deg,transparent,#9681ff,transparent);
+  animation:intro-accent-pass 900ms 1120ms ease-in-out both;
+}
+
+@keyframes intro-logo-enter{
+  0%{opacity:0;transform:translateY(16px) scale(0.92);filter:blur(14px)}
+  50%{opacity:1;filter:blur(2px)}
+  100%{opacity:1;transform:none;filter:blur(0)}
+}
+@keyframes intro-shine{0%{transform:translateX(-160%) skewX(-12deg);opacity:0}24%{opacity:.8}100%{transform:translateX(620%) skewX(-12deg);opacity:0}}
+@keyframes intro-network-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+@keyframes intro-node-breathe{to{opacity:.28;transform:scale(.72)}}
+@keyframes intro-tracer-a{0%{opacity:0;transform:translate(0,0)}18%{opacity:.72}75%{opacity:.32}100%{opacity:0;transform:translate(270px,82px)}}
+@keyframes intro-tracer-b{0%{opacity:0;transform:translate(0,0)}20%{opacity:.64}76%{opacity:.25}100%{opacity:0;transform:translate(250px,-55px)}}
+@keyframes intro-halo{from{opacity:0;transform:scale(.75)}to{opacity:.9;transform:scale(1)}}
+@keyframes intro-aura{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes intro-copy-in{from{opacity:0;transform:translateY(12px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@keyframes intro-accent-in{to{opacity:1}}
+@keyframes intro-accent-pass{from{transform:translateX(-120%)}to{transform:translateX(340%)}}
+
+@media (max-width:720px){
+  .brand-intro-stage{width:min(calc(100vw - 32px),600px);min-height:320px;padding-block:64px 54px}
+  .brand-intro-network{inset:24px 10px}
+  .brand-intro-logo-wrap{width:min(86vw,470px)}
+  .brand-intro-kicker{top:54px}
+  .brand-intro-identity{bottom:60px}
+  .brand-intro-accent{bottom:35px}
+}
+@media (max-width:520px){
+  .brand-intro-grid{background-size:52px 52px}
+  .brand-intro-stage{min-height:300px}
+  .brand-intro-logo-wrap{width:min(90vw,390px)}
+  .brand-intro-kicker{font-size:8px;letter-spacing:.18em}
+  .brand-intro-kicker span{width:18px}
+  .brand-intro-identity{flex-direction:column;gap:7px;white-space:normal;text-align:center}
+  .brand-intro-divider{width:30px;height:1px}
+  .brand-intro-description{max-width:280px;line-height:1.45}
+  .intro-node-a{left:3%}
+  .intro-node-c{left:92%}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .brand-intro-stage{min-height:250px;padding-block:48px 38px}
+  .brand-intro-kicker{top:34px}
+  .brand-intro-identity{bottom:42px}
+  .brand-intro-accent{bottom:21px}
+}
+@media(prefers-reduced-motion:reduce){
+  .brand-intro-aura,
+  .brand-intro-network,
+  .intro-connection,
+  .intro-node,
+  .intro-tracer,
+  .brand-intro-halo,
+  .brand-intro-logo-wrap,
+  .brand-intro-shine,
+  .brand-intro-kicker,
+  .brand-intro-identity,
+  .brand-intro-accent,
+  .brand-intro-accent span{animation:none!important}
+  .brand-intro-aura,
+  .brand-intro-network,
+  .brand-intro-halo,
+  .brand-intro-logo-wrap,
+  .brand-intro-kicker,
+  .brand-intro-identity,
+  .brand-intro-accent{opacity:1;transform:none;filter:none}
+  .intro-tracer{display:none}
+  .brand-intro{transition-duration:120ms}
+}
+
+/* Merge-safe theme-aware sidebar logo treatment. */
+.research-sidebar .brand-copy .brand-logo {
+  display: block;
+  width: 132px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.research-sidebar .brand-copy .brand-logo-dark {
+  display: none;
+}
+
+.dark .research-sidebar .brand-copy .brand-logo-light {
+  display: none;
+}
+
+.dark .research-sidebar .brand-copy .brand-logo-dark {
+  display: block;
+}
+
+.research-sidebar .brand-mark {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 11px;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.research-sidebar .brand-mark img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+[data-layout="icon"] .research-sidebar .brand-mark,
+.research-shell.is-collapsed .research-sidebar .brand-mark {
+  display: grid;
+}
+
+[data-layout="icon"] .research-sidebar .brand-copy,
+.research-shell.is-collapsed .research-sidebar .brand-copy {
+  display: none;
+}
+
+/* In the expanded sidebar, hide the old text wordmark treatment. */
+.research-sidebar .brand-copy > strong {
+  display: none !important;
+}

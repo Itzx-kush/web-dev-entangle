@@ -1,0 +1,206 @@
+{
+  "project": "EntangleX Q-Health",
+  "generated_on": "2026-09-10",
+  "source_generated": true,
+  "delivery": "ENTANGLEX-Q-HEALTH.zip containing the entanglex-q-health folder",
+  "verification_statement": "On 2026-09-21, post-generation Task 1 verification established the pinned dependency baseline, backend startup/API workflows, frontend typecheck/tests/build/runtime checks, classical ML, bounded VQC, QSVC and circuit execution, persistence/reload, security/storage hardening, and final native regression. The isolated live API smoke passed demo, provenance, bounded training, prediction, report, comparison, rerun and retention workflows. Docker build/runtime was not performed because the Docker CLI/daemon was unavailable. Cross-browser coverage, full-scale quantum training, hardware execution, clinical validity and public-production security remain unverified/ outside scope.",
+  "static_inspection": {
+    "python_ast_parsing": "Performed without importing application modules; no syntax errors found.",
+    "python_files_parsed": 56,
+    "typescript_tsx_source_parsing": "Performed with a preinstalled TypeScript parser; no parse errors found. This was not a dependency-resolved type check or frontend build.",
+    "typescript_tsx_files_parsed": 30,
+    "relative_python_import_paths": "134 checked; no unresolved local paths found.",
+    "named_local_python_imports": "247 checked against local source bindings/modules; no unresolved references found.",
+    "relative_frontend_import_paths": "Checked for file presence; no unresolved local references found.",
+    "json_syntax": "Manifest/metadata JSON parsed for syntax only.",
+    "documentation_links": "Local Markdown links inspected for file presence.",
+    "api_contract_review": "Route names, request/response fields, frontend callers and configuration names were inspected in source; the documented backend HTTP workflow was also executed successfully.",
+    "runtime_artifact_scan": "No database, trained model, credential-bearing .env, installed node_modules, execution result or bytecode bundle is shipped."
+  },
+  "not_performed": [
+    "Docker build or execution (Docker CLI/daemon unavailable in final closure environment)",
+    "Full-scale quantum training or hardware execution beyond bounded local simulator verification",
+    "Cross-browser compatibility matrix",
+    "Clinical validation, external cohort validation or quantum advantage experimentation",
+    "Public-production security/compliance deployment"
+  ],
+  "source_documents": [
+    {
+      "path": "docs/specifications/biomedical-specification.txt",
+      "sha256": "ae4da97a160f3705ab6bfd1dc67d495676b43505f808e11785dcddc9cbd2b5ab"
+    },
+    {
+      "path": "docs/specifications/master-prompt.md",
+      "sha256": "fb6a685e34fa0508af0ba285b1304af71ab95b8e0ac655804707aa2ebeca6336"
+    }
+  ],
+  "environment_verification": {
+    "date": "2026-09-21",
+    "python": "CPython 3.11.16",
+    "node": "22.12.0",
+    "npm": "10.9.0",
+    "backend_dependency_installation": "PASS",
+    "python_major_imports": "PASS",
+    "application_imports": "PASS",
+    "qiskit_api_construction": "PASS",
+    "frontend_lockfile_validation": "PASS",
+    "frontend_npm_ci": "PASS",
+    "exact_versions_recorded": "PASS",
+    "record": "docs/verified_environment.md"
+  },
+  "backend_runtime_verification": {
+    "date": "2026-09-21",
+    "python": "CPython 3.11.16",
+    "uvicorn_command": "python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --no-access-log",
+    "startup": "PASS",
+    "lifespan": "PASS",
+    "health": "PASS",
+    "openapi": "PASS",
+    "docs": "PASS",
+    "backend_tests": {
+      "passed": 43,
+      "skipped": 3,
+      "failed": 0,
+      "warnings": 2
+    },
+    "api_integration": "PASS",
+    "classical_training": "PASS",
+    "prediction": "PASS",
+    "reports": "PASS",
+    "rerun": "PASS",
+    "queued_cancellation": "PASS",
+    "record": "docs/backend_verification.md"
+  },
+  "frontend_runtime_verification": {
+    "date": "2026-09-21",
+    "node": "22.12.0",
+    "npm": "10.9.0",
+    "npm_ci": "PASS",
+    "typecheck": "PASS",
+    "tests": {
+      "files_passed": 3,
+      "tests_passed": 6,
+      "failed": 0
+    },
+    "production_build": "PASS",
+    "development_server": "PASS",
+    "development_root": "PASS",
+    "production_preview": "PASS",
+    "production_root": "PASS",
+    "direct_route_rendering": "PASS",
+    "backend_boundary": "PASS",
+    "record": "docs/frontend_verification.md"
+  },
+  "ml_quantum_verification": {
+    "date": "2026-09-21",
+    "python": "CPython 3.11.16",
+    "qiskit": "2.5.2",
+    "qiskit_machine_learning": "0.9.1",
+    "qiskit_aer": "0.17.2",
+    "classical_models": [
+      "logistic_regression",
+      "svm",
+      "random_forest"
+    ],
+    "quantum_models": [
+      "vqc",
+      "qsvc",
+      "qnn"
+    ],
+    "quantum_test_file": {
+      "passed": 13,
+      "failed": 0,
+      "repeat_runs": 2
+    },
+    "full_backend_regression": {
+      "passed": 56,
+      "failed": 0,
+      "warnings": 11
+    },
+    "statevector_smoke": "PASS",
+    "aer_smoke": "PASS",
+    "shared_preprocessing_pipeline": "PASS",
+    "circuit_determinism": "PASS",
+    "artifact_persistence_reload": "PASS",
+    "quantum_api_smoke": "PASS",
+    "record": "docs/ml_quantum_verification.md"
+  },
+  "task2_qnn_verification": {
+    "date": "2026-09-21",
+    "starting_baseline": "67da36d6092740dacde27e8fd60dfda97b3540e1",
+    "qnn_identifier": "qnn",
+    "focused_tests": {
+      "file": "backend/tests/test_qnn.py",
+      "passed": 12,
+      "failed": 0,
+      "warnings": 7
+    },
+    "full_backend_regression": {
+      "passed": 79,
+      "failed": 0,
+      "warnings": 16
+    },
+    "frontend": {
+      "typecheck": "PASS",
+      "tests": "PASS: 3 files, 6 tests",
+      "production_build": "PASS"
+    },
+    "live_api_smoke": "PASS: health/openapi/capabilities/demo/QNN training/ready registry model/circuit/comparison/report",
+    "persistence_reload": "PASS",
+    "classical_models_preserved": [
+      "logistic_regression",
+      "svm",
+      "random_forest"
+    ],
+    "quantum_models_preserved": [
+      "vqc",
+      "qsvc"
+    ],
+    "docker": "NOT PERFORMED: Docker unavailable",
+    "scientific_boundary": "QNN is local simulation only and is not evidence of quantum advantage, clinical validation or diagnosis.",
+    "record": "docs/task2_qnn_verification.md"
+  },
+  "security_storage_verification": {
+    "date": "2026-09-21",
+    "targeted_tests": {
+      "passed": 32,
+      "failed": 0,
+      "warnings": 2
+    },
+    "full_backend_regression": {
+      "passed": 67,
+      "failed": 0,
+      "warnings": 11
+    },
+    "strict_csv_validation": "PASS",
+    "upload_cleanup": "PASS",
+    "path_traversal_and_symlink_safety": "PASS",
+    "atomic_storage_cleanup": "PASS",
+    "artifact_hash_and_deserialization_safety": "PASS",
+    "dataset_delete_consistency": "PASS",
+    "authorization_and_origin_checks": "PASS",
+    "privacy_and_error_sanitization": "PASS",
+    "bounded_request_handling": "PASS",
+    "concurrency_guards": "PASS",
+    "record": "docs/security_storage_verification.md"
+  },
+  "current_task1_verification": {
+    "date": "2026-09-21",
+    "task1_commits": {
+      "1.1": "b0558eaa22d0c782e45d471ffc57aac6f6aa5ce8",
+      "1.2": "025ad569aa3c20b2e31d2d0ba8ee3454509f971a",
+      "1.3": "90bbcc79f444a1e71d1912097bc2a33a39507fc7",
+      "1.4": "bd89c0e1fe580abd6f6a324a86c355cda8165c99",
+      "1.5": "a2e173f7216e6c6990fc9a25107f17352b804dc3"
+    },
+    "backend_regression": "PASS: 67 passed, 0 failed, 11 warnings",
+    "targeted_security_storage_data_quality": "PASS: 32 passed, 0 failed, 2 warnings",
+    "live_backend_smoke": "PASS: health/openapi/docs/summary/demo/provenance/validation/training/prediction/report/comparison/rerun/retention",
+    "frontend_regression": "PASS: npm ci, typecheck, 3 files/6 tests, production build",
+    "docker": "NOT PERFORMED: Docker unavailable",
+    "configuration_consistency": "PASS: API/proxy/ports/storage/Node/lockfile reviewed",
+    "scientific_integrity": "PASS: no fabricated runtime metrics, predictions, clinical claims, or quantum-advantage claims",
+    "record": "docs/task1_final_verification.md",
+    "task1_6_closure_publication_commit": "cf66c854a877bf3e31c42b155fea98e41682c691"
+  }
+}

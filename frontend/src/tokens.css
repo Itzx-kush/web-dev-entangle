@@ -1,0 +1,298 @@
+:root {
+  color-scheme: light;
+  --qh-font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --qh-font-sans: var(--qh-font-family);
+  --qh-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --qh-font-display: var(--qh-font-family);
+  --qh-text-xs: 0.6875rem;
+  --qh-text-sm: 0.8125rem;
+  --qh-text-md: 0.9375rem;
+  --qh-text-lg: 1.125rem;
+  --qh-text-xl: clamp(1.5rem, 2.1vw, 2rem);
+  --qh-text-2xl: clamp(1.9rem, 3vw, 2.75rem);
+  --qh-title-size: var(--qh-text-2xl);
+  --qh-title-weight: 680;
+  --qh-body-line-height: 1.6;
+  --qh-heading-line-height: 1.2;
+  --qh-label-tracking: 0.08em;
+  --qh-type-display: clamp(1.8rem, 3.5vw, 3.2rem);
+  --qh-type-page-title: clamp(1.35rem, 2.1vw, 2rem);
+  --qh-type-section-title: 1rem;
+  --qh-type-subsection-title: 0.875rem;
+  --qh-type-body: 0.875rem;
+  --qh-type-body-small: 0.8125rem;
+  --qh-type-label: 0.75rem;
+  --qh-type-eyebrow: 0.6875rem;
+  --qh-type-metadata: 0.6875rem;
+  --qh-motion-fast: 120ms;
+  --qh-motion-standard: 180ms;
+  --qh-motion-moderate: 240ms;
+  --qh-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --qh-type-metric: clamp(1.5rem, 2.5vw, 2rem);
+  --qh-space-section: clamp(20px, 2.5vw, 32px);
+  --qh-space-stack: clamp(12px, 1.5vw, 16px);
+  --qh-surface-accent: color-mix(in srgb, #1a2f38 3%, #fff);
+  --qh-surface-quantum: color-mix(in srgb, #3a4259 4%, #fff);
+  --qh-surface-research: color-mix(in srgb, #1a2f38 2%, #fff);
+  --qh-surface-warning: color-mix(in srgb, #b8860b 6%, #fff);
+  --qh-surface-danger: color-mix(in srgb, #c73a3a 4%, #fff);
+  --qh-border-interactive: color-mix(in srgb, #1a2f38 24%, #d9e2e6);
+  --qh-shadow-none: none;
+  --qh-shadow-low: 0 1px 2px rgba(24, 47, 59, 0.04);
+  --qh-shadow-medium: 0 3px 10px rgba(24, 47, 59, 0.07);
+  --qh-shadow-high: 0 10px 28px rgba(24, 47, 59, 0.14);
+  --qh-z-base: 0;
+  --qh-z-sticky: 20;
+  --qh-z-sidebar: 30;
+  --qh-z-dropdown: 40;
+  --qh-z-drawer: 60;
+  --qh-z-modal: 70;
+  --qh-z-toast: 80;
+  --qh-z-intro: 100;
+
+  --qh-color-background: #f8f9fc;
+  --qh-color-foreground: #171b26;
+  --qh-color-muted-foreground: #667085;
+  --qh-color-subtle-foreground: #98a3b3;
+  --qh-color-surface: #ffffff;
+  --qh-color-surface-soft: #f1f3f9;
+  --qh-color-surface-raised: #ffffff;
+  --qh-color-surface-inset: #f8f9fc;
+  --qh-color-overlay: rgba(17, 20, 24, 0.4);
+  --qh-color-border: #e2e6ef;
+  --qh-color-border-subtle: #eef0f5;
+  --qh-color-border-strong: #cbd2e0;
+  --qh-color-primary: #5b5bd6;
+  --qh-color-primary-strong: #4949b8;
+  --qh-color-primary-foreground: #ffffff;
+  --qh-color-secondary: #f3f4f6;
+  --qh-color-secondary-foreground: #475467;
+  --qh-color-accent: #1da9bc;
+  --qh-color-accent-soft: #e8f7fa;
+  --qh-color-quantum: #7c4dff;
+  --qh-color-quantum-soft: #f1edff;
+  --qh-color-research: #18865c;
+  --qh-color-research-soft: #e9f8f1;
+  --qh-color-success: #10b981;
+  --qh-color-success-soft: #ecfdf5;
+  --qh-color-warning: #f59e0b;
+  --qh-color-warning-soft: #fffbeb;
+  --qh-color-danger: #ef4444;
+  --qh-color-danger-soft: #fef2f2;
+  --qh-color-info: #3987c9;
+  --qh-color-info-soft: #eaf4ff;
+  --qh-color-focus: rgba(91, 91, 214, 0.45);
+  --qh-color-sidebar: #ffffff;
+  --qh-color-sidebar-raised: #f1f3f9;
+  --qh-color-sidebar-foreground: #171b26;
+  --qh-color-sidebar-muted: #667085;
+
+  /* Semantic visual layer. Components should consume these meanings, not palette literals. */
+  --qh-color-text-primary: var(--qh-color-foreground);
+  --qh-color-text-secondary: var(--qh-color-muted-foreground);
+  --qh-color-text-muted: var(--qh-color-subtle-foreground);
+  --qh-color-text-inverse: var(--qh-color-primary-foreground);
+  --qh-color-surface-hover: #f1f0ff;
+  --qh-color-surface-selected: var(--qh-color-research-soft);
+  --qh-color-border-interactive: var(--qh-border-interactive);
+  --qh-color-data-accent: #3987c9;
+  --qh-color-data-accent-soft: #eaf4ff;
+  --qh-color-model-accent: var(--qh-color-quantum);
+  --qh-color-model-accent-soft: var(--qh-color-quantum-soft);
+  --qh-color-studio-accent: #7c4dff;
+  --qh-color-studio-accent-soft: #f1edff;
+  --qh-surface-accent: var(--qh-color-surface-hover);
+  --qh-surface-quantum: var(--qh-color-quantum-soft);
+  --qh-surface-research: var(--qh-color-research-soft);
+  --qh-surface-warning: var(--qh-color-warning-soft);
+  --qh-surface-danger: var(--qh-color-danger-soft);
+
+  --qh-space-1: 4px;
+  --qh-space-2: 8px;
+  --qh-space-3: 12px;
+  --qh-space-4: 16px;
+  --qh-space-5: 20px;
+  --qh-space-6: 24px;
+  --qh-space-8: 32px;
+  --qh-space-10: 40px;
+  --qh-space-12: 48px;
+  --qh-space-16: 64px;
+
+  --qh-radius-sm: 6px;
+  --qh-radius-md: 8px;
+  --qh-radius-lg: 10px;
+  --qh-radius-xl: 12px;
+  --qh-radius-pill: 999px;
+
+  --qh-border-thin: 1px;
+  --qh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --qh-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --qh-shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px var(--qh-color-focus);
+
+  --qh-motion-fast: 120ms;
+  --qh-motion-standard: 180ms;
+  --qh-motion-slow: 320ms;
+  /* 3.11 semantic motion vocabulary: instant feedback, micro, component, navigation. */
+  --motion-instant: 0ms;
+  --motion-fast: 120ms;
+  --motion-standard: 180ms;
+  --motion-moderate: 240ms;
+  --motion-slow: 320ms;
+  --qh-ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --qh-ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-linear: linear;
+
+  /* Public aliases for future components and environment surfaces. */
+  --qh-color-app-background: var(--qh-color-background);
+  --qh-color-surface-primary: var(--qh-color-surface);
+  --qh-color-surface-secondary: var(--qh-color-surface-soft);
+  --qh-color-surface-elevated: var(--qh-color-surface-raised);
+  --qh-color-text-tertiary: var(--qh-color-subtle-foreground);
+  --qh-color-divider: var(--qh-color-border);
+  --qh-color-divider-strong: var(--qh-color-border-strong);
+  --qh-color-secondary-accent: var(--qh-color-accent);
+  --qh-color-status-success: var(--qh-color-success);
+  --qh-color-status-warning: var(--qh-color-warning);
+  --qh-color-status-error: var(--qh-color-danger);
+  --qh-color-status-info: var(--qh-color-info);
+  --qh-radius-control: var(--qh-radius-sm);
+  --qh-radius-card: var(--qh-radius-md);
+  --qh-radius-container: var(--qh-radius-lg);
+  --qh-elevation-none: none;
+  --qh-elevation-subtle: var(--qh-shadow-low);
+  --qh-elevation-raised: var(--qh-shadow-medium);
+  --qh-elevation-dialog: var(--qh-shadow-high);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --qh-color-background: #080a0d;
+  --qh-color-foreground: #f4f7fb;
+  --qh-color-muted-foreground: #a6b0bf;
+  --qh-color-subtle-foreground: #98a3b3;
+  --qh-color-surface: #11161d;
+  --qh-color-surface-soft: #1d2631;
+  --qh-color-surface-raised: #151c25;
+  --qh-color-surface-inset: #0e141b;
+  --qh-color-overlay: rgba(0, 0, 0, 0.68);
+  --qh-color-border: rgba(202, 213, 225, 0.14);
+  --qh-color-border-subtle: rgba(202, 213, 225, 0.09);
+  --qh-color-border-strong: rgba(202, 213, 225, 0.24);
+  --qh-color-primary: #8a83ff;
+  --qh-color-primary-strong: #a29dff;
+  --qh-color-primary-foreground: #080a0d;
+  --qh-color-secondary: #151c25;
+  --qh-color-secondary-foreground: #e8edf5;
+  --qh-color-accent: #22c4d6;
+  --qh-color-accent-soft: rgba(34, 196, 214, 0.14);
+  --qh-color-quantum: #a996ff;
+  --qh-color-quantum-soft: rgba(169, 150, 255, 0.14);
+  --qh-color-research: #53d48f;
+  --qh-color-research-soft: rgba(83, 212, 143, 0.13);
+  --qh-color-success: #53d48f;
+  --qh-color-success-soft: rgba(83, 212, 143, 0.14);
+  --qh-color-warning: #f0bc6e;
+  --qh-color-warning-soft: rgba(240, 188, 110, 0.14);
+  --qh-color-danger: #ff8f8f;
+  --qh-color-danger-soft: rgba(255, 143, 143, 0.14);
+  --qh-color-info: #8fc8ff;
+  --qh-color-info-soft: rgba(143, 200, 255, 0.14);
+  --qh-color-focus: #a29dff;
+  --qh-color-sidebar: #0b0e12;
+  --qh-color-sidebar-raised: #121923;
+  --qh-color-sidebar-foreground: #f4f7fb;
+  --qh-color-sidebar-muted: #9aa7b7;
+  --qh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 5px 16px rgba(0, 0, 0, 0.12);
+  --qh-shadow-md: 0 14px 34px rgba(0, 0, 0, 0.24), 0 3px 8px rgba(0, 0, 0, 0.16);
+  --qh-shadow-low: 0 6px 18px rgba(0, 0, 0, .18);
+  --qh-shadow-medium: 0 12px 28px rgba(0, 0, 0, .25);
+  --qh-shadow-high: 0 22px 56px rgba(0, 0, 0, .4);
+  --qh-color-surface-hover: #1d2631;
+  --qh-color-surface-selected: var(--qh-color-research-soft);
+  --qh-color-data-accent: #8fc8ff;
+  --qh-color-data-accent-soft: rgba(143, 200, 255, .14);
+  --qh-color-studio-accent: #bba7ff;
+  --qh-color-studio-accent-soft: rgba(187, 167, 255, .14);
+  --qh-surface-accent: var(--qh-color-surface-hover);
+  --qh-surface-quantum: var(--qh-color-quantum-soft);
+  --qh-surface-research: var(--qh-color-research-soft);
+  --qh-surface-warning: var(--qh-color-warning-soft);
+  --qh-surface-danger: var(--qh-color-danger-soft);
+}
+
+[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --qh-color-background: #080a0d;
+    --qh-color-foreground: #f4f7fb;
+    --qh-color-muted-foreground: #a6b0bf;
+    --qh-color-subtle-foreground: #98a3b3;
+    --qh-color-surface: #11161d;
+    --qh-color-surface-soft: #1d2631;
+    --qh-color-surface-raised: #151c25;
+    --qh-color-surface-inset: #0e141b;
+    --qh-color-border: rgba(202, 213, 225, 0.14);
+    --qh-color-border-subtle: rgba(202, 213, 225, 0.09);
+    --qh-color-border-strong: rgba(202, 213, 225, 0.24);
+    --qh-color-primary: #8a83ff;
+    --qh-color-primary-strong: #a29dff;
+    --qh-color-primary-foreground: #080a0d;
+    --qh-color-secondary: #151c25;
+    --qh-color-secondary-foreground: #e8edf5;
+    --qh-color-accent: #22c4d6;
+    --qh-color-accent-soft: rgba(34, 196, 214, 0.14);
+    --qh-color-quantum: #a996ff;
+    --qh-color-quantum-soft: rgba(169, 150, 255, 0.14);
+    --qh-color-research: #53d48f;
+    --qh-color-research-soft: rgba(83, 212, 143, 0.13);
+    --qh-color-success: #53d48f;
+    --qh-color-success-soft: rgba(83, 212, 143, 0.14);
+    --qh-color-warning: #f0bc6e;
+    --qh-color-warning-soft: rgba(240, 188, 110, 0.14);
+    --qh-color-danger: #ff8f8f;
+    --qh-color-danger-soft: rgba(255, 143, 143, 0.14);
+    --qh-color-info: #8fc8ff;
+    --qh-color-info-soft: rgba(143, 200, 255, 0.14);
+    --qh-color-focus: #a29dff;
+    --qh-color-sidebar: #0b0e12;
+    --qh-color-sidebar-raised: #121923;
+    --qh-color-sidebar-foreground: #f4f7fb;
+    --qh-color-sidebar-muted: #9aa7b7;
+    --qh-shadow-low: 0 6px 18px rgba(0, 0, 0, .18);
+    --qh-shadow-medium: 0 12px 28px rgba(0, 0, 0, .25);
+    --qh-shadow-high: 0 22px 56px rgba(0, 0, 0, .4);
+    --qh-color-surface-hover: #1d2631;
+    --qh-color-surface-selected: var(--qh-color-research-soft);
+    --qh-color-data-accent: #8fc8ff;
+    --qh-color-data-accent-soft: rgba(143, 200, 255, .14);
+    --qh-color-studio-accent: #bba7ff;
+    --qh-color-studio-accent-soft: rgba(187, 167, 255, .14);
+    --qh-surface-accent: var(--qh-color-surface-hover);
+    --qh-surface-quantum: var(--qh-color-quantum-soft);
+    --qh-surface-research: var(--qh-color-research-soft);
+    --qh-surface-warning: var(--qh-color-warning-soft);
+    --qh-surface-danger: var(--qh-color-danger-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --qh-motion-fast: 0ms;
+    --qh-motion-standard: 0ms;
+    --qh-motion-slow: 0ms;
+    --motion-fast: 0ms;
+    --motion-standard: 0ms;
+    --motion-moderate: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+/* Q-Health 3.3 motion language: short, purposeful, and removable. */
+:root { --qh-motion-page-enter: 260ms; --qh-motion-page-exit: 180ms; --qh-motion-reveal: 420ms; --qh-motion-modal: 220ms; --qh-motion-state: 240ms; --qh-motion-hover: 140ms; --qh-motion-intro: 1680ms; --qh-ease-enter: cubic-bezier(0.16, 1, 0.3, 1); --qh-ease-exit: cubic-bezier(0.7, 0, 0.84, 0); }
+@media (prefers-reduced-motion: reduce) { :root { --qh-motion-page-enter: 1ms; --qh-motion-page-exit: 1ms; --qh-motion-reveal: 1ms; --qh-motion-modal: 1ms; --qh-motion-state: 1ms; --qh-motion-hover: 1ms; --qh-motion-intro: 550ms; --motion-fast: 0ms; --motion-standard: 0ms; --motion-moderate: 0ms; --motion-slow: 0ms; } }

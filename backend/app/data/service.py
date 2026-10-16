@@ -1,0 +1,390 @@
+import csv
+import hashlib
+import io
+from threading import Lock
+from uuid import uuid4
+import numpy as np
+import pandas as pd
+from sqlalchemy import select
+from ..api.schemas import DatasetUploadMetadata
+from ..config import get_settings
+from ..database import session_scope
+from ..storage.entities import Dataset, DatasetVersion, Experiment, Run
+from ..storage.files import atomic_bytes, safe_path, sanitize_filename, verify
+from ..storage.repository import require
+from ..utils.errors import AppError
+from ..utils.serialization import utcnow
+from .catalog import builtin_bytes, list_builtin_datasets
+from .quality import quality_report
+from .target_detection import detect_target
+
+_demo_registration_lock = Lock()
+_dataset_delete_lock = Lock()
+_builtin_registration_lock = Lock()
+
+def _read_csv_table(content: bytes, target_hint: str | None = None) -> tuple[pd.DataFrame, list[str]]:
+    settings = get_settings()
+    if len(content) > settings.upload_limit:
+        raise AppError("upload_too_large", "The upload exceeds the configured size limit.", 413)
+    if b"\x00" in content:
+        raise AppError("invalid_csv", "Binary/NUL content is not supported.")
+    try:
+        text = content.decode("utf-8-sig")
+        rows = list(csv.reader(io.StringIO(text), strict=True))
+        header = rows[0]
+    except (UnicodeDecodeError, StopIteration, csv.Error) as exc:
+        raise AppError("invalid_csv", "Upload a nonempty UTF-8 comma-separated CSV file.") from exc
+    if len(header) < 2 or len(header) > settings.max_columns:
+        raise AppError("column_limit", "The CSV must contain a target and input features within the column limit.")
+    normalized_header = [h.lstrip("\ufeff") for h in header]
+    if normalized_header != header:
+        header = normalized_header
+    if len(set(header)) != len(header) or any(not h.strip() or h != h.strip() or len(h) > 100 or any(ord(c) < 32 for c in h) for h in header):
+        raise AppError("invalid_header", "Column names must be unique, trimmed, nonempty, and at most 100 characters.")
+    if any(row and len(row) != len(header) for row in rows[1:]):
+        raise AppError("inconsistent_schema", "CSV rows and headers have inconsistent field counts.")
+    try:
+        dtype = None
+        if target_hint:
+            source_target = "readmitted" if "readmitted" in header and target_hint.strip() in {"readmitted", "readmitted_30d"} else target_hint
+            if source_target in header:
+                dtype = {source_target: "string"}
+        frame = pd.read_csv(io.StringIO(text), dtype=dtype, nrows=settings.max_rows + 1, on_bad_lines="error")
+    except (ValueError, pd.errors.ParserError, pd.errors.EmptyDataError) as exc:
+        raise AppError("invalid_csv", "CSV parsing failed; check quoting, delimiters, and the table schema.") from exc
+    if len(frame) < 10 or len(frame) > settings.max_rows:
+        raise AppError("row_limit", "The dataset must have at least 10 rows and remain within the configured row limit.")
+    frame.columns = [str(c).lstrip("\ufeff").strip() for c in frame.columns]
+    if list(frame.columns) != header or not isinstance(frame.index, pd.RangeIndex):
+        raise AppError("inconsistent_schema", "CSV rows and headers have inconsistent field counts.")
+    return frame, header
+
+def parse_csv(content: bytes, target: str, positive_label: str | None = None) -> pd.DataFrame:
+    frame, header = _read_csv_table(content, target)
+    diabetes_readmission_source = "readmitted" in header and target.strip() in {"readmitted", "readmitted_30d"}
+    if diabetes_readmission_source:
+        within_30 = frame["readmitted"].astype("string").str.strip().eq("<30")
+        if target.strip() == "readmitted_30d" or positive_label == "1":
+            frame[target] = within_30.astype(int)
+        else:
+            frame[target] = np.where(within_30, "<30", "not_within_30d")
+        drop_columns = ["encounter_id", "patient_nbr"]
+        if target != "readmitted":
+            drop_columns.append("readmitted")
+        frame = frame.drop(columns=drop_columns, errors="ignore")
+    for col in frame.select_dtypes(exclude=np.number):
+        # Object arrays use np.nan (not pd.NA) for sklearn's imputers.
+        frame[col] = frame[col].map(lambda v: str(v) if pd.notna(v) else np.nan).astype(object)
+    return frame
+
+def inspect_csv(content: bytes, filename: str, target: str | None = None, positive_label: str | None = None) -> dict:
+    if not filename.lower().endswith(".csv"):
+        raise AppError("extension_not_allowed", "Only UTF-8 .csv uploads are accepted.")
+    frame, _ = _read_csv_table(content)
+    result = detect_target(frame, target, positive_label)
+    schema = []
+    for column in frame.columns:
+        series = frame[column]
+        schema.append({
+            "name": str(column),
+            "type": "number" if pd.api.types.is_numeric_dtype(series) else "string",
+            "missing_count": int(series.isna().sum()),
+            "unique_count": int(series.nunique(dropna=True)),
+        })
+    return {
+        "filename": sanitize_filename(filename),
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "row_count": len(frame),
+        "column_count": len(frame.columns),
+        "columns": [str(c) for c in frame.columns],
+        "schema": schema,
+        **result,
+    }
+
+def register_csv(
+    content: bytes,
+    filename: str,
+    metadata: DatasetUploadMetadata,
+    *,
+    license_info: str | None = None,
+    is_demo: bool = False,
+    provenance_extra: dict | None = None,
+) -> Dataset:
+    if not filename.lower().endswith(".csv"):
+        raise AppError("extension_not_allowed", "Only UTF-8 .csv uploads are accepted.")
+    frame = parse_csv(content, metadata.target, metadata.positive_label)
+    quality = quality_report(frame, metadata.target, metadata.positive_label)
+    detection = detect_target(frame, metadata.target, metadata.positive_label)
+    identity = str(uuid4())
+    timestamp = utcnow()
+    sha = hashlib.sha256(content).hexdigest()
+    provenance = {
+        **metadata.model_dump(exclude={"deidentified"}),
+        "task": "binary_classification", "dataset_hash": sha,
+        "hash_algorithm": "sha256", "hash_scope": "exact stored CSV bytes",
+        "uploaded_at": timestamp.isoformat(), "row_count": len(frame),
+        "feature_count": len(frame.columns) - 1,
+        "features": [c for c in frame if c != metadata.target],
+        "numeric_features": quality["numeric_features"], "categorical_features": quality["categorical_features"],
+        "target_classes": quality["target_classes"], "class_distribution": quality["class_distribution"],
+        "negative_label": next(c for c in quality["target_classes"] if c != metadata.positive_label),
+        "license": license_info, "is_demo": is_demo, "deidentification_asserted_by_uploader": True,
+        "preprocessing_configuration": "Stored per experiment; source dataset is immutable.",
+        "origin": "built_in" if license_info is not None else "uploaded",
+        "dataset_status": "registered",
+        "target_type": "binary_classification",
+        "target_detection": detection,
+        **(provenance_extra or {}),
+    }
+    path = safe_path("data/datasets", identity, ".csv")
+    atomic_bytes(path, content)
+    try:
+        with session_scope() as session:
+            record = Dataset(id=identity, name=metadata.name, filename=sanitize_filename(filename), sha256=sha, provenance=provenance, quality=quality, created_at=timestamp)
+            session.add(record)
+            session.flush()
+            from ..dataset_versions.service import register_initial_version
+            register_initial_version(
+                session, dataset=record, frame=frame, content=content,
+                storage_reference=f"data/datasets/{identity}.csv",
+                provenance=provenance, quality=quality,
+            )
+        return record
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+
+def library() -> list[dict]:
+    return list_builtin_datasets()
+
+def register_builtin(slug: str, target: str | None = None, positive_label: str | None = None) -> Dataset:
+    with _builtin_registration_lock:
+        entry, content = builtin_bytes(slug)
+        resolved_target = target or entry["target"]
+        frame = parse_csv(content, resolved_target, positive_label or entry["positive_label"])
+        detection = detect_target(frame, resolved_target, positive_label)
+        resolved_positive = positive_label
+        if resolved_positive is None:
+            resolved_positive = entry["positive_label"] if resolved_target == entry["target"] else detection["positive_label"]
+        if resolved_positive is None:
+            raise AppError("positive_label_required", "Choose the positive label before registering this target.")
+        metadata = DatasetUploadMetadata(
+            name=entry["name"],
+            domain=entry["domain"],
+            source=entry["source"],
+            source_url=entry["source_url"],
+            version=entry["version"],
+            target=resolved_target,
+            positive_label=resolved_positive,
+            deidentified=True,
+        )
+        sha = hashlib.sha256(content).hexdigest()
+        with session_scope() as session:
+            versioned_dataset_ids = select(DatasetVersion.dataset_id).where(
+                DatasetVersion.content_sha256 == sha
+            )
+            matches = list(session.scalars(select(Dataset).where(
+                Dataset.name == entry["name"],
+                (Dataset.sha256 == sha) | Dataset.id.in_(versioned_dataset_ids),
+            )))
+            for existing in matches:
+                exact_version = session.scalar(select(DatasetVersion).where(
+                    DatasetVersion.dataset_id == existing.id,
+                    DatasetVersion.content_sha256 == sha,
+                    DatasetVersion.target == resolved_target,
+                    DatasetVersion.positive_label == resolved_positive,
+                ))
+                if exact_version:
+                    existing.current_version_id = exact_version.id
+                    existing.sha256 = exact_version.content_sha256
+                    existing.provenance = exact_version.provenance
+                    existing.quality = exact_version.quality_summary
+                    return existing
+                if (
+                    existing.sha256 == sha
+                    and existing.provenance.get("target") == resolved_target
+                    and existing.provenance.get("positive_label") == resolved_positive
+                ):
+                    return existing
+        heuristic = next((c for c in detection["candidates"] if c["column"] == resolved_target), None)
+        target_detection = {
+            **detection,
+            "selection_method": "verified_manifest" if target is None else "manual_override",
+            "confidence_score": 1.0 if target is None else detection["confidence_score"],
+            "confidence": "high" if target is None else detection["confidence"],
+            "verified_target": entry["target"],
+            "heuristic_candidate": heuristic,
+        }
+        return register_csv(
+            content,
+            entry["filename"],
+            metadata,
+            license_info=f'{entry["license"]}; {entry["attribution"]}',
+            provenance_extra={
+                "origin": "built_in",
+                "library_slug": slug,
+                "dataset_status": "registered",
+                "target_type": "binary_classification",
+                "target_detection": target_detection,
+                "license_url": entry["license_url"],
+                "attribution": entry["attribution"],
+                "normalization": entry["normalization"],
+                "packaged_resource_sha256": entry["sha256"],
+                "recommended_duplicate_policy": entry["recommended_duplicate_policy"],
+                "deidentification_asserted_by_uploader": False,
+            },
+        )
+
+def load_versioned_frame(identity: str, version_id: str | None = None, expected_hash: str | None = None) -> tuple[Dataset, DatasetVersion | None, pd.DataFrame]:
+    from ..dataset_versions.service import read_version_bytes, resolve_version
+    with session_scope() as session:
+        record = require(session, Dataset, identity)
+        version = resolve_version(session, record, version_id=version_id, expected_hash=expected_hash)
+    if version is not None:
+        content = read_version_bytes(version)
+        frame = parse_csv(content, version.target, version.positive_label)
+        return record, version, frame
+    # Honest compatibility path for unverifiable/unmigrated legacy rows.
+    path = safe_path("data/datasets", identity, ".csv")
+    verify(path, record.sha256)
+    return record, None, parse_csv(path.read_bytes(), record.provenance["target"], record.provenance["positive_label"])
+
+
+def load_frame(identity: str, version_id: str | None = None, expected_hash: str | None = None) -> tuple[Dataset, pd.DataFrame]:
+    record, _version, frame = load_versioned_frame(identity, version_id, expected_hash)
+    return record, frame
+
+def register_demo() -> Dataset:
+    with _demo_registration_lock:
+        return _register_demo()
+
+def _register_demo() -> Dataset:
+    from sklearn.datasets import load_breast_cancer
+    from importlib.metadata import version
+    data = load_breast_cancer(as_frame=True)
+    frame = data.data.copy()
+    # sklearn target 0 = malignant. Map explicitly; the positive class is malignant.
+    frame["diagnosis"] = np.where(data.target.to_numpy() == 0, "malignant", "benign")
+    meta = DatasetUploadMetadata(
+        name="Breast Cancer Wisconsin Diagnostic", domain="oncology",
+        source="UCI Machine Learning Repository, distributed with scikit-learn",
+        source_url="https://doi.org/10.24432/C5DW2B", version=f"scikit-learn-{version('scikit-learn')}",
+        target="diagnosis", positive_label="malignant", deidentified=True,
+    )
+    content = frame.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    sha = hashlib.sha256(content).hexdigest()
+    with session_scope() as session:
+        versioned_dataset_ids = select(DatasetVersion.dataset_id).where(
+            DatasetVersion.content_sha256 == sha
+        )
+        existing = session.scalar(select(Dataset).where(
+            Dataset.name == meta.name,
+            (Dataset.sha256 == sha) | Dataset.id.in_(versioned_dataset_ids),
+        ))
+        if existing is not None:
+            exact_version = session.scalar(select(DatasetVersion).where(
+                DatasetVersion.dataset_id == existing.id,
+                DatasetVersion.content_sha256 == sha,
+                DatasetVersion.target == meta.target,
+                DatasetVersion.positive_label == meta.positive_label,
+            ))
+            if exact_version:
+                existing.current_version_id = exact_version.id
+                existing.sha256 = exact_version.content_sha256
+                existing.provenance = exact_version.provenance
+                existing.quality = exact_version.quality_summary
+            return existing
+    return register_csv(
+        content,
+        "wdbc-benchmark.csv",
+        meta,
+        license_info="UCI CC BY 4.0; Wolberg, Mangasarian, Street & Street (1993). Identifier column is not included in sklearn features.",
+        is_demo=True,
+    )
+
+def delete_dataset(identity: str) -> None:
+    with _dataset_delete_lock:
+        _delete_dataset(identity)
+
+def _delete_dataset(identity: str) -> None:
+    from ..dataset_versions.service import _storage_path
+
+    with session_scope() as session:
+        dataset = require(session, Dataset, identity)
+        if (
+            session.scalar(select(Experiment.id).where(Experiment.dataset_id == identity).limit(1))
+            or session.scalar(select(Run.id).where(Run.dataset_id == identity).limit(1))
+        ):
+            raise AppError(
+                "dataset_in_use",
+                "This dataset is referenced by scientific history and is retained for reproducibility.",
+                409,
+            )
+        versions = list(
+            session.scalars(select(DatasetVersion).where(DatasetVersion.dataset_id == identity))
+        )
+
+    stored: dict[str, tuple[object, bytes]] = {}
+    for version in versions:
+        path = _storage_path(version.storage_reference)
+        try:
+            content = path.read_bytes()
+        except OSError as exc:
+            raise AppError(
+                "integrity_error",
+                "Stored Dataset Version is missing and cannot be safely deleted.",
+                409,
+            ) from exc
+        if hashlib.sha256(content).hexdigest() != version.content_sha256:
+            raise AppError("integrity_error", "Stored Dataset Version integrity has changed.", 409)
+        stored[str(path)] = (path, content)
+
+    if not versions:
+        path = safe_path("data/datasets", identity, ".csv")
+        try:
+            original = path.read_bytes()
+        except OSError as exc:
+            raise AppError(
+                "integrity_error",
+                "Stored dataset is missing and cannot be safely deleted.",
+                409,
+            ) from exc
+        if hashlib.sha256(original).hexdigest() != dataset.sha256:
+            raise AppError("integrity_error", "Stored dataset integrity has changed.", 409)
+        stored[str(path)] = (path, original)
+
+    removed = []
+    try:
+        for path, content in stored.values():
+            path.unlink()
+            removed.append((path, content))
+        with session_scope() as session:
+            dataset = require(session, Dataset, identity)
+            if (
+                session.scalar(select(Experiment.id).where(Experiment.dataset_id == identity).limit(1))
+                or session.scalar(select(Run.id).where(Run.dataset_id == identity).limit(1))
+            ):
+                raise AppError(
+                    "dataset_in_use",
+                    "This dataset is referenced by scientific history and is retained for reproducibility.",
+                    409,
+                )
+            dataset.current_version_id = None
+            session.flush()
+            for version in session.scalars(
+                select(DatasetVersion).where(DatasetVersion.dataset_id == identity)
+            ):
+                session.delete(version)
+            session.flush()
+            session.delete(dataset)
+    except Exception:
+        for path, content in removed:
+            try:
+                atomic_bytes(path, content)
+            except OSError as exc:
+                raise AppError(
+                    "storage_consistency",
+                    "Dataset deletion failed and storage could not be restored.",
+                    500,
+                ) from exc
+        raise

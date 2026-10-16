@@ -1,0 +1,110 @@
+import {lazy,Suspense,useEffect,useRef} from 'react';
+import {Navigate,Route,Routes,useLocation} from 'react-router-dom';
+import {useQuery} from '@tanstack/react-query';
+import {ResearchShell} from './components/ResearchShell';
+import {ThemeToggle} from './components/ThemeToggle';
+import {Loading} from './components/Shared';
+import {VerifiedPipeline,VerifiedQuality} from './components/VerifiedDemoViews';
+import {AiProvider} from './contexts/AiContext';
+import {AiPopup} from './components/AiPopup';
+import {qh} from './lib/api';
+import {useDraft} from './hooks/useDraft';
+import {useVerifiedDemo} from './hooks/useVerifiedDemo';
+
+const Overview=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.Overview})));
+const Datasets=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.Datasets})));
+const Quality=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.Quality})));
+const PipelineStage=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.PipelineStage})));
+const Training=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.Training})));
+const Comparison=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.Comparison})));
+const Robustness=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.Robustness})));
+const Quantum=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.Quantum})));
+const Explainability=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.Explainability})));
+const PredictionPage=lazy(()=>import('./pages/ResearchPagesModels').then(m=>({default:m.PredictionPage})));
+const Experiments=lazy(()=>import('./pages/ResearchPagesStudio').then(m=>({default:m.Experiments})));
+const ExperimentDetail=lazy(()=>import('./pages/ResearchPagesStudio').then(m=>({default:m.ExperimentDetail})));
+const DemoCenter=lazy(()=>import('./pages/ResearchPagesSystem').then(m=>({default:m.DemoCenter})));
+const SettingsPage=lazy(()=>import('./pages/ResearchPagesSystem').then(m=>({default:m.SettingsPage})));
+const AccountPage=lazy(()=>import('./pages/AccountPage').then(m=>({default:m.AccountPage})));
+const ResearchHistoryPage=lazy(()=>import('./research/ResearchHistoryPage').then(m=>({default:m.ResearchHistoryPage})));
+const ResearchReportsPage=lazy(()=>import('./research/ResearchReportsPage').then(m=>({default:m.ResearchReportsPage})));
+const ResearchReportDetailPage=lazy(()=>import('./research/ResearchReportsPage').then(m=>({default:m.ResearchReportDetailPage})));
+const AiAssistantPage=lazy(()=>import('./pages/AiAssistantPage').then(m=>({default:m.AiAssistantPage})));
+const RedisLab=lazy(()=>import('./pages/RedisLab').then(m=>({default:m.RedisLab})));
+
+export default function App(){
+  return <AiProvider>
+    <ResearchShell>
+      <ThemeToggle/>
+      <WorkspaceRoutes/>
+    </ResearchShell>
+    <AiPopup/>
+  </AiProvider>;
+}
+
+function WorkspaceRoutes(){
+  const location=useLocation();
+  const frameRef=useRef<HTMLDivElement|null>(null);
+
+  useEffect(()=>{
+    const workspace=document.querySelector<HTMLElement>('.research-workspace');
+    workspace?.scrollTo?.({top:0,behavior:'auto'});
+    frameRef.current?.focus({preventScroll:true});
+  },[location.pathname]);
+
+  return <div ref={frameRef} className="workspace-route-frame" key={location.pathname} tabIndex={-1} aria-label="Research page content">
+    <ActiveDatasetGuard/>
+    <Suspense fallback={<Loading/>}><Routes location={location}>
+      <Route path="/" element={<Overview/>}/>
+      <Route path="/datasets" element={<DatasetsRoute/>}/>
+      <Route path="/quality" element={<QualityRoute/>}/>
+      <Route path="/preprocessing" element={<PreprocessingRoute/>}/>
+      <Route path="/features" element={<FeaturesRoute/>}/>
+      <Route path="/pca" element={<PcaRoute/>}/>
+      <Route path="/training" element={<Training/>}/>
+      <Route path="/comparison" element={<Comparison/>}/>
+      <Route path="/robustness" element={<Robustness/>}/>
+      <Route path="/quantum" element={<QuantumRoute/>}/>
+      <Route path="/explainability" element={<Explainability/>}/>
+      <Route path="/prediction" element={<PredictionPage/>}/>
+      <Route path="/experiments" element={<Experiments/>}/>
+      <Route path="/experiments/:id" element={<ExperimentDetail/>}/>
+      <Route path="/demo" element={<DemoCenter/>}/>
+      <Route path="/account" element={<AccountPage/>}/>
+      <Route path="/my-research" element={<ResearchHistoryPage/>}/>
+      <Route path="/my-research/reports" element={<ResearchReportsPage/>}/>
+      <Route path="/my-research/reports/:savedReportId" element={<ResearchReportDetailPage/>}/>
+      <Route path="/ai" element={<AiAssistantPage/>}/>
+      <Route path="/settings" element={<SettingsPage/>}/>
+      <Route path="/redis" element={<RedisLab/>}/>
+      <Route path="*" element={<Navigate to="/" replace/>}/>
+    </Routes></Suspense>
+  </div>;
+}
+
+function ActiveDatasetGuard(){
+  const {draft,clearDataset}=useDraft();
+  const activeId=draft.dataset_id;
+  const query=useQuery({
+    queryKey:['dataset',activeId],
+    queryFn:()=>qh.dataset(activeId),
+    enabled:Boolean(activeId),
+    retry:(failureCount,error)=>!(typeof error==='object'&&error!==null&&'status' in error&&(error as {status?:number}).status===404)&&failureCount<1,
+  });
+  useEffect(()=>{
+    const error=query.error as {status?:number;code?:string}|null;
+    if(activeId&&error?.status===404&&error.code==='not_found')clearDataset(activeId);
+  },[activeId,clearDataset,query.error]);
+  return null;
+}
+
+function DatasetsRoute(){ return <Datasets/>; }
+function QualityRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedQuality/>:<Quality/>; }
+function PreprocessingRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="preprocessing"/>:<PipelineStage endpoint="/preprocessing/preview" eyebrow="03 / Prepare" title="Preprocessing" description="Configure leakage-safe transformations that are fitted within the backend research pipeline and carried into every model comparison."/>; }
+function FeaturesRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="features"/>:<PipelineStage endpoint="/feature-selection/preview" eyebrow="04 / Select" title="Feature selection" description="Inspect training-only feature selection decisions without converting benchmark association into biological causation."/>; }
+function PcaRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="pca"/>:<PipelineStage endpoint="/pca/preview" eyebrow="05 / Reduce" title="PCA / dimensions" description="Fit a compact training representation before classical and quantum learning while preserving the held-out evaluation boundary."/>; }
+function QuantumRoute(){
+  // Verified mode uses the same Quantum Lab workspace so the enhanced
+  // circuit/evidence surface is never bypassed by a legacy demo-only route.
+  return <Quantum/>;
+}

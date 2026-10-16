@@ -1,0 +1,68 @@
+services:
+  - type: web
+    runtime: static
+    name: entanglex-q-health
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://entanglex-q-health-api.onrender.com/api
+      # Supabase public browser configuration.
+      # Values are intentionally entered in Render, not committed to Git.
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; connect-src 'self' https://entanglex-q-health-api.onrender.com https://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+  - type: web
+    runtime: docker
+    name: entanglex-q-health-api
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    # A persistent disk keeps the runtime SQLite registry, uploaded datasets and
+    # generated model/experiment artifacts across restarts and redeploys.
+    # Persistent disks require a paid instance type and pin the service to a
+    # single instance (no zero-downtime deploys). Size can grow but never shrink.
+    # 1 CPU / 2 GB RAM: the backend imports Qiskit, SciPy, scikit-learn,
+    # SHAP and the packaged PennyLane/PyTorch hybrid runtime.
+    plan: 1c-2g
+    disk:
+      name: qhealth-runtime
+      mountPath: /runtime
+      sizeGB: 1
+    envVars:
+      - key: QHEALTH_DEPLOYMENT_MODE
+        value: production
+      - key: QHEALTH_STORAGE_ROOT
+        value: /runtime
+      - key: QHEALTH_CORS_ORIGINS
+        value: https://entanglex-q-health.onrender.com
+      - key: QHEALTH_TRUSTED_HOSTS
+        value: entanglex-q-health-api.onrender.com,localhost,127.0.0.1
+      # Saved research reports: backend-only Supabase persistence and JWT verification.
+      - key: QHEALTH_SUPABASE_URL
+        sync: false
+      - key: QHEALTH_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: QHEALTH_SUPABASE_JWT_AUDIENCE
+        value: authenticated
+      - key: QHEALTH_GROQ_API_KEY
+        sync: false
+      - key: QHEALTH_GROQ_MODEL
+        value: qwen/qwen3.8-27b

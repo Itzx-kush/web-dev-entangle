@@ -1,0 +1,178 @@
+import {useEffect,useState} from 'react';
+import {Link} from 'react-router-dom';
+import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
+import {Activity,ArrowLeft,ArrowRight,Atom,CheckCircle2,Database,FlaskConical,LogIn,LogOut,MonitorCog,Moon,PlayCircle,ShieldCheck,Sparkles,Sun,Zap} from 'lucide-react';
+import {Badge,Button,Card,Select} from '../components/ui';
+import {ErrorBanner,Notice,PageHeader,StatusBadge} from '../components/Shared';
+import {deriveDemoState,type DemoStageKey,type DemoStageStatus} from '../lib/demoState';
+import {qh} from '../lib/api';
+import {useDraft} from '../hooks/useDraft';
+import {modelLabels,shortId} from '../utils/format';
+import {PipelineFlow,StatusStrip,WorkbenchRail} from '../components/TremorWorkbench';
+import {VerifiedDemoLanding} from '../components/VerifiedDemoViews';
+import {useAuth} from '../auth/AuthProvider';
+import {AccountAvatar,accountEmail,accountName} from '../auth/AccountIdentity';
+import {useGuestMigration} from '../auth/GuestMigrationProvider';
+
+const demoStages:{key:DemoStageKey;label:string;copy:string;path:string;action:string}[]=[
+  {key:'dataset',label:'Dataset',copy:'Select a packaged public medical dataset or register an authorized deidentified CSV.',path:'/datasets',action:'Choose Dataset'},
+  {key:'quality',label:'Quality',copy:'Review missingness, class balance, identifiers, duplicates and integrity blockers.',path:'/quality',action:'Open Data Quality'},
+  {key:'preprocessing',label:'Preprocessing',copy:'Configure leakage-safe imputation, scaling and optional training-only transforms.',path:'/preprocessing',action:'Configure Pipeline'},
+  {key:'features',label:'Feature Engineering',copy:'Choose the measured feature representation without making causal claims.',path:'/features',action:'Select Features'},
+  {key:'pca',label:'PCA',copy:'Inspect the configured reduced representation used by compatible model paths.',path:'/pca',action:'Configure PCA'},
+  {key:'training',label:'Training',copy:'Create one real backend experiment under shared evaluation conditions.',path:'/training',action:'Run Training'},
+  {key:'quantum',label:'Classical / Quantum',copy:'Inspect supported classical models and simulator-backed quantum execution honestly.',path:'/quantum',action:'Open Quantum Lab'},
+  {key:'comparison',label:'Comparison',copy:'Compare at least two ready models from the same completed experiment.',path:'/comparison',action:'Compare Models'},
+  {key:'robustness',label:'Robustness',copy:'Measure frozen-model degradation under controlled, reproducible perturbations.',path:'/robustness',action:'Open Robustness Lab'},
+  {key:'explainability',label:'Explainability',copy:'Measure feature influence for a ready model without implying biological causation.',path:'/explainability',action:'View Explanation'},
+  {key:'prediction',label:'Prediction',copy:'Generate a research-only output from the exact ready-model input schema.',path:'/prediction',action:'Make Prediction'},
+  {key:'report',label:'Report',copy:'Review experiment provenance, model records, limitations and report exports.',path:'/experiments',action:'View Experiment'},
+];
+
+const tone=(status:DemoStageStatus):'green'|'amber'|'red'|'blue'=>
+  status==='COMPLETED'||status==='READY'?'green':
+  status==='BLOCKED'||status==='UNAVAILABLE'?'red':
+  status==='IN PROGRESS'?'amber':'blue';
+
+export function DemoCenter(){
+  return <div className="layer3-final-workspace layer3-demo-workspace"><VerifiedDemoLanding/></div>;
+}
+
+export function LegacyDemoCenter(){
+  const {draft,selectDataset}=useDraft();
+  const qc=useQueryClient();
+  const health=useQuery({queryKey:['health'],queryFn:qh.health,refetchInterval:15000});
+  const jobs=useQuery({queryKey:['jobs'],queryFn:qh.jobs,refetchInterval:5000});
+  const models=useQuery({queryKey:['models'],queryFn:qh.models,refetchInterval:10000});
+  const experiments=useQuery({queryKey:['experiments'],queryFn:qh.experiments,refetchInterval:10000});
+  const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,staleTime:300000});
+  const alignment=useQuery({queryKey:['alignment'],queryFn:qh.alignment,staleTime:300000});
+  const selectedDataset=useQuery({
+    queryKey:['dataset',draft.dataset_id],
+    queryFn:()=>qh.dataset(draft.dataset_id),
+    enabled:Boolean(draft.dataset_id),
+  });
+  const [step,setStep]=useState(0);
+  const register=useMutation({
+    mutationFn:(slug:string)=>qh.registerBuiltIn(slug),
+    onSuccess:dataset=>{
+      selectDataset(dataset.id,dataset.provenance.recommended_duplicate_policy);
+      setStep(1);
+      qc.invalidateQueries({queryKey:['datasets']});
+      qc.invalidateQueries({queryKey:['summary']});
+      qc.invalidateQueries({queryKey:['experiments']});
+      qc.invalidateQueries({queryKey:['models']});
+    },
+  });
+  const dataset=selectedDataset.data;
+  const activeDatasetId=dataset?.id===draft.dataset_id?draft.dataset_id:'';
+  const state=deriveDemoState(
+    activeDatasetId,
+    experiments.data,
+    models.data,
+    jobs.data,
+    health.isError?false:health.data?.quantum.available,
+  );
+  const readyCount=library.data?.filter(item=>item.demo_readiness.status==='ready').length??0;
+  const processingCount=library.data?.filter(item=>item.demo_readiness.status==='requires_processing').length??0;
+  const activeReadiness=library.data?.find(item=>item.slug===dataset?.provenance.library_slug)?.demo_readiness;
+  const current=demoStages[step];
+  const active=jobs.data?.filter(job=>['queued','running','cancel_requested'].includes(job.status)).length||0;
+  const experiment=state.currentExperiment;
+  const experimentPath=experiment?`/experiments/${experiment.id}`:'/experiments';
+  const stageDetail=(key:DemoStageKey)=>{
+    if(!activeDatasetId&&key!=='dataset')return 'Select a valid registered dataset before this stage can use the research pipeline.';
+    if(key==='dataset')return dataset?'Active registered dataset is available to downstream routes.':'No active dataset is selected.';
+    if(['preprocessing','features','pca'].includes(key))return 'Configuration is ready; preview execution is not persisted as completed state.';
+    if(key==='quality')return 'The registered quality profile is available; open the stage to revalidate selected inputs.';
+    if(key==='training'){
+      if(state.currentJob)return state.currentJob.state;
+      return experiment?`Latest current-dataset experiment: ${experiment.status}.`:'No experiment exists for the active dataset.';
+    }
+    if(key==='quantum')return health.data?.quantum.execution||'Quantum capability has not been reported yet.';
+    if(key==='comparison')return state.readyModels.length>=2?'Two or more ready models belong to the current experiment.':'Requires two ready models from the current completed experiment.';
+    if(key==='robustness'||key==='explainability'||key==='prediction')return state.readyModels.length?'A ready model belongs to the current completed experiment.':'Requires a ready model from the current dataset experiment.';
+    if(key==='report')return experiment?'Experiment evidence and report export are tied to the current dataset.':'Requires a completed experiment for the active dataset.';
+    return '';
+  };
+  const error=[health,jobs,models,experiments,library,alignment,selectedDataset,register].find(query=>query.error)?.error;
+  return <div>
+    <PageHeader eyebrow="SIH 2026 · Judge workflow" title="SIH Demo Center" description="Hybrid quantum–classical machine learning research platform for controlled medical classification experiments." actions={<Link className="btn btn-primary" to={current.key==='report'&&experiment?experimentPath:current.path}><PlayCircle size={14}/>{current.action}</Link>}/>
+    <WorkbenchRail items={[{label:'Demo stage',value:`${step+1} / ${demoStages.length}`,detail:current.label,tone:'blue'},{label:'Dataset',value:dataset?dataset.name:'None',detail:'Active registered input',tone:dataset?'green':'amber'},{label:'Ready models',value:state.readyModels.length,detail:'Current experiment evidence',tone:state.readyModels.length?'purple':'slate'},{label:'Active jobs',value:active,detail:'Backend execution state',tone:active?'amber':'green'}]}/>
+    <StatusStrip items={[{label:'API health',value:health.isError?'Unavailable':'Connected',status:health.isError?'bad':'good'},{label:'Quantum capability',value:health.data?.quantum.available?'Available':'Unavailable',status:health.data?.quantum.available?'good':'warning'},{label:'Verified demos',value:String(readyCount),status:readyCount?'good':'neutral'},{label:'Requires processing',value:String(processingCount),status:processingCount?'warning':'good'}]}/>
+    <PipelineFlow items={demoStages.slice(0,6).map((stage,index)=>({label:stage.label,detail:state.stages[stage.key],status:index<step?'complete':index===step?'current':state.stages[stage.key]==='BLOCKED'?'blocked':'waiting'}))}/>
+    <ErrorBanner error={error instanceof Error?error.message:undefined}/>
+    <div className="demo-hero">
+      <div><p className="eyebrow">TRUTHFUL, TRACEABLE DEMONSTRATION</p><h2>From public medical data to measured research evidence.</h2><p>Select a dataset, inspect each real pipeline stage, and review only artifacts that actually exist. Verified packages expose genuine precomputed research results; every dataset still supports live training.</p><div className="demo-facts"><span><Database size={14}/> {dataset?'1 active dataset':'No active dataset'}</span><span><FlaskConical size={14}/> {experiment?'Current experiment':'No current experiment'}</span><span><Activity size={14}/> {active} active jobs</span><span><CheckCircle2 size={14}/> {readyCount} verified demo ready</span><span><MonitorCog size={14}/> {processingCount} require processing</span></div></div>
+      <div className="demo-visual"><Atom size={22}/><span>DATA</span><i/><span>CONTROLLED MODELS</span><i/><span>EVIDENCE</span></div>
+    </div>
+
+    {alignment.data&&<div className="two-grid mt-5"><Card title="Primary SIH use case" description={alignment.data.showcase.label}><div className="space-y-3"><Badge tone="purple">PRIMARY SIH USE CASE</Badge><h2 className="text-xl font-semibold">{alignment.data.showcase.display_name}</h2><p className="text-sm muted">Featured, not exclusive: the Medical Dataset Library and custom deidentified datasets remain available.</p><p className="text-xs muted">Target: {alignment.data.showcase.target} · Positive class: {alignment.data.showcase.positive_class}</p><Notice tone="amber">{alignment.data.showcase.research_only_disclaimer}</Notice><Button disabled={register.isPending||dataset?.provenance.library_slug===alignment.data.showcase.featured_dataset_slug} onClick={()=>register.mutate(alignment.data.showcase.featured_dataset_slug)}>{dataset?.provenance.library_slug===alignment.data.showcase.featured_dataset_slug?'SIH preset active':'Activate SIH Diabetes Demonstration'}</Button><small className="block muted">Selects the featured dataset context only. It does not launch training.</small></div></Card><Card title="Flagship hybrid architecture" description="Implemented architecture and execution state are reported separately"><div className="space-y-2">{alignment.data.flagship_architecture.stages.map((stage,index)=><div className="flex items-center gap-3 rounded-lg border p-2 text-xs" key={stage}><Badge tone="blue">{String(index+1).padStart(2,'0')}</Badge><span>{stage}</span></div>)}</div><div className="mt-3 grid gap-2 text-xs"><div className="flex justify-between"><span>Architecture</span><strong>{alignment.data.flagship_architecture.status}</strong></div><div className="flex justify-between"><span>Dependencies</span><strong>{alignment.data.models.find(model=>model.model_id==='hybrid_pennylane_torch')?.executable?'AVAILABLE':'UNAVAILABLE'}</strong></div><div className="flex justify-between"><span>Execution</span><strong>{models.data?.some(model=>model.model_type==='hybrid_pennylane_torch'&&model.status==='ready')?'EXECUTED IN AN EXPERIMENT':'IMPLEMENTED — NO RUN YET'}</strong></div><div className="flex justify-between"><span>Hardware</span><strong>UNAVAILABLE</strong></div></div><Notice tone="amber">Local simulation only. No hardware or quantum advantage is claimed.</Notice></Card></div>}
+
+    <div className="two-grid mt-5" aria-live="polite">
+      <Card title="Current dataset" description="The active registered dataset is the single source of truth for every downstream stage.">
+        {dataset?<div className="space-y-3"><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold">{dataset.name}</h3><p className="mt-1 text-xs muted">{dataset.provenance.domain} · {dataset.provenance.source}</p></div><div className="flex flex-wrap gap-1"><Badge tone="green">ACTIVE</Badge>{activeReadiness&&<Badge tone={activeReadiness.status==='ready'?'blue':'amber'}>{activeReadiness.status==='ready'?'VERIFIED DEMO READY':'REQUIRES PROCESSING'}</Badge>}</div></div><div className="grid grid-cols-2 gap-3 text-xs"><div><span className="metric-label">SAMPLES</span><strong className="block">{dataset.provenance.row_count.toLocaleString()}</strong></div><div><span className="metric-label">FEATURES</span><strong className="block">{dataset.provenance.feature_count}</strong></div><div><span className="metric-label">TARGET</span><strong className="block break-all">{dataset.provenance.target}</strong></div><div><span className="metric-label">CLASSES</span><strong className="block">{dataset.provenance.negative_label} / {dataset.provenance.positive_label}</strong></div></div><Link className="btn btn-outline" to="/datasets">Review provenance <ArrowRight size={13}/></Link></div>:<div><p className="text-sm muted">No dataset is selected. Choose one of the five packaged public datasets below or open Data Lab for a custom CSV.</p><Link className="btn btn-primary mt-4" to="/datasets">Choose Dataset <ArrowRight size={13}/></Link></div>}
+      </Card>
+      <Card title="Current experiment and model state" description="Only records related to the active dataset and its latest experiment appear here.">
+        {experiment?<div className="space-y-3"><div className="flex items-center justify-between gap-3"><span className="mono text-xs">{shortId(experiment.id)}</span><StatusBadge value={experiment.status}/></div><p className="text-xs muted">Dataset {shortId(experiment.dataset_id)} · {(experiment.config.models||[]).map(kind=>modelLabels[kind]).join(', ')}</p><div className="flex flex-wrap gap-1">{state.readyModels.length?state.readyModels.map(model=><Badge tone="green" key={model.id}>{modelLabels[model.model_type]} · READY</Badge>):<Badge tone="amber">NO READY MODEL</Badge>}</div>{state.currentJob&&<div><div className="flex justify-between text-xs"><span className="muted">{state.currentJob.state}</span><strong>{state.currentJob.progress}%</strong></div><progress className="job-progress mt-2 w-full" max="100" value={state.currentJob.progress}/></div>}<Link className="btn btn-outline" to={experimentPath}>View Experiment <ArrowRight size={13}/></Link></div>:<p className="text-sm muted">No experiment exists for the active dataset. Previous experiments for other datasets do not unlock this workflow.</p>}
+      </Card>
+    </div>
+
+    <Card className="mt-5" title="Quickstart · Medical Dataset Library" description="Register one verified packaged dataset directly. Source files, SHA-256 integrity, targets and provenance remain owned by the existing backend catalog.">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">{library.data?.map(item=>{const selected=dataset?.provenance.library_slug===item.slug;return <article className={'rounded-xl border p-3 '+(selected?'border-primary bg-primary/5':'')} key={item.slug}><div className="flex items-start justify-between gap-2"><div className="flex flex-wrap gap-1"><Badge tone={selected?'green':'blue'}>{selected?'ACTIVE':'BUILT-IN'}</Badge>{item.slug===alignment.data?.showcase.featured_dataset_slug&&<Badge tone="purple">FEATURED SIH</Badge>}<Badge tone={item.demo_readiness.status==='ready'?'blue':'amber'}>{item.demo_readiness.status==='ready'?'VERIFIED DEMO READY':'REQUIRES PROCESSING'}</Badge></div><span className="text-[10px] muted">{item.domain}</span></div><h3 className="mt-2 text-sm font-semibold">{item.name}</h3><p className="mt-2 text-[11px] muted">{item.row_count.toLocaleString()} samples · {item.feature_count} features</p><p className="mt-1 text-[11px]"><strong>Target:</strong> {item.target}</p><p className="mt-1 text-[10px] muted">{item.negative_label} / {item.positive_label}</p><p className="mt-1 text-[10px] muted">{item.demo_readiness.status==='ready'?'Instant research result available':'Run live training to generate results'}</p><Button className="mt-3 w-full" variant={selected?'outline':'primary'} disabled={register.isPending||selected} onClick={()=>register.mutate(item.slug)}>{selected?'Selected':'Use Dataset'}</Button></article>})}</div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs muted">Need a custom deidentified CSV or full attribution details?</p><Link className="btn btn-outline" to="/datasets">Open Medical Dataset Library <ArrowRight size={13}/></Link></div>
+    </Card>
+
+    <Card className="mt-5" title="Judge path · Research pipeline" description="READY means the next real action is available. COMPLETED is used only for persisted backend execution state.">
+      <div className="demo-spotlight"><div><div className="eyebrow">CURRENT STAGE · {String(step+1).padStart(2,'0')}</div><h2>{current.label}</h2><p>{stageDetail(current.key)}</p></div><Badge tone={tone(state.stages[current.key])}>{state.stages[current.key]}</Badge></div>
+      <div className="demo-controls"><Button variant="outline" disabled={step===0} onClick={()=>setStep(index=>Math.max(0,index-1))}><ArrowLeft size={13}/>Previous</Button><div className="demo-step-count">Step {step+1} of {demoStages.length}</div><Button variant="outline" disabled={step===demoStages.length-1} onClick={()=>setStep(index=>Math.min(demoStages.length-1,index+1))}>Next<ArrowRight size={13}/></Button></div>
+      <div className="demo-timeline">{demoStages.map((stage,index)=><div className={'demo-step '+(index===step?'is-selected':'')} data-stage={stage.key} key={stage.key}><button type="button" className="demo-step-marker" aria-label={`Select ${stage.label} stage`} onClick={()=>setStep(index)}>{String(index+1).padStart(2,'0')}</button>{index<demoStages.length-1&&<div className="demo-step-line"/>}<div className="demo-step-copy"><div className="flex items-center justify-between gap-3"><div><h3>{stage.label}</h3><p>{stage.copy}</p><small className="mt-1 block muted">{stageDetail(stage.key)}</small></div><div className="flex items-center gap-2"><Badge tone={tone(state.stages[stage.key])}>{state.stages[stage.key]}</Badge><Link className="btn btn-outline px-3" to={stage.key==='report'&&experiment?experimentPath:stage.path} onClick={()=>setStep(index)}>{stage.action} <ArrowRight size={13}/></Link></div></div></div></div>)}</div>
+    </Card>
+
+    <div className="two-grid mt-5">
+      <Card title="Live backend readiness"><div className="space-y-3"><div className="readiness-row"><span><span className={'status-dot '+(health.data?'is-live':'is-offline')}/>Backend</span><strong>{health.data?'Connected':'Unavailable'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(dataset?'is-live':'is-offline')}/>Active dataset</span><strong>{dataset?dataset.name:'Not selected'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(health.data?.quantum.available?'is-live':'is-offline')}/>Quantum capability</span><strong>{health.data?.quantum.available?'Local simulation available':'Not available'}</strong></div></div><Notice tone="amber">Present only a backend-verified packaged result or a completed live experiment. This page never manufactures readiness.</Notice></Card>
+      <Card title="Scientific guardrails"><div className="space-y-3"><p className="text-sm muted"><ShieldCheck size={15} className="mr-2 inline text-emerald-600"/>Measured benchmark outputs are research evidence, not clinical validation.</p><p className="text-sm muted"><Zap size={15} className="mr-2 inline text-purple-600"/>Quantum execution is local simulation unless the backend explicitly reports otherwise; no advantage is claimed.</p><p className="text-sm muted"><Sparkles size={15} className="mr-2 inline text-amber-600"/>Predictions are research outputs, never diagnoses, treatment guidance or medical recommendations.</p></div></Card>
+    </div>
+  </div>;
+}
+
+export function SettingsPage(){
+  const {user,isAuthenticated,signingOut,signOut}=useAuth();
+  const {beginUpgrade,hasMigratableState}=useGuestMigration();
+  type ThemePreference='research'|'dark'|'system';
+  type SidebarPreference='sidebar'|'floating'|'inset';
+  type LayoutPreference='default'|'icon'|'offcanvas';
+  const [theme,setTheme]=useState<ThemePreference>(()=>{
+    const value=localStorage.getItem('qhealth-theme');
+    return value==='dark'?'dark':value==='system'?'system':'research';
+  });
+  const [sidebar,setSidebar]=useState<SidebarPreference>(()=>{
+    const value=localStorage.getItem('qhealth-sidebar-variant');
+    return value==='sidebar'||value==='floating'?'sidebar'===value?'sidebar':'floating':'inset';
+  });
+  const [layout,setLayout]=useState<LayoutPreference>(()=>{
+    const value=localStorage.getItem('qhealth-layout');
+    return value==='icon'||value==='offcanvas'?'icon'===value?'icon':'offcanvas':'default';
+  });
+  const [density,setDensity]=useState<'comfortable'|'compact'>(()=>(localStorage.getItem('qhealth-density') as 'comfortable'|'compact')||'comfortable');
+  const [motion,setMotion]=useState<'full'|'reduced'>(()=>(localStorage.getItem('qhealth-motion') as 'full'|'reduced')||'full');
+  const [inspector,setInspector]=useState(localStorage.getItem('qhealth-inspector')!=='hidden');
+  useEffect(()=>{localStorage.setItem('qhealth-theme',theme);localStorage.setItem('qhealth-sidebar-variant',sidebar);localStorage.setItem('qhealth-layout',layout);localStorage.setItem('qhealth-density',density);localStorage.setItem('qhealth-motion',motion);localStorage.setItem('qhealth-inspector',inspector?'visible':'hidden');window.dispatchEvent(new Event('qhealth-settings-changed'))},[theme,sidebar,layout,density,motion,inspector]);
+  return <div className="layer3-final-workspace layer3-settings-workspace">
+    <PageHeader eyebrow="Workspace controls" title="Settings center" description="Manage account access, interface preferences, accessibility, and research safeguards."/>
+    <WorkbenchRail items={[{label:'Account',value:isAuthenticated?'Signed in':'Guest mode',detail:isAuthenticated?'Personal workspace':'Prototype access',tone:isAuthenticated?'green':'slate'},{label:'Theme',value:theme==='research'?'Research light':theme==='dark'?'Deep research':'System',detail:'Workspace appearance',tone:theme==='dark'?'purple':'blue'},{label:'Density',value:density,detail:'Layout spacing',tone:'blue'},{label:'Motion',value:motion,detail:'Accessibility preference',tone:motion==='reduced'?'green':'purple'}]}/>
+    <StatusStrip items={[{label:'Interface',value:'Applied immediately',status:'good'},{label:'Persistence',value:'Local browser only',status:'good'},{label:'Secrets',value:'Never stored',status:'good'},{label:'Research safeguards',value:'Always enabled',status:'good'}]}/>
+    <div className="settings-section-heading"><span className="eyebrow">Account</span><h2>Identity &amp; access</h2><p>Manage the current EntangleX workspace identity without changing research API behavior.</p></div>
+    <div className="settings-account-card">
+      {isAuthenticated?<><AccountAvatar user={user} size="medium"/><div><strong>{accountName(user)}</strong><span>{accountEmail(user)}</span><small>Authenticated personal workspace</small></div><div className="settings-account-actions"><Link className="btn btn-outline" to="/account">My account</Link><Link className="btn btn-outline" to="/my-research">My Research</Link><Button variant="ghost" disabled={signingOut} onClick={()=>void signOut()}><LogOut size={14}/>{signingOut?'Signing out…':'Sign out'}</Button></div></>
+      :<><span className="settings-guest-mark"><LogIn size={18}/></span><div><strong>Guest research workspace</strong><span>Current prototype access</span><small>{hasMigratableState?'Eligible session metadata can be saved after sign-in.':'No account identity is attached to this session.'}</small></div><Button variant="outline" onClick={beginUpgrade}><LogIn size={14}/>{hasMigratableState?'Sign in to save':'Go to sign in'}</Button></>}
+    </div>
+    <div className="settings-section-heading"><span className="eyebrow">Interface</span><h2>Appearance &amp; accessibility</h2><p>Preferences apply immediately and remain local to this browser.</p></div>
+    <div className="settings-grid">
+      <Card title="Appearance" description="Choose the research surface that best fits the room you are working in."><div className="settings-option-grid"><button type="button" className={'settings-option '+(theme==='research'?'is-selected':'')} onClick={()=>setTheme('research')} aria-pressed={theme==='research'}><Sun size={18}/><span><strong>Research light</strong><small>Bright surfaces · navy evidence UI</small></span></button><button type="button" className={'settings-option '+(theme==='dark'?'is-selected':'')} onClick={()=>setTheme('dark')} aria-pressed={theme==='dark'}><Moon size={18}/><span><strong>Deep research</strong><small>Low-glare dark workspace</small></span></button><button type="button" className={'settings-option '+(theme==='system'?'is-selected':'')} onClick={()=>setTheme('system')} aria-pressed={theme==='system'}><MonitorCog size={18}/><span><strong>System</strong><small>Follow the operating system preference</small></span></button></div></Card>
+      <Card title="Workspace layout" description="Keep the research shell comfortable on large screens and focused on smaller ones."><div className="settings-form"><label className="field"><span>Sidebar</span><Select aria-label="Sidebar" value={sidebar} onChange={e=>setSidebar(e.target.value as typeof sidebar)}><option value="sidebar">Standard</option><option value="floating">Floating</option><option value="inset">Inset</option></Select></label><label className="field"><span>Layout</span><Select aria-label="Layout" value={layout} onChange={e=>setLayout(e.target.value as typeof layout)}><option value="default">Default</option><option value="icon">Compact</option><option value="offcanvas">Off-canvas</option></Select></label><label className="field"><span>Density</span><Select aria-label="Density" value={density} onChange={e=>setDensity(e.target.value as typeof density)}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></Select></label><label className="field"><span>Motion</span><Select aria-label="Motion" value={motion} onChange={e=>setMotion(e.target.value as typeof motion)}><option value="full">Full motion</option><option value="reduced">Reduced motion</option></Select></label><label className="settings-check"><input type="checkbox" checked={inspector} onChange={e=>setInspector(e.target.checked)}/><span><strong>Show context inspector</strong><small>Live backend, registry and job context on wide screens.</small></span></label></div></Card>
+      <Card title="Research safeguards" description="These defaults are product constraints, not decorative copy."><div className="space-y-3"><div className="safeguard-row"><CheckCircle2 size={16}/><span>Clinical disclaimer remains visible across the workspace.</span></div><div className="safeguard-row"><CheckCircle2 size={16}/><span>Quantum capability is reported, never inferred as advantage.</span></div><div className="safeguard-row"><CheckCircle2 size={16}/><span>API tokens stay in memory and are omitted from local storage.</span></div></div><Link className="btn btn-outline mt-4" to="/demo"><PlayCircle size={14}/>Open SIH Demo Center</Link></Card>
+      <Card title="Connection" description="Use the existing connection control to provide an optional local bearer token."><div className="flex items-start gap-3 text-sm muted"><Activity size={17} className="mt-0.5 text-primary"/><p>The live connection indicator and status inspector are driven by existing health, summary, and job endpoints. Account identity does not change those API contracts.</p></div></Card>
+    </div>
+  </div>;
+}

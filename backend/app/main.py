@@ -1,0 +1,232 @@
+import json
+import logging
+import time
+from threading import Thread
+from contextlib import asynccontextmanager
+from uuid import uuid4
+from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from sqlalchemy import func, select
+from .api import redis_lab
+from .api import ablation, ai, alignment, audit, controlled_comparison, data_quality, datasets, experiments, jobs, model_cards, models, pipeline, pipelines, protocols, quantum, runs, saved_reports, shift, studies, subgroups, training, validation, threshold, condition_tasks, quantum_diagnostics
+
+from .api.middleware import BodyLimitMiddleware
+from .api.security import authorize
+from .api.schemas import ExperimentOut
+from .alignment import alignment_contract
+from .config import DISCLAIMER, get_settings
+from .database import init_db, session_scope
+from .demo_readiness import install_verified_demo_artifacts, validate_readiness_configuration
+from .dataset_versions.service import ensure_legacy_versions
+from .jobs.manager import manager
+from .quantum.backends import availability
+from .storage.entities import Dataset, Experiment, Job, ModelRecord
+from .telemetry.db_probe import probe_database, probe_storage
+from .telemetry.registry import telemetry_registry
+from .telemetry.schemas import DiagnosticsResponse, TelemetryResponse
+from .telemetry.service import get_system_diagnostics, get_system_telemetry
+from .utils.errors import AppError
+
+settings = get_settings()
+logger = logging.getLogger("qhealth")
+
+class SafeJSONFormatter(logging.Formatter):
+    def format(self, record):
+        # Application calls supply only fixed messages, opaque IDs and exception types.
+        return json.dumps({"level": record.levelname, "logger": record.name, "event": record.getMessage()})
+
+handler = logging.StreamHandler()
+handler.setFormatter(SafeJSONFormatter())
+logger.handlers = [handler]
+logger.setLevel(settings.log_level.upper())
+logger.propagate = False
+
+def _background_runtime_bootstrap():
+    try:
+        install_verified_demo_artifacts()
+    except AppError as exc:
+        # Request-time recovery remains available for the immutable packaged demo.
+        logger.warning("verified_demo_startup_recovery_required code=%s", exc.code)
+    except OSError as exc:
+        logger.warning("verified_demo_startup_filesystem_unavailable exception_type=%s", type(exc).__name__)
+    try:
+        ensure_legacy_versions()
+    except Exception as exc:
+        logger.warning("legacy_version_backfill_deferred exception_type=%s", type(exc).__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    validate_readiness_configuration()
+    init_db()
+    manager.start()
+    Thread(target=_background_runtime_bootstrap, name="qhealth-runtime-bootstrap", daemon=True).start()
+    logger.info("application_started mode=single_workstation_research")
+    try:
+        yield
+    finally:
+        manager.stop()
+
+app = FastAPI(title="EntangleX Q-Health", version="0.1.0", description=DISCLAIMER, lifespan=lifespan)
+app.add_middleware(BodyLimitMiddleware, max_bytes=settings.upload_limit + 65536)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=[s.strip() for s in settings.trusted_hosts.split(",")])
+cors_origins = [s.strip() for s in settings.cors_origins.split(",") if s.strip()]
+allow_credentials = "*" not in cors_origins
+app.add_middleware(CORSMiddleware, allow_origins=cors_origins, allow_credentials=allow_credentials, allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "Authorization", "Idempotency-Key"], expose_headers=["Content-Disposition", "X-Request-ID"])
+
+@app.middleware("http")
+async def request_context(request: Request, call_next):
+    request.state.request_id = str(uuid4())
+    start_time = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        # Handle here without re-raising through ServerErrorMiddleware, which
+        # could otherwise cause the ASGI server to log raw exception text.
+        logger.error("request_failure request_id=%s exception_type=%s", request.state.request_id, type(exc).__name__)
+        response = JSONResponse({"error": {"code": "internal_error", "message": "The operation failed. Raw biomedical inputs are not logged.", "request_id": request.state.request_id}}, status_code=500)
+
+    duration_ms = (time.perf_counter() - start_time) * 1000.0
+    if settings.telemetry_enabled:
+        try:
+            telemetry_registry.record_request(
+                method=request.method,
+                path=request.url.path,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
+        except Exception:
+            pass
+
+    response.headers["X-Request-ID"] = request.state.request_id
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+@app.exception_handler(AppError)
+async def application_error(request: Request, exc: AppError):
+    return JSONResponse({"error": {"code": exc.code, "message": exc.message, "request_id": getattr(request.state, "request_id", None)}}, status_code=exc.status)
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    # Never reflect Pydantic's raw 'input' or context containing medical values.
+    fields = [{"location": [str(v) for v in err["loc"]], "type": err["type"]} for err in exc.errors()]
+    return JSONResponse({"error": {"code": "validation_error", "message": "Request validation failed. Check the field types and allowed configuration ranges.", "fields": fields, "request_id": getattr(request.state, "request_id", None)}}, status_code=422)
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(request: Request, exc: StarletteHTTPException):
+    return JSONResponse({"error": {"code": "http_error", "message": "The requested operation is unavailable.", "request_id": getattr(request.state, "request_id", None)}}, status_code=exc.status_code)
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, exc: Exception):
+    logger.error("request_failure request_id=%s exception_type=%s", getattr(request.state, "request_id", None), type(exc).__name__)
+    return JSONResponse({"error": {"code": "internal_error", "message": "The operation failed. Review installation and configuration; raw biomedical inputs are not logged.", "request_id": getattr(request.state, "request_id", None)}}, status_code=500)
+
+@app.get("/api/health", tags=["health"])
+def health():
+    return {"status": "ok", "version": "0.1.0", "mode": "single-workstation research prototype", "authentication_required": bool(settings.api_token), "quantum": availability(), "disclaimer": DISCLAIMER}
+
+@app.get("/api/health/ready", tags=["health"])
+def health_ready():
+    """Readiness probe for orchestrators and workstation health checkers."""
+    db_probe = probe_database()
+    storage_probe = probe_storage(settings)
+    is_ready = db_probe["available"] and storage_probe["available"]
+    payload = {
+        "status": "ready" if is_ready else "not_ready",
+        "database": db_probe["available"],
+        "storage": storage_probe["available"],
+        "version": "0.1.0",
+        "disclaimer": DISCLAIMER,
+    }
+    return JSONResponse(payload, status_code=200 if is_ready else 503)
+
+api = APIRouter(prefix="/api", dependencies=[Depends(authorize)])
+from .api import calibration, threshold, hybrid
+for router in [ai.router, datasets.router, pipeline.router, pipelines.router, protocols.router, training.router, jobs.router, models.router, model_cards.router, experiments.router, controlled_comparison.router, runs.router, quantum.router, alignment.router, hybrid.router, studies.router, validation.router, shift.router, shift.dataset_shift_router, calibration.router, threshold.router, condition_tasks.router, ablation.router, quantum_diagnostics.router, redis_lab.router, audit.router, data_quality.router, subgroups.router, saved_reports.router]:
+    api.include_router(router)
+
+
+@api.get("/summary", tags=["dashboard"])
+def summary():
+    with session_scope() as session:
+        counts = {"datasets": session.scalar(select(func.count()).select_from(Dataset)),
+                  "experiments": session.scalar(select(func.count()).select_from(Experiment).where(Experiment.deleted_at.is_(None))),
+                  "ready_models": session.scalar(select(func.count()).select_from(ModelRecord).where(ModelRecord.status == "ready")),
+                  "active_jobs": session.scalar(select(func.count()).select_from(Job).where(Job.status.in_(["queued", "running", "cancel_requested"])))}
+        experiments_recent = [
+            ExperimentOut.model_validate(e).model_dump(mode="json")
+            for e in session.scalars(
+                select(Experiment)
+                .where(Experiment.deleted_at.is_(None))
+                .order_by(Experiment.created_at.desc())
+                .limit(5)
+            )
+        ]
+    return {"counts": counts, "recent_experiments": experiments_recent, "disclaimer": DISCLAIMER}
+
+@api.get("/system/status", tags=["dashboard"])
+def system_status():
+    """Expose safe, read-only runtime facts for the research workspace shell."""
+    job_counts: dict[str, int] = {}
+    database_available = True
+    database_error = None
+    try:
+        with session_scope() as session:
+            job_counts = dict(
+                session.execute(
+                    select(Job.status, func.count()).group_by(Job.status)
+                ).all()
+            )
+    except Exception as exc:
+        database_available = False
+        database_error = type(exc).__name__
+        logger.warning("system_status_database_unavailable exception_type=%s", type(exc).__name__)
+    root = settings.root
+    try:
+        storage_available = all((root / name).is_dir() for name in ["data", "models", "experiments"])
+    except OSError:
+        storage_available = False
+    status = "ok" if database_available and storage_available else "degraded"
+    return {
+        "status": status,
+        "version": "0.1.0",
+        "mode": "single-workstation research prototype",
+        "database_available": database_available,
+        "database_error": database_error,
+        "storage_available": storage_available,
+        "quantum": availability(),
+        "model_capabilities": alignment_contract()["models"],
+        "supported_models": {
+            "classical": ["logistic_regression", "svm", "random_forest"],
+            "quantum": ["vqc", "qsvc", "qnn"],
+            "qiskit_quantum": ["vqc", "qsvc", "qnn"],
+            "pennylane_hybrid": ["hybrid_pennylane_torch"],
+        },
+        "jobs": {
+            "queued": job_counts.get("queued", 0),
+            "running": job_counts.get("running", 0),
+            "active": (
+                job_counts.get("queued", 0)
+                + job_counts.get("running", 0)
+                + job_counts.get("cancel_requested", 0)
+            ),
+        },
+    }
+
+@api.get("/system/telemetry", tags=["dashboard"], response_model=TelemetryResponse)
+def system_telemetry():
+    """Aggregate operational telemetry for research dashboards."""
+    return get_system_telemetry()
+
+@api.get("/system/diagnostics", tags=["dashboard"], response_model=DiagnosticsResponse)
+def system_diagnostics():
+    """Safe, read-only system diagnostics for operators and researchers."""
+    return get_system_diagnostics()
+
+app.include_router(api)

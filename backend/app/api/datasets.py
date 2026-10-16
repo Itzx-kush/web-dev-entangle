@@ -1,0 +1,165 @@
+from uuid import UUID
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, Response
+from pydantic import ValidationError
+from starlette.concurrency import run_in_threadpool
+from ..config import get_settings
+from ..database import session_scope
+from ..data import service
+from ..dataset_versions import service as version_service
+from ..data.quality import quality_report
+from ..ratelimit.limiter import rate_limit_expensive
+from ..storage.entities import Dataset
+from ..storage.repository import recent, require
+from ..utils.errors import AppError
+from ..demo_readiness import readiness_for_registered_dataset, readiness_summary
+from .schemas import (
+    BuiltInRegistrationRequest,
+    DatasetInspectionOut,
+    DatasetLibraryItem,
+    DatasetOut,
+    DatasetCardOut,
+    DatasetVersionComparisonOut,
+    DatasetVersionIntegrityOut,
+    DatasetVersionOut,
+    DatasetUploadMetadata,
+    ValidateRequest,
+)
+
+router = APIRouter(prefix="/datasets", tags=["datasets"])
+
+async def _read_upload(file: UploadFile) -> bytes:
+    content = bytearray()
+    while part := await file.read(1024 * 1024):
+        content.extend(part)
+        if len(content) > get_settings().upload_limit:
+            raise AppError("upload_too_large", "Dataset exceeds the upload size limit.", 413)
+    return bytes(content)
+
+@router.get("", response_model=list[DatasetOut])
+def list_datasets(limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+    with session_scope() as session:
+        return recent(session, Dataset, limit, offset)
+
+@router.get("/library", response_model=list[DatasetLibraryItem])
+def list_library():
+    return service.library()
+
+@router.get("/readiness", response_model=dict)
+def dataset_readiness():
+    return readiness_summary()
+
+@router.post("/library/{slug}", response_model=DatasetOut, status_code=201)
+def register_library_dataset(slug: str, request: BuiltInRegistrationRequest | None = None):
+    request = request or BuiltInRegistrationRequest()
+    return service.register_builtin(slug, request.target, request.positive_label)
+
+@router.post("/inspect", response_model=DatasetInspectionOut, dependencies=[Depends(rate_limit_expensive)])
+async def inspect_dataset(
+    file: UploadFile = File(...),
+    target: str | None = Form(default=None),
+    positive_label: str | None = Form(default=None),
+):
+    try:
+        if not file.filename:
+            raise AppError("filename_required", "Choose a CSV file to inspect.")
+        content = await _read_upload(file)
+        return await run_in_threadpool(service.inspect_csv, content, file.filename, target, positive_label)
+    finally:
+        await file.close()
+
+@router.post("/upload", response_model=DatasetOut, status_code=201, dependencies=[Depends(rate_limit_expensive)])
+async def upload_dataset(metadata_json: str = Form(...), file: UploadFile = File(...)):
+    try:
+        try:
+            metadata = DatasetUploadMetadata.model_validate_json(metadata_json)
+        except ValidationError as exc:
+            raise AppError("metadata_invalid", "Upload metadata is invalid. Supply name, target, positive_label, source information and deidentified=true.") from exc
+        if not file.filename or not file.filename.lower().endswith(".csv"):
+            raise AppError("extension_not_allowed", "Only UTF-8 .csv uploads are accepted.")
+        content = await _read_upload(file)
+        return await run_in_threadpool(service.register_csv, content, file.filename, metadata)
+    finally:
+        await file.close()
+
+@router.post("/demo", response_model=DatasetOut, status_code=201)
+def load_demo():
+    return service.register_demo()
+
+@router.get("/{identity}/versions", response_model=list[DatasetVersionOut])
+def list_dataset_versions(identity: UUID):
+    return version_service.list_versions(str(identity))
+
+
+@router.post("/{identity}/versions", response_model=DatasetVersionOut, status_code=201)
+async def create_dataset_version(identity: UUID, metadata_json: str = Form(...), file: UploadFile = File(...)):
+    try:
+        try:
+            metadata = DatasetUploadMetadata.model_validate_json(metadata_json)
+        except ValidationError as exc:
+            raise AppError("metadata_invalid", "Dataset Version metadata is invalid.") from exc
+        if not file.filename:
+            raise AppError("filename_required", "Choose a CSV file to register.")
+        content = await _read_upload(file)
+        version, _created = await run_in_threadpool(
+            version_service.create_version, str(identity), content, file.filename, metadata
+        )
+        return version
+    finally:
+        await file.close()
+
+
+@router.get("/{identity}/versions/compare", response_model=DatasetVersionComparisonOut)
+def compare_dataset_versions(identity: UUID, left: UUID = Query(...), right: UUID = Query(...)):
+    return version_service.compare_versions(str(identity), str(left), str(right))
+
+
+@router.get("/{identity}/versions/{version_id}", response_model=DatasetVersionOut)
+def get_dataset_version(identity: UUID, version_id: UUID):
+    return version_service.get_version(str(identity), str(version_id))
+
+
+@router.get("/{identity}/versions/{version_id}/provenance", response_model=dict)
+def get_dataset_version_provenance(identity: UUID, version_id: UUID):
+    version = version_service.get_version(str(identity), str(version_id))
+    return {
+        "dataset_id": version.dataset_id, "dataset_version_id": version.id,
+        "version": version.version_label, "content_sha256": version.content_sha256,
+        "schema_fingerprint": version.schema_fingerprint, "source": version.source_metadata,
+        "provenance": version.provenance, "created_at": version.created_at.isoformat(),
+    }
+
+
+@router.get("/{identity}/versions/{version_id}/card", response_model=DatasetCardOut)
+def get_dataset_version_card(identity: UUID, version_id: UUID):
+    return version_service.dataset_card(str(identity), str(version_id))
+
+
+@router.get("/{identity}/versions/{version_id}/verify", response_model=DatasetVersionIntegrityOut)
+def verify_dataset_version(identity: UUID, version_id: UUID):
+    return version_service.verify_version(str(identity), str(version_id))
+
+
+@router.get("/{identity}/readiness", response_model=dict)
+def registered_dataset_readiness(identity: UUID):
+    with session_scope() as session:
+        return readiness_for_registered_dataset(require(session, Dataset, str(identity)))
+
+@router.get("/{identity}", response_model=DatasetOut)
+def get_dataset(identity: UUID):
+    with session_scope() as session:
+        return require(session, Dataset, str(identity))
+
+@router.get("/{identity}/provenance", response_model=dict)
+def get_provenance(identity: UUID):
+    with session_scope() as session:
+        return require(session, Dataset, str(identity)).provenance
+
+@router.post("/{identity}/validate", response_model=dict)
+def validate_dataset(identity: UUID, request: ValidateRequest):
+    dataset, frame = service.load_frame(str(identity))
+    return quality_report(frame, dataset.provenance["target"], dataset.provenance["positive_label"], request.features)
+
+@router.delete("/{identity}", status_code=204)
+def delete_dataset(identity: UUID):
+    service.delete_dataset(str(identity))
+    return Response(status_code=204)

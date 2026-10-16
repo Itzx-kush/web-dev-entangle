@@ -1,1 +1,294 @@
-# web-dev-entangle
+# EntangleX Q-Health
+
+**A research-oriented hybrid quantum-classical machine-learning platform for evaluating biomedical disease-risk prediction.**
+
+> **Research Prototype:** This platform provides model-generated disease-risk predictions for research and decision-support purposes. Predictions are based on benchmark or user-provided datasets and are not a substitute for professional medical diagnosis, treatment, or clinical validation.
+
+## Source-generation status
+
+This repository contains generated application source, configuration, tests, and documentation. The paragraph below is a **historical source-generation record**, not the current verification state. No model, benchmark result, performance screenshot, or fabricated prediction is bundled in the repository.
+
+## Historical Task 1 verification status
+
+The source-generation statement above is historical. Post-generation Task 1 verification subsequently established the pinned Python/Node dependency baseline, backend startup and API workflows, frontend typecheck/tests/build/runtime checks, classical ML, bounded VQC/QSVC and circuit execution, model persistence/reload, security/storage hardening, and the final native regression. The bounded live API smoke also covered demo registration, provenance, training, prediction, reports, comparison, rerun, and referenced-dataset retention. Docker build/runtime could not be executed in the final closure environment because the Docker CLI/daemon was unavailable; see [Task 1 final verification](docs/task1_final_verification.md).
+
+## Historical Task 2 verification status
+
+Task 2 adds genuine QNN support under the existing model, training, registry, persistence, API, comparison, report and frontend selector architecture. Logistic Regression, SVM, Random Forest, VQC and QSVC remain available. The focused QNN suite passed 12 tests; the complete backend regression with quantum tests enabled passed 79 tests; frontend typecheck, tests and production build passed; and a bounded live QNN API smoke passed. QNN uses local simulation and does not establish quantum advantage or clinical validation. See [Task 2 QNN verification](docs/task2_qnn_verification.md).
+
+## Current final SIH verification
+
+The latest completion-pass results are recorded in [SIH final verification](docs/SIH_FINAL_VERIFICATION.md). The current frontend adds an interactive research pipeline, measured feature/PCA preview surfaces, Quantum Lab explain/technical modes with backend-driven circuit rendering, Demo Center presentation controls, keyboard command actions, focused interaction coverage, and route-level lazy loading. The current hardening pass passed `100` backend tests with quantum enabled, `12` focused QNN tests, and `9` frontend tests; bounded live classical + QNN workflow verification passed. Visible browser QA remains explicitly unverified because the shared browser could not reach the local Vite server. Use [the recording-ready video script](docs/SIH_DEMO_VIDEO_SCRIPT.md) for a live judge presentation.
+
+## 1. Overview and problem statement
+
+Biomedical classification research needs traceable data, isolated evaluation, clear positive-class definitions, and comparisons that do not presume quantum superiority. EntangleX Q-Health implements that workflow as a local research prototype: validate data, configure a shared training pipeline, compare classical and quantum models, explain frozen predictions, and preserve experiment provenance.
+
+The first demo uses the public **Breast Cancer Wisconsin Diagnostic** benchmark distributed with scikit-learn. The dataset is registered at runtime; no patient-identifiable information is added. This is a diagnostic-label classification benchmark, **not evidence of prospective early detection**. Other biomedical binary-classification datasets use the same metadata-driven architecture.
+
+## 2. Architecture and technology stack
+
+```text
+React / TypeScript / Vite
+          | same-origin /api
+FastAPI routers + strict Pydantic schemas
+          | services / repositories
+SQLite experiment, model, dataset and job registries
+          | single-process bounded training worker
+Shared split -> fold-local sklearn Pipeline -> classical OR quantum estimator
+          | trusted local artifacts + immutable dataset hashes
+Measured evaluation / explanations / research predictions / HTML and JSON reports
+```
+
+The backend uses Python, FastAPI, Pydantic 2, SQLAlchemy 2, pandas, NumPy, scikit-learn, SHAP, Qiskit, Qiskit Machine Learning and Qiskit Aer. The frontend uses React 19, TypeScript 5.9 and Vite 7. Optional Google authentication and private metadata-only research history use Supabase; the existing research backend remains independent and anonymous guest use remains available. There is no external analytics, hosted inference API, or real-quantum-hardware requirement.
+
+## 3. Prerequisites and version assumptions
+
+Target **64-bit CPython 3.11**, **Node.js 22.12.0 in the 22.x line**, npm, and an ordinary desktop browser. Docker Compose v2 is optional. The direct dependency set and frontend lockfile were verified in a clean environment; Docker runtime and complete application execution remain separate checks. Full quantum dependencies are substantially heavier than the classical-only installation.
+
+Backend direct dependencies are pinned to the verified environment documented in [verified environment](docs/verified_environment.md). Qiskit Machine Learning is **0.9.1**, Qiskit is **2.5.2**, and Aer is **0.17.2**. The committed `frontend/package-lock.json` is the authoritative npm lockfile; use `npm ci` for a clean, reproducible install. See [dependency assumptions](docs/dependency_assumptions.md).
+
+## 4. Installation: Windows PowerShell
+
+Extract `ENTANGLEX-Q-HEALTH.zip`, open a terminal in the extracted parent folder, and run:
+
+```powershell
+cd entanglex-q-health
+py -3.11 -m venv .venv
+Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+.\.venv\Scripts\python.exe scripts\init_db.py
+cd frontend
+npm ci
+cd ..
+```
+
+Using the virtual environment's Python executable directly avoids PowerShell activation-policy changes. Installation runs on your workstation, not as part of source generation.
+
+### Linux / macOS alternative
+
+```bash
+cd entanglex-q-health
+python3.11 -m venv .venv
+cp .env.example .env
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r backend/requirements.txt
+.venv/bin/python scripts/init_db.py
+cd frontend
+npm ci
+cd ..
+```
+
+For a classical-only starting environment, install `backend/requirements-core.txt` and `backend/requirements-dev.txt`. Install `backend/requirements-quantum.txt` before using quantum models and `backend/requirements-explainability.txt` before requesting SHAP. Permutation importance does not require SHAP.
+
+## 5. Environment configuration and database setup
+
+The backend reads `.env` from the **project root**, independently of terminal working directory. `QHEALTH_STORAGE_ROOT=.` stores the database and artifacts inside the project. Dataset CSVs live under `data/datasets`, trusted model bundles under `models`, and private experiment/report snapshots under `experiments`. A generated UUID is the only storage filename identity. `scripts/init_db.py` creates the schema; backend startup also initializes it idempotently.
+
+`QHEALTH_API_TOKEN` is blank by default for loopback-only, single-user use. Before private-data work, generate a strong token locally and set it in `.env`; enter the same token in **Connection settings**. The browser keeps it in memory, never in local storage. An API token alone is not sufficient for public deployment. Do not place secrets in `VITE_*` variables. See [security](docs/security.md).
+
+## 6. Backend startup
+
+From the project root in Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+```
+
+Linux/macOS:
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+```
+
+Health endpoint: `http://127.0.0.1:8000/api/health`. Generated OpenAPI schema: `http://127.0.0.1:8000/openapi.json`. Interactive API documentation: `http://127.0.0.1:8000/docs`. Use exactly one process: the MVP training worker is in-process. Avoid `--reload` while training.
+
+The backend startup, automated suite, live HTTP workflow, classical training, prediction, reports, rerun, and queued-job cancellation were verified in the pinned environment. See [backend verification](docs/backend_verification.md). Frontend runtime, Docker runtime, and full quantum training remain separate checks.
+
+## 7. Frontend startup
+
+Open a second terminal in the project root:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite proxies `/api` to `http://127.0.0.1:8000`. Guest mode requires no frontend environment file. Google sign-in and personal research history require the public Supabase URL/anon variables and migrations documented in [authentication and personal research workspace](docs/authentication.md). The connection indicator reports HTTP reachability, not scientific validity or quantum execution. `npm run build` performs a TypeScript check and production build when you execute it.
+
+The frontend type-check, Vitest suite, production build, development server, production preview, direct route rendering, and live backend boundary were verified in the pinned Node environment. See [frontend verification](docs/frontend_verification.md). Cross-browser coverage and Docker runtime remain separate checks.
+
+## 8. Docker startup
+
+From the project root after copying `.env.example` to `.env`:
+
+```bash
+docker compose up --build
+```
+
+Open `http://127.0.0.1:8080`. Both published ports are loopback-bound. Docker stores runtime data in a named volume. Stop with `docker compose down`; do not add `-v` unless intentionally deleting stored datasets and experiments. Docker images/configuration are provided, **not execution-verified**. See [deployment](docs/deployment.md).
+
+## 9. Guided demo workflow
+
+1. Open **Datasets** and choose a verified entry from the **Medical Dataset Library**. The Breast Cancer Wisconsin Diagnostic entry preserves the original benchmark path, while `POST /api/datasets/demo` remains backwards compatible with the scikit-learn loader. Verify source, hash, class counts, and the configured positive label before continuing.
+2. Open **Data quality**, then **Preprocessing**, **Feature selection**, and **PCA / dimensions**. Inspect descriptive quality and training-only previews. Defaults use 12 ANOVA-selected encoded features, four PCA components, and angle scaling shared by every model.
+3. Open **Training**. Start with Logistic Regression, SVM and Random Forest. The default 160-sample stratified budget applies to every selected model, not just quantum models. A completed model's metrics appear only after actual fitting and held-out evaluation.
+4. For a separate comparison, select classical baselines together with VQC, QSVC and/or QNN. Quantum selection requires shared PCA dimensions equal to qubits, shared angle scaling, no class weighting, and no calibration. Start with four qubits and modest optimizer iterations. Jobs expose state, partial failures, and cooperative cancellation.
+5. Inspect **Model comparison**, **Quantum circuit**, and **Explainability**. In **Research prediction**, enter anonymous features or explicitly load one public demo sample. In **Experiments**, open a record and export its HTML or JSON report.
+
+Optional CLI demonstration against an already-running server:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo.py
+.\.venv\Scripts\python.exe scripts\demo.py --quantum --max-samples 160
+```
+
+The second command performs genuine quantum training on your machine. No performance or runtime is promised.
+
+## 10. Medical Dataset Library, upload and provenance
+
+The Data Lab exposes five deployment-safe public datasets: Breast Cancer
+Wisconsin Diagnostic, Early Stage Diabetes Risk Prediction, Cleveland Heart
+Disease, Chronic Kidney Disease and ILPD Liver Patient. The backend package
+contains their small normalized CSV resources and a checked provenance
+manifest. Selecting one verifies its SHA-256 and creates an ordinary registered
+dataset ID for the existing quality, preprocessing, training, explainability
+and reporting workflow. `POST /api/datasets/demo` remains available for the
+original scikit-learn WDBC benchmark.
+
+
+Only UTF-8 comma-separated `.csv` tables are supported, with one header row and at least ten records. Supply dataset name, domain, source/reference, version, target column, and explicit positive-class label. Confirm that records are de-identified and independent. The MVP requires exactly two nonmissing target labels; it rejects an absent target, invalid labels, invalid headers, binary files, oversized content, and unsupported extensions.
+
+The inspect-first upload flow ranks possible target columns and infers a
+positive label only when the binary labels have clear semantics. Low-confidence
+or ambiguous results require manual selection. Existing `/api/datasets/upload`
+clients remain compatible and explicit target/positive-label values always
+take precedence.
+
+The database records the exact stored CSV SHA-256, upload time, rows/features, class distribution, source, version and class mapping. No upload is available through a static public URL. Uploaded raw records are not displayed globally. The public-demo sample endpoint explicitly refuses user-uploaded datasets.
+
+## 11. Validation, preprocessing, feature selection and PCA
+
+Quality reports show missing/infinite values, constants, low variance, high correlations, class imbalance, duplicates, potential identifiers, suspicious target proxies, and aggregate distributions. Mixed-type columns are reported as categorical rather than silently coerced to numeric. Identifiers, near-perfect proxies, contradictory duplicate vectors, and infinities block training until corrected or excluded.
+
+Feature engineering supports configured nonnegative `log1p` transforms and numeric ratios. A zero denominator becomes missing and follows the training-fitted imputer. Numeric pipelines support median/mean/mode imputation, optional training-quantile clipping and standard/min-max/robust/no scaling. Categorical inputs use mode imputation and bounded one-hot encoding; public encoded-feature labels are neutralized to avoid disclosing category values.
+
+Selection supports ANOVA, mutual information, variance threshold, or none. PCA and optional `[0, pi]` angle scaling are fitted only after the train/test split. Each CV fold receives a completely fresh full pipeline. Exact duplicate removal is explicit and documented; residual duplicate selected input vectors are rejected. See [ML pipeline](docs/ml_pipeline.md).
+
+## 12. Classical and quantum ML
+
+Classical models are Logistic Regression, SVM and Random Forest. Quantum models are VQC, QSVC and QNN behind the existing sklearn-compatible adapter architecture. VQC and QNN use the existing ZZ feature map and real-amplitudes ansatz; QNN uses Qiskit Machine Learning `SamplerQNN` with a bounded `NeuralNetworkClassifier` optimizer. QSVC uses fidelity-kernel compute-uncompute. Backends are exact local statevector simulation or finite-shot Aer simulation with optional illustrative depolarizing noise.
+
+**Quantum model** describes the estimator. **Hybrid quantum-classical method** describes classical preprocessing/optimization with quantum circuit evaluation. **Quantum simulation** executes locally on classical hardware. **Real quantum hardware** is not implemented or implied. The circuit view displays parameterized logical structure, not proof of hardware execution. See [quantum pipeline](docs/quantum_pipeline.md).
+
+## 13. Benchmarking, evaluation and calibration
+
+Every model in one experiment uses the same source hash, selected input schema, sampled rows, holdout indices, CV folds and transformation configuration. Comparison never combines arbitrary experiments with different conditions. Accuracy, precision, recall/sensitivity, specificity, F1, ROC-AUC, ROC curves and confusion matrices are calculated at runtime. FN/FP counts are explicit. Undefined metrics remain null, not invented zero scores.
+
+Training resubstitution, CV mean/sample standard deviation and held-out test metrics are distinct. Training, CV and inference timings are measured separately. SVM/QSVC margins are not probabilities; therefore their uncalibrated predictions do not receive probability-based research risk categories. Optional classical-only sigmoid/isotonic calibration wraps the whole pipeline with inner training-only folds. Brier score and reliability curves are reported separately and never called clinical calibration.
+
+## 14. Explainability and prediction
+
+Permutation importance calculates measured ROC-AUC drops on a bounded held-out subset. Legacy non-hybrid raw-feature SHAP remains limited to complete numeric inputs. The PennyLane + PyTorch hybrid path supports bounded mixed categorical/numeric SHAP by deriving encodings from the training partition, reconstructing valid original-feature frames, and evaluating the complete frozen pipeline's final positive-class probability. Qiskit model explanations retain finite-difference perturbation/sensitivity semantics. None of these methods establishes medical causation.
+
+Prediction requires the exact registered input schema and an identified ready model. The screen distinguishes predicted class, positive-class model probability, decision score and non-clinical research risk category. Research thresholds are configurable. Sample inputs and predictions are not persisted. No diagnosis, treatment instruction, medical recommendation or patient prognosis is generated.
+
+## 15. Experiments, model registry and API usage
+
+Experiment records retain configuration, dataset provenance, split fingerprint, software versions, model metrics, timing and limitations. Models are tied to an experiment, source dataset, trusted artifact and its hash. Rerun creates a **new** experiment with `parent_id`; it never overwrites the original. Failed models remain visible. HTML/JSON reports include the medical disclaimer and measured, non-presumptive comparison text.
+
+The API reference is [docs/api.md](docs/api.md). Public reachability is `GET /api/health`; other app endpoints accept an optional configured Bearer token. Training submission returns job and experiment records; poll `/api/training/jobs/{id}`. Reports are downloaded through the authenticated API, not a public file server. Render deployment settings, SPA fallback behavior, production API/CORS configuration, and the persistent runtime-storage boundary are documented in [deployment](docs/deployment.md). The checked-in Render blueprint mounts a persistent disk at `/runtime` so uploads and live-run state survive restarts and redeploys, while packaged built-ins and verified demos remain repository-bundled and independent of it.
+
+## 16. Tests and source checks
+
+Executable tests cover dataset/provenance, target quality, leakage boundaries, preprocessing, metrics, classical training, prediction schemas, security, API registries and report/rerun workflows. Quantum execution tests are deliberately opt-in, including focused QNN coverage in `backend/tests/test_qnn.py`. **During source generation these tests were not run; post-generation Task 1 and Task 2 verification ran the backend suite with quantum tests enabled and the frontend suite.** See [testing](docs/testing.md), [Task 1 final verification](docs/task1_final_verification.md) and [Task 2 QNN verification](docs/task2_qnn_verification.md).
+
+```powershell
+# From project root: static inspection only; does not import or execute the app.
+.\.venv\Scripts\python.exe scripts\check_source.py
+# Actual tests, to be run by you after installation:
+cd backend
+..\.venv\Scripts\python.exe -m pytest -m "not quantum"
+$env:RUN_QUANTUM_TESTS="1"
+..\.venv\Scripts\python.exe -m pytest -m quantum
+cd ..\frontend
+npm test
+npm run build
+```
+
+See [testing](docs/testing.md). Synthetic arrays in test fixtures are assertions about code behavior, not demonstration performance or fabricated biomedical results.
+
+## 17. Security considerations
+
+Uploads are size/extension/header constrained and stored with generated IDs. Paths are validated, local artifact hashes are checked, raw biomedical payloads are not logged, and application errors omit request values. Uploaded code/models are never executed. Model persistence uses trusted local dill artifacts and is unsafe if an attacker can replace both artifacts and registry hashes. Protect the entire runtime directory.
+
+Optional Supabase accounts isolate the metadata-only My Research activity stream with Row Level Security; they do not add RBAC, encrypt or move the existing backend research store, establish clinical audit certification, provide complete public-internet hardening, or confer regulated deployment approval. Identifier-name heuristics are not complete de-identification. Use a controlled environment and appropriate institutional policies. See [authentication](docs/authentication.md) and [security](docs/security.md) before private-data work.
+
+Upload validation, path safety, artifact integrity, deletion consistency, privacy boundaries, and robustness checks were verified in [security and storage verification](docs/security_storage_verification.md). This verification does not claim public-internet security, automatic de-identification, encryption, or regulatory compliance.
+
+## 18. Troubleshooting and known limitations
+
+- **Backend unavailable:** start both terminals; use the documented ports; inspect `/api/health`. A configured API token must be supplied in Connection settings after browser refresh.
+- **Quantum unavailable/import errors:** install the optional quantum group in the same Python environment. Align actual installed versions with the documented API target; do not interpret availability detection as executed verification.
+- **PCA/selection failure:** reduce components or choose more retained features/samples. Every CV training fold must support the dimensions; previews alone do not prove fold feasibility.
+- **Quality blocks training:** correct or exclude identifiers/proxy features, resolve conflicting duplicates and infinities, and explicitly choose a duplicate policy. Do not simply suppress a leakage warning.
+- **Permutation subset has one class:** increase the explanation sample budget or use perturbation. Legacy non-hybrid SHAP requires complete numeric raw features; the Early Stage Diabetes hybrid path supports bounded mixed categorical/numeric SHAP using training-derived category mappings.
+- **Slow quantum fit/cancellation:** lower the *shared* sample budget and optimizer iterations. Cancellation takes effect at safe boundaries, not in the middle of a simulator call. Do not start multiple backend workers.
+- **Dependency/build failures:** compare the installed environment with [verified environment](docs/verified_environment.md). The recorded pins and lockfile cover dependency resolution, not Docker runtime or complete application execution.
+
+See [limitations](docs/limitations.md) for unsupported grouped/time-series validation, privacy limitations, external validation gaps, remaining runtime/deployment limits and finite-shot variability. No benchmark score establishes clinical validity, utility, regulatory approval or general quantum advantage.
+
+## 19. Documentation map and dataset attribution
+
+[Architecture](docs/architecture.md) | [API](docs/api.md) | [ML pipeline](docs/ml_pipeline.md) | [Quantum pipeline](docs/quantum_pipeline.md) | [Explainability](docs/explainability.md) | [Deployment](docs/deployment.md) | [Reproducibility](docs/reproducibility.md) | [Security](docs/security.md) | [Dataset provenance](docs/data_provenance.md) | [Requirements traceability](docs/requirements_traceability.md) | [Generation status](docs/generation_status.json) | [Task 1 final verification](docs/task1_final_verification.md) | [Task 2 QNN verification](docs/task2_qnn_verification.md) | [SIH final verification](docs/SIH_FINAL_VERIFICATION.md) | [SIH demo video script](docs/SIH_DEMO_VIDEO_SCRIPT.md)
+
+The WDBC source is UCI Machine Learning Repository, DOI **10.24432/C5DW2B**, attributed to Wolberg, Mangasarian, Street and Street (1993), under **CC BY 4.0** as described by UCI. The actual application copy is reconstructed from the installed scikit-learn dataset and hashed at registration; the sklearn version and transformation are recorded. Original supplied specifications are retained under `docs/specifications/`.
+
+
+## Verified Instant Demo
+
+See [docs/VERIFIED_INSTANT_DEMO.md](docs/VERIFIED_INSTANT_DEMO.md).
+
+## SIH Judge Alignment — Foundation (2026-09-30)
+
+Early Stage Diabetes Risk Prediction is the **featured SIH demonstration**, while the existing Medical Dataset Library remains supported. The canonical future model identifier is `hybrid_pennylane_torch`: classical preprocessing and reduction → PennyLane quantum representation → PyTorch output head → positive-class probability → the existing OOF sensitivity-first threshold engine → research risk category → SHAP explanation.
+
+This foundation does **not** implement or execute that hybrid model. Its capability state is `NOT_YET_IMPLEMENTED`; the UI disables training. Existing Logistic Regression, SVM, Random Forest, VQC, QSVC, QNN, Qiskit/Aer simulation, evidence, robustness, explainability, persistence, reports, and resource-advisor paths remain in place. Real hardware and quantum advantage are not claimed. Prompt 2 is responsible for measured hybrid training execution.
+
+Prompt 2 dependencies are isolated in `backend/requirements-hybrid.txt` for the verified Python 3.11 dependency strategy; Prompt 1 does not install, import for execution, or add them to the default environment.
+
+## SIH Judge Alignment — Executable Hybrid Model (2026-09-30)
+
+`hybrid_pennylane_torch` is now an executable, bounded CPU model: the existing leakage-safe preprocessing/PCA pipeline feeds `AngleEmbedding`, trainable `StronglyEntanglingLayers`, per-qubit Pauli-Z expectation values, and a configurable PyTorch binary-classification head. It returns positive-class probabilities and uses the existing out-of-fold sensitivity-first threshold engine; the untouched holdout does not select the threshold.
+
+### Judge-facing diabetes workflow
+
+1. Activate **Early Stage Diabetes Risk Prediction** in Demo Center.
+2. Inspect data quality and provenance.
+3. Review preprocessing.
+4. Review feature selection and PCA.
+5. Configure a classical baseline.
+6. Configure **PennyLane + PyTorch Hybrid**.
+7. Train one controlled experiment.
+8. Compare classical vs hybrid evidence.
+9. Inspect the sensitivity-first operating point.
+10. Open Research Prediction.
+11. Ask **“Why was this case flagged?”**
+12. Run SHAP and inspect original-feature contributions.
+13. Run frozen-artifact robustness evaluation.
+14. Review simulator/resource and unavailable-hardware status.
+15. Export the evidence report.
+
+The WDBC path remains available. Results are research benchmark evidence—not diagnosis, clinical validation, real-hardware evidence, or proof of quantum advantage.
+
+
+## SIH Judge Alignment — Hybrid SHAP Refinement (2026-09-30)
+
+Hybrid local explanations answer **“Why was this case flagged?”** for the exact submitted case. The response records the final positive-class probability, persisted OOF operating threshold, predicted class, original feature values, signed SHAP contributions, direction, and method `SHAP — Final Hybrid Output`. Dataset-level explanations are separately labeled as mean absolute SHAP contribution across bounded held-out cases. Background rows are bounded to 20 and come only from the training partition; explanation requests remain bounded to 32 cases and never retrain or mutate the artifact. SHAP describes model behavior—not biological causation, clinical diagnosis, or a complete causal interpretation of the simulator-executed quantum circuit.
+
+## Fair controlled diabetes benchmark
+
+The judge-facing flagship benchmark compares **Random Forest** with the **PennyLane + PyTorch hybrid** on the registered `early-stage-diabetes` dataset. A pair is labelled **CONTROLLED COMPARISON** only after backend verification of the dataset SHA-256, sampled rows, train/holdout indices, preprocessing and PCA representation, sample budget, seed, CV folds, duplicate policy, and OOF threshold protocol. PCA components must equal the hybrid qubit count. The API and report preserve measured holdout metrics, confusion counts, timing, simulator resources, fairness checks, and neutral metric deltas. The browser renders this persisted evidence and does not calculate authoritative benchmark results.
+
+The SIH preset uses bounded, editable demonstration defaults (40 samples, PCA/qubits 2, one quantum layer, two CV folds, seed 23, test size 0.25, target sensitivity 0.80). These are not scientifically optimal values, and activating the preset never starts training automatically.
