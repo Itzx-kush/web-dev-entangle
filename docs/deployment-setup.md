@@ -2,7 +2,7 @@
 
 This guide outlines the production deployment architecture and configuration for the EntangleX Q-Health application.
 
-> **Current single-project frontend/API routing:** The root [Vercel Services guide](vercel-multi-service-deployment.md) deploys the frontend and Express Experiment Notes API together and proxies research API calls to the existing FastAPI deployment. The Python service remains on its persistent runtime; it is not built as a serverless function.
+> **Current deployment:** The root [Vercel Services guide](vercel-multi-service-deployment.md) deploys the frontend and Express Experiment Notes API together. Research requests are proxied to the existing persistent FastAPI service. Experiment Notes use the existing Supabase Postgres project with owner-scoped row-level security; MongoDB is not required for the deployed API.
 
 ---
 
@@ -35,7 +35,7 @@ The production architecture consists of four decoupled services:
              |
              v
 +--------------------------+
-|  MongoDB Atlas Cluster   |
+|  Supabase Postgres Notes Table   |
 |  Persistent Notes DB     |
 +--------------------------+
 ```
@@ -53,14 +53,14 @@ The production architecture consists of four decoupled services:
    - Routed via `node-api/vercel.json` rewrite rules.
    - Node.js runtime pinned via `node-api/.nvmrc` to `22.12.0`.
    - Authenticated via Supabase Auth JWT verification (`@supabase/supabase-js`).
-   - Persists experiment notes in MongoDB Atlas via Mongoose with connection pooling and in-flight promise caching.
+   - Persists experiment notes in Supabase Postgres. The Express API forwards the verified user's JWT so Postgres row-level security limits access to the caller's rows.
 
 3. **Python / FastAPI Backend**:
    - Retained on **Render** (configured via root `render.yaml`).
    - Responsible for classical and quantum machine learning pipelines (VQC, QSVC, QNN), dataset storage, SHAP explainability, and hardware provider integrations.
 
 4. **Data & Identity Layer**:
-   - **MongoDB Atlas**: Managed cloud document database for experiment notes.
+   - **Supabase Postgres**: Managed relational storage for experiment notes with row-level security; Supabase Auth supplies JWTs.
    - **Supabase**: Managed authentication service issuing JWT bearer tokens.
 
 ---
@@ -150,7 +150,7 @@ Configure the following variables in the Node API Vercel project:
 | --- | --- | --- |
 | `NODE_ENV` | Environment identifier | `production` |
 | `PORT` | Local port (defaults to `5000` locally) | `5000` |
-| `MONGODB_URI` | MongoDB Atlas connection string | `mongodb+srv://<user>:<password>@cluster0.mongodb.net/entanglex?retryWrites=true&w=majority` |
+| `SUPABASE_URL` | Supabase project URL used by the notes API | `https://xyzproject.supabase.co` |\n| `SUPABASE_ANON_KEY` | Public anon/publishable key used for auth and user-scoped data requests | `eyJhbGciOi...` |
 | `SUPABASE_URL` | Supabase Project URL (same as frontend) | `https://xyzproject.supabase.co` |
 | `SUPABASE_ANON_KEY` | Supabase Anon Key (same as frontend) | `eyJhbGciOi...` |
 | `CORS_ORIGINS` | Comma-separated allowed frontend origins | `https://entanglex-qhealth-frontend.vercel.app` |
@@ -160,9 +160,9 @@ Configure the following variables in the Node API Vercel project:
 
 ---
 
-## 4. MongoDB Atlas Database Setup
+## 4. Supabase Postgres Notes Storage
 
-1. **Create an Atlas Cluster**:
+The notes table is created by `supabase/migrations/20261017_create_experiment_notes.sql`. It enables RLS and restricts select, insert, update, and delete operations to rows where `auth.uid() = owner_id`. The Express API must pass each verified user's Bearer token to the database client. Do not use a service-role key in this serverless API path.
    - Create a free (M0) or dedicated cluster in your target cloud region.
    - Database name: `entanglex`.
 
@@ -187,7 +187,7 @@ Configure the following variables in the Node API Vercel project:
 | **Frontend URL** | `http://localhost:5173` | `https://<frontend-project>.vercel.app` |
 | **Node API URL** | `http://localhost:5000/api` | `https://<node-api-project>.vercel.app/api` |
 | **Python API URL** | `http://localhost:8000/api` | `https://<render-service>.onrender.com/api` |
-| **MongoDB** | `mongodb://localhost:27017/entanglex` | `mongodb+srv://...` (Atlas) |
+| **Notes storage** | Supabase Postgres project | Same Supabase project, with the requester's JWT passed to Postgres RLS |
 | **CORS Origins** | `http://localhost:5173, http://localhost:3000` | Exact frontend production URL |
 
 ### Running Locally
