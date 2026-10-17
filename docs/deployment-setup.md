@@ -2,7 +2,7 @@
 
 This guide outlines the production deployment architecture and configuration for the EntangleX Q-Health application.
 
-> **Alternative single-project experiment:** This guide describes the split deployment that preserves the Python service's persistent container storage. For the requested attempt to deploy the frontend, Express API, and FastAPI backend together as Vercel Services, see [vercel-multi-service-deployment.md](vercel-multi-service-deployment.md). The all-Vercel approach has known persistence and background-worker limitations for the current Python backend.
+> **Current single-project frontend/API routing:** The root [Vercel Services guide](vercel-multi-service-deployment.md) deploys the frontend and Express Experiment Notes API together and proxies research API calls to the existing FastAPI deployment. The Python service remains on its persistent runtime; it is not built as a serverless function.
 
 ---
 
