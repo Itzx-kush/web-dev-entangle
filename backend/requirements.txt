@@ -1,6 +1,27 @@
--r requirements-core.txt
--r requirements-quantum.txt
--r requirements-explainability.txt
--r requirements-dev.txt
+# Flat production requirements for Vercel's Python dependency parser.
+# Keep this list synchronized with requirements-core.txt, requirements-quantum.txt,
+# requirements-explainability.txt, requirements-dev.txt, and requirements-hybrid.txt.
 
--r requirements-hybrid.txt
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+SQLAlchemy==2.0.54
+python-multipart==0.0.32
+numpy==2.4.6
+pandas==2.3.3
+scipy==1.17.1
+scikit-learn==1.9.1
+dill==0.4.1
+groq==1.7.0
+reportlab==4.4.4
+httpx==0.28.1
+PyJWT[crypto]==2.10.1
+cryptography==50.0.2
+qiskit==2.5.2
+qiskit-machine-learning==0.9.1
+qiskit-aer==0.17.2
+shap==0.51.0
+pytest==8.4.2
+pennylane>=0.43,<0.44
+torch>=2.7,<2.10
