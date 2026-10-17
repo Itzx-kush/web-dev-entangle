@@ -30,12 +30,12 @@ The first two values are same-origin paths and do not contain credentials. If th
 ### Express Experiment Notes service
 
 - `NODE_ENV=production`
-- `MONGODB_URI` — a MongoDB Atlas URI for the `entanglex` database
+No database connection string is required. Experiment Notes are stored in the existing Supabase Postgres project.
 - `SUPABASE_URL` — the same Supabase project URL
 - `SUPABASE_ANON_KEY` — the public anon key used to verify user tokens
 - `CORS_ORIGINS` — exact allowed browser origins, comma-separated, with no wildcard
 
-The API can build without these credentials, but notes CRUD requires a reachable MongoDB database and Supabase token verification. A successful deployment alone does not prove these integrations work. MongoDB Atlas must allow connections from the deployed service.
+The API requires the Supabase URL and public anon key, plus a valid user access token at request time. The `experiment_notes` table uses Postgres row-level security so each signed-in user can access only their own records.
 
 ## Why the research API stays on the existing service
 
@@ -48,9 +48,9 @@ Keeping FastAPI on the existing persistent deployment preserves its current Pyth
 1. Open the generated site and refresh a nested browser route to verify the single-page-app routing.
 2. Request `/api/health`; confirm it returns the FastAPI health response from the research service.
 3. Request `/api/notes/health`; confirm the Express health endpoint responds.
-4. Once the required Supabase and MongoDB variables are configured, sign in and test creating, listing, updating, and deleting a test note.
+4. Once the Supabase URL/public anon key are configured, sign in and test creating, listing, updating, and deleting a test note.
 5. Run a small research workflow and confirm the returned dataset or experiment is present in the existing backend service.
 
-This configuration keeps the frontend and notes API under one domain while preserving the current research backend deployment. It is not a claim that every production integration is configured: Supabase and MongoDB credentials must be supplied in project settings, and those integration flows need post-deployment checks.
+This configuration keeps the frontend and notes API under one domain while preserving the current research backend deployment. Supabase is already configured in the Vercel project; the notes table is protected by owner-level RLS, and the live CRUD path must still be tested with an authenticated session.
 
 See [deployment-setup.md](deployment-setup.md) for the fuller architecture and setup notes, and Vercel's [Services documentation](https://vercel.com/kb/guide/vercel-services) and [external rewrite documentation](https://vercel.com/docs/routing/rewrites) for routing behavior.
