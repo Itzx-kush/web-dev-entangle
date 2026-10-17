@@ -116,7 +116,7 @@ export function ResearchHistoryPage(){
   </div>;
 
   return <div className="layer3-final-workspace layer3-history-page research-history-page">
-    <PageHeader eyebrow="Personal research" title="My Research" description="Your private record of meaningful EntangleX research actions, linked back to the existing scientific workspace." actions={<div className="flex gap-2"><Link className="btn btn-outline" to="/my-research/reports">My Research Reports</Link><Link className="btn btn-primary" to="/training">New experiment</Link></div>}/>
+    <PageHeader eyebrow="Personal research" title="My Research" description="Your private record of meaningful EntangleX research actions, linked back to the existing scientific workspace." actions={<div className="flex flex-wrap gap-2"><Link className="btn btn-outline" to="/my-research/reports">My Research Reports</Link><Link className="btn btn-outline" to="/my-research/notes">Experiment Notes</Link><Link className="btn btn-primary" to="/training">New experiment</Link></div>}/>
 
     <section className="research-history-intro">
       <div><span className="account-kicker">User-owned metadata</span><h2>Recent activity</h2><p>References and concise research metadata are stored here. Raw health inputs and full scientific result payloads are not.</p></div>

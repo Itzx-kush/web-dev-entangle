@@ -3,7 +3,7 @@ import {NavLink,useLocation,useNavigate} from 'react-router-dom';
 import {useQuery} from '@tanstack/react-query';
 import {
   Activity,Atom,BarChart3,Brain,Bot,ChevronLeft,ChevronRight,Command,Database,
-  FlaskConical,History,KeyRound,LayoutDashboard,Menu,MoreHorizontal,PanelRight,PlayCircle,Search,Settings2,
+  FileText,FlaskConical,History,KeyRound,LayoutDashboard,Menu,MoreHorizontal,PanelRight,PlayCircle,Search,Settings2,
   ShieldCheck,SlidersHorizontal,UserRound,X,Zap
 } from 'lucide-react';
 import {qh,setSessionToken} from '../lib/api';
@@ -58,6 +58,7 @@ const navGroups:NavGroup[]=[
   {label:'Studio',items:[
     {label:'AI Assistant',path:'/ai',icon:Bot},
     {label:'Experiment registry',path:'/experiments',icon:FlaskConical},
+    {label:'Experiment notes',path:'/my-research/notes',icon:FileText},
     {label:'SIH Demo Center',path:'/demo',icon:PlayCircle},
   ]},
   {label:'Systems',items:[
@@ -70,6 +71,8 @@ const pageNames:Record<string,string>=Object.fromEntries(
 );
 pageNames['/account']='My account';
 pageNames['/my-research']='My Research';
+pageNames['/my-research/reports']='Saved Reports';
+pageNames['/my-research/notes']='Experiment Notes';
 pageNames['/settings']='Settings center';
 
 const navByPath=(path:string)=>navGroups.flatMap(group=>group.items).find(item=>item.path===path)!;
