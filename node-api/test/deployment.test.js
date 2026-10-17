@@ -53,6 +53,11 @@ describe('Production Deployment & Serverless Configuration', () => {
     assert.equal(denied.body.error, 'Forbidden');
   });
 
+  test('trusts exactly one reverse-proxy hop for rate limiting', () => {
+    const testApp = createApp({ enableRateLimit: false });
+    assert.equal(testApp.get('trust proxy'), 1);
+  });
+
   test('health endpoint stays responsive and reports the injected database status', async () => {
     const testApp = createApp({
       noteService: createInMemoryNotesService(),
