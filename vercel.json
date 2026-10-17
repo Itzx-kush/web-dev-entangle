@@ -12,19 +12,13 @@
       "root": "node-api",
       "framework": "express",
       "installCommand": "npm ci",
-      "routes": [
+      "entrypoint": "api/index.js",
+      "rewrites": [
         {
-          "src": "/api/notes/(.*)",
-          "transforms": [
-            {
-              "type": "request.path",
-              "op": "set",
-              "args": "/api/$1"
-            }
-          ]
+          "source": "/api/notes/:path(.*)?",
+          "destination": "/api/:path"
         }
-      ],
-      "entrypoint": "api/index.js"
+      ]
     }
   },
   "rewrites": [
