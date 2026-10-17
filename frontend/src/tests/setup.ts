@@ -7,4 +7,7 @@ class ResizeObserverMock {
   disconnect(){}
 }
 globalThis.ResizeObserver=ResizeObserverMock as unknown as typeof ResizeObserver;
+if (typeof window !== 'undefined') {
+  window.scrollTo = () => {};
+}
 afterEach(() => cleanup());

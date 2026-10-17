@@ -29,6 +29,7 @@ const AccountPage=lazy(()=>import('./pages/AccountPage').then(m=>({default:m.Acc
 const ResearchHistoryPage=lazy(()=>import('./research/ResearchHistoryPage').then(m=>({default:m.ResearchHistoryPage})));
 const ResearchReportsPage=lazy(()=>import('./research/ResearchReportsPage').then(m=>({default:m.ResearchReportsPage})));
 const ResearchReportDetailPage=lazy(()=>import('./research/ResearchReportsPage').then(m=>({default:m.ResearchReportDetailPage})));
+const ExperimentNotesPage=lazy(()=>import('./research/ExperimentNotesPage').then(m=>({default:m.ExperimentNotesPage})));
 const AiAssistantPage=lazy(()=>import('./pages/AiAssistantPage').then(m=>({default:m.AiAssistantPage})));
 const RedisLab=lazy(()=>import('./pages/RedisLab').then(m=>({default:m.RedisLab})));
 
@@ -74,6 +75,7 @@ function WorkspaceRoutes(){
       <Route path="/my-research" element={<ResearchHistoryPage/>}/>
       <Route path="/my-research/reports" element={<ResearchReportsPage/>}/>
       <Route path="/my-research/reports/:savedReportId" element={<ResearchReportDetailPage/>}/>
+      <Route path="/my-research/notes" element={<ExperimentNotesPage/>}/>
       <Route path="/ai" element={<AiAssistantPage/>}/>
       <Route path="/settings" element={<SettingsPage/>}/>
       <Route path="/redis" element={<RedisLab/>}/>
