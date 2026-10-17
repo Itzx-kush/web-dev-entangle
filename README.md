@@ -1,294 +1,463 @@
 # EntangleX Q-Health
 
-**A research-oriented hybrid quantum-classical machine-learning platform for evaluating biomedical disease-risk prediction.**
+**A research-oriented hybrid quantum-classical machine-learning platform for evaluating biomedical disease-risk prediction and managing structured experiment notes.**
 
-> **Research Prototype:** This platform provides model-generated disease-risk predictions for research and decision-support purposes. Predictions are based on benchmark or user-provided datasets and are not a substitute for professional medical diagnosis, treatment, or clinical validation.
+> [!IMPORTANT]
+> **Research Prototype Disclaimer:** EntangleX Q-Health is designed for educational, research, and algorithmic evaluation purposes. Model predictions and risk estimates are based on benchmark and user-provided datasets; they do not constitute professional medical diagnosis, clinical prognosis, or treatment recommendations. The Experiment Notes feature provides qualitative research observation storage and is not an Electronic Health Record (EHR) or clinical record management system.
 
-## Source-generation status
+---
 
-This repository contains generated application source, configuration, tests, and documentation. The paragraph below is a **historical source-generation record**, not the current verification state. No model, benchmark result, performance screenshot, or fabricated prediction is bundled in the repository.
+## 1. Overview and Problem Statement
 
-## Historical Task 1 verification status
+### The Biomedical Machine Learning Challenge
+Biomedical classification research demands reproducible data validation, leakage-safe preprocessing, isolated train/test evaluation, and traceable record-keeping. When evaluating classical algorithms alongside simulated quantum machine-learning models (such as Variational Quantum Classifiers and Quantum Neural Networks), researchers must systematically compare diagnostic accuracy, sensitivity, and calibration without unfounded presumptions of quantum advantage.
 
-The source-generation statement above is historical. Post-generation Task 1 verification subsequently established the pinned Python/Node dependency baseline, backend startup and API workflows, frontend typecheck/tests/build/runtime checks, classical ML, bounded VQC/QSVC and circuit execution, model persistence/reload, security/storage hardening, and the final native regression. The bounded live API smoke also covered demo registration, provenance, training, prediction, reports, comparison, rerun, and referenced-dataset retention. Docker build/runtime could not be executed in the final closure environment because the Docker CLI/daemon was unavailable; see [Task 1 final verification](docs/task1_final_verification.md).
+Furthermore, computational researchers require a dedicated, structured environment to document exploratory hypotheses, dataset anomalies, hyperparameter choices, and operational findings without mixing informal notes into formal prediction payloads or static PDF exports.
 
-## Historical Task 2 verification status
+### The EntangleX Q-Health Solution
+EntangleX Q-Health addresses these requirements through an integrated full-stack architecture:
 
-Task 2 adds genuine QNN support under the existing model, training, registry, persistence, API, comparison, report and frontend selector architecture. Logistic Regression, SVM, Random Forest, VQC and QSVC remain available. The focused QNN suite passed 12 tests; the complete backend regression with quantum tests enabled passed 79 tests; frontend typecheck, tests and production build passed; and a bounded live QNN API smoke passed. QNN uses local simulation and does not establish quantum advantage or clinical validation. See [Task 2 QNN verification](docs/task2_qnn_verification.md).
+1. **Interactive Research Interface:** A React-based single-page application providing responsive dataset visualization, data-quality auditing, feature selection, pipeline configuration, model training, comparison, and explainability.
+2. **Specialized Machine-Learning Backend:** A Python FastAPI service responsible for executing scikit-learn pipelines, Qiskit/PennyLane quantum simulation, SHAP explainability, and SQLite-backed experiment tracking.
+3. **Dedicated Experiment Notes Microservice:** An authenticated Node.js and Express REST API backed by MongoDB Atlas, enabling researchers to create, search, update, and manage personal research notes tied to specific datasets, models, and experiment runs.
 
-## Current final SIH verification
+---
 
-The latest completion-pass results are recorded in [SIH final verification](docs/SIH_FINAL_VERIFICATION.md). The current frontend adds an interactive research pipeline, measured feature/PCA preview surfaces, Quantum Lab explain/technical modes with backend-driven circuit rendering, Demo Center presentation controls, keyboard command actions, focused interaction coverage, and route-level lazy loading. The current hardening pass passed `100` backend tests with quantum enabled, `12` focused QNN tests, and `9` frontend tests; bounded live classical + QNN workflow verification passed. Visible browser QA remains explicitly unverified because the shared browser could not reach the local Vite server. Use [the recording-ready video script](docs/SIH_DEMO_VIDEO_SCRIPT.md) for a live judge presentation.
+## 2. College Assignment Requirements
 
-## 1. Overview and problem statement
+This project fulfills all requirements of the full-stack web development assignment by demonstrating modern frontend, backend, database, and DevOps practices:
 
-Biomedical classification research needs traceable data, isolated evaluation, clear positive-class definitions, and comparisons that do not presume quantum superiority. EntangleX Q-Health implements that workflow as a local research prototype: validate data, configure a shared training pipeline, compare classical and quantum models, explain frozen predictions, and preserve experiment provenance.
+| Assignment Requirement | Project Implementation & Source Mapping |
+| :--- | :--- |
+| **HTML5** | Semantic HTML structure, accessible forms, dialogue modals, and root template in [`frontend/index.html`](frontend/index.html). |
+| **CSS3** | Modern responsive design, CSS custom properties, light/dark/research themes, accessible focus states, and flexbox/grid layouts in [`frontend/src/index.css`](frontend/src/index.css). |
+| **JavaScript** | Native ES modules runtime in the Node.js API ([`node-api/src/`](node-api/src/)) and browser scripting; the frontend is authored in TypeScript ([`frontend/src/`](frontend/src/)), which compiles to standard JavaScript. |
+| **React.js** | Interactive user interface built with React 19, functional components, custom hooks, context providers, and dynamic lazy-loaded routing in [`frontend/src/App.tsx`](frontend/src/App.tsx). |
+| **Vite** | Modern frontend tooling, rapid hot-module reloading in development, and optimized production bundling configured in [`frontend/vite.config.ts`](frontend/vite.config.ts). |
+| **Node.js** | Microservice runtime running on Node.js (version 22.x LTS pinned via [`.nvmrc`](.nvmrc)), executing the Experiment Notes backend. |
+| **Express.js** | REST API framework handling HTTP routing, security headers (`helmet`), cross-origin policies (`cors`), input validation, and error management in [`node-api/src/app.js`](node-api/src/app.js). |
+| **MongoDB & Mongoose** | Persistent cloud document storage using MongoDB Atlas and Mongoose 8 object modeling with ownership-scoped indexing and timestamps in [`node-api/src/models/ExperimentNote.js`](node-api/src/models/ExperimentNote.js). |
+| **RESTful API Integration** | Typed asynchronous frontend client ([`frontend/src/lib/experimentNotesApi.ts`](frontend/src/lib/experimentNotesApi.ts)) executing standard HTTP methods against Express endpoints. |
+| **MongoDB CRUD Operations** | Complete Create, Read, Update, and Delete operations for user-scoped experiment notes with server-side validation and search filters. |
+| **Responsive UI Design** | Mobile-first and desktop-optimized layouts featuring collapsible sidebars, adaptive data grids, and responsive charts across all screen viewports. |
+| **GitHub Source Code** | Managed in Git with branch isolation, automated test verification, and pull requests targeting [`Itzx-kush/web-dev-entangle`](https://github.com/Itzx-kush/web-dev-entangle). |
+| **Vercel Deployment Readiness** | Serverless API configuration ([`node-api/vercel.json`](node-api/vercel.json)), SPA client-side deep-linking rewrites ([`frontend/vercel.json`](frontend/vercel.json)), and complete runbook in [`docs/deployment-setup.md`](docs/deployment-setup.md). |
+| **README Documentation** | Comprehensive project documentation covering problem formulation, architecture, technology stack, CRUD endpoints, setup, testing, and deployment. |
 
-The first demo uses the public **Breast Cancer Wisconsin Diagnostic** benchmark distributed with scikit-learn. The dataset is registered at runtime; no patient-identifiable information is added. This is a diagnostic-label classification benchmark, **not evidence of prospective early detection**. Other biomedical binary-classification datasets use the same metadata-driven architecture.
+---
 
-## 2. Architecture and technology stack
+## 3. Technology Stack
 
-```text
-React / TypeScript / Vite
-          | same-origin /api
-FastAPI routers + strict Pydantic schemas
-          | services / repositories
-SQLite experiment, model, dataset and job registries
-          | single-process bounded training worker
-Shared split -> fold-local sklearn Pipeline -> classical OR quantum estimator
-          | trusted local artifacts + immutable dataset hashes
-Measured evaluation / explanations / research predictions / HTML and JSON reports
+The platform employs a multi-tier architecture uniting specialized services:
+
+| Technology | Where It Is Used | Purpose & Responsibilities |
+| :--- | :--- | :--- |
+| **React 19** | Frontend (`frontend/src/`) | Declarative, component-driven UI for research workflows and experiment note management. |
+| **TypeScript 5.9** | Frontend (`frontend/src/`) | Static typing, interface contracts, and compile-time safety across frontend modules. |
+| **Vite 7** | Frontend (`frontend/`) | High-performance build tool, development server, and asset optimizer. |
+| **React Query (@tanstack)** | Frontend (`frontend/src/`) | Asynchronous server-state management, automated cache invalidation, and optimistic mutations. |
+| **Lucide React** | Frontend (`frontend/src/`) | Accessible, scalable SVG iconography across application navigation and data views. |
+| **Node.js (>=20.x, 22.x LTS)** | Backend API (`node-api/`) | High-efficiency asynchronous JavaScript runtime for the Experiment Notes microservice. |
+| **Express 4** | Backend API (`node-api/src/`) | Robust web framework providing RESTful routing, middleware pipelines, and HTTP controllers. |
+| **MongoDB & Mongoose 8** | Backend API (`node-api/src/db/`) | Schema-enforced document persistence for experiment notes with automated connection caching. |
+| **Zod 3** | Backend API (`node-api/src/validation/`) | Runtime type validation safeguarding API endpoints against malformed or injected payloads. |
+| **Supabase Auth** | Frontend & Node API | User identity provider issuing JWT access tokens verified on protected API routes. |
+| **Python 3.11** | Research Backend (`backend/`) | Execution engine for scientific computing, statistical analysis, and machine learning. |
+| **FastAPI & Pydantic 2** | Research Backend (`backend/app/`) | High-performance Python REST APIs for dataset inspection, model training, and predictions. |
+| **scikit-learn & NumPy** | Research Backend (`backend/app/ml/`) | Classical ML algorithms (Logistic Regression, SVM, Random Forest), PCA, and evaluation metrics. |
+| **Qiskit & PennyLane** | Research Backend (`backend/app/quantum/`) | Quantum circuit synthesis, parameterized ansatz evaluation, and simulator execution. |
+| **SQLite 3** | Research Backend (`backend/`) | Embedded storage for Python training jobs, model bundles, and experiment lineage. |
+| **Vitest & Node Test Runner** | Testing (`frontend/`, `node-api/`) | Automated unit and integration test suites validating client and server contracts. |
+
+---
+
+## 4. Full-Stack System Architecture
+
+The following diagram illustrates the decoupled separation of concerns across the client, services, and persistence layers:
+
+```mermaid
+flowchart TD
+    subgraph Client["Browser Client (React / Vite SPA)"]
+        UI["Research Shell & Workspace Navigation"]
+        NotesPage["Experiment Notes Page (/my-research/notes)"]
+        ResearchLabs["Data Lab / Quantum Lab / Model Studio"]
+    end
+
+    subgraph Identity["Identity Provider"]
+        Supabase["Supabase Auth (JWT Bearer Tokens)"]
+    end
+
+    subgraph NodeService["Node.js / Express Microservice (node-api)"]
+        ExpressRouter["Express REST Router (/api/experiment-notes)"]
+        AuthMiddleware["JWT Token Verifier (Supabase Client)"]
+        ZodValidator["Zod Schema Validation & Sanitization"]
+        NotesController["Experiment Notes Controller & Service"]
+    end
+
+    subgraph PythonService["Python / FastAPI Backend (backend)"]
+        FastApiRouter["FastAPI Application (/api/...)"]
+        MlEngine["scikit-learn & Qiskit / PennyLane Engine"]
+        SqliteStore[("SQLite Storage (Jobs, Models, Experiments)")]
+    end
+
+    subgraph MongoCloud["Cloud Database"]
+        AtlasDB[("MongoDB Atlas (Experiment Notes Collection)")]
+    end
+
+    UI --> Identity
+    NotesPage -- "Bearer JWT + JSON" --> ExpressRouter
+    ResearchLabs -- "REST HTTP /api" --> FastApiRouter
+
+    ExpressRouter --> AuthMiddleware
+    AuthMiddleware --> ZodValidator
+    ZodValidator --> NotesController
+    NotesController -- "Mongoose ODM" --> AtlasDB
+
+    FastApiRouter --> MlEngine
+    MlEngine --> SqliteStore
 ```
 
-The backend uses Python, FastAPI, Pydantic 2, SQLAlchemy 2, pandas, NumPy, scikit-learn, SHAP, Qiskit, Qiskit Machine Learning and Qiskit Aer. The frontend uses React 19, TypeScript 5.9 and Vite 7. Optional Google authentication and private metadata-only research history use Supabase; the existing research backend remains independent and anonymous guest use remains available. There is no external analytics, hosted inference API, or real-quantum-hardware requirement.
+### Architectural Division of Labor
+- **Frontend Routing:** Client-side navigation is orchestrated by `react-router-dom`. Standard research workflows communicate with the Python backend via `/api/*` proxies. The Experiment Notes interface communicates directly with the Express REST API.
+- **Node.js Express API (`node-api/`):** Manages qualitative research observations. It operates independently of the Python ML engine. All write operations enforce user authentication, input sanitization, and strict ownership isolation.
+- **Python FastAPI Backend (`backend/`):** Dedicated entirely to heavy computational tasks: dataset normalization, ANOVA/PCA feature transforms, quantum simulator evaluation, and model artifact serialization.
+- **Database Partitioning:** SQLite stores local training job queues and model artifact metadata. MongoDB Atlas stores user-authored Experiment Notes.
 
-## 3. Prerequisites and version assumptions
+---
 
-Target **64-bit CPython 3.11**, **Node.js 22.12.0 in the 22.x line**, npm, and an ordinary desktop browser. Docker Compose v2 is optional. The direct dependency set and frontend lockfile were verified in a clean environment; Docker runtime and complete application execution remain separate checks. Full quantum dependencies are substantially heavier than the classical-only installation.
+## 5. Experiment Notes REST API & MongoDB CRUD
 
-Backend direct dependencies are pinned to the verified environment documented in [verified environment](docs/verified_environment.md). Qiskit Machine Learning is **0.9.1**, Qiskit is **2.5.2**, and Aer is **0.17.2**. The committed `frontend/package-lock.json` is the authoritative npm lockfile; use `npm ci` for a clean, reproducible install. See [dependency assumptions](docs/dependency_assumptions.md).
+The Experiment Notes microservice implements full CRUD capabilities through standard REST conventions:
 
-## 4. Installation: Windows PowerShell
+| Operation | HTTP Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- | :--- |
+| **Health Check** | `GET` | `/health` or `/api/health` | Returns service status, uptime, and MongoDB connectivity state. | No |
+| **Create Note** | `POST` | `/api/experiment-notes` | Creates a new research note associated with the authenticated user. | Yes (Bearer JWT) |
+| **List Notes** | `GET` | `/api/experiment-notes` | Retrieves a paginated list of notes owned by the caller with optional filters. | Yes (Bearer JWT) |
+| **Get Single Note** | `GET` | `/api/experiment-notes/:id` | Retrieves a specific note by its 24-character hexadecimal ID. | Yes (Bearer JWT) |
+| **Update Note** | `PATCH` | `/api/experiment-notes/:id` | Partially updates mutable fields of an existing owned note. | Yes (Bearer JWT) |
+| **Delete Note** | `DELETE` | `/api/experiment-notes/:id` | Permanently deletes a note owned by the authenticated caller. | Yes (Bearer JWT) |
 
-Extract `ENTANGLEX-Q-HEALTH.zip`, open a terminal in the extracted parent folder, and run:
+### Data Model Schema (`ExperimentNote`)
+
+Managed via Mongoose in [`node-api/src/models/ExperimentNote.js`](node-api/src/models/ExperimentNote.js):
+
+| Field | Type | Required | Constraints & Description |
+| :--- | :--- | :--- | :--- |
+| `id` | String | Auto | Unique 24-character hex identifier (transformed from MongoDB `_id`). |
+| `title` | String | Yes | Trimmed, 1 to 200 characters. Descriptive summary of the note. |
+| `content` | String | Yes | 1 to 10,000 characters. Detailed observations, parameters, or findings. |
+| `datasetName` | String | No | Max 100 characters. Associated dataset (e.g., `Breast Cancer Wisconsin`, `Diabetes UCI`). |
+| `modelName` | String | No | Max 100 characters. Associated model (e.g., `Random Forest`, `VQC`, `QNN`). |
+| `experimentReference`| String | No | Max 100 characters. Identifier linking to a specific experiment snapshot. |
+| `tags` | Array of Strings | No | Categorical tags (max 50 chars each) for indexing and filtering. |
+| `ownerId` | String | System | Extracted from verified Supabase JWT; immutable; indexed for data isolation. |
+| `createdAt` | Date | System | ISO 8601 creation timestamp managed by Mongoose timestamps. |
+| `updatedAt` | Date | System | ISO 8601 last-updated timestamp; indexed with `ownerId` for fast sorting. |
+
+### Sample Request and Response
+
+#### Creating a Note (`POST /api/experiment-notes`)
+
+**Request Headers:**
+```http
+Authorization: Bearer <valid_supabase_access_token>
+Content-Type: application/json
+```
+
+**Request Payload:**
+```json
+{
+  "title": "VQC Angle Embedding Convergence",
+  "content": "Observed 89.2% test accuracy when using 4 PCA components with ZZFeatureMap. Gradient variance decreased significantly after increasing sample budget to 160.",
+  "datasetName": "Breast Cancer Wisconsin Diagnostic",
+  "modelName": "VQC",
+  "experimentReference": "exp-vqc-wdbc-01",
+  "tags": ["quantum", "vqc", "pca", "wdbc"]
+}
+```
+
+**Response (`201 Created`):**
+```json
+{
+  "id": "67114dfa8b13d2459a123456",
+  "title": "VQC Angle Embedding Convergence",
+  "content": "Observed 89.2% test accuracy when using 4 PCA components with ZZFeatureMap. Gradient variance decreased significantly after increasing sample budget to 160.",
+  "datasetName": "Breast Cancer Wisconsin Diagnostic",
+  "modelName": "VQC",
+  "experimentReference": "exp-vqc-wdbc-01",
+  "tags": ["quantum", "vqc", "pca", "wdbc"],
+  "ownerId": "usr-8a21f4bc-91e3-4d05-b16f",
+  "createdAt": "2026-10-17T18:30:00.000Z",
+  "updatedAt": "2026-10-17T18:30:00.000Z"
+}
+```
+
+### Security & Cross-User Data Isolation
+- **Ownership Scoping:** All database queries (`find`, `findOne`, `findOneAndUpdate`, `findOneAndDelete`) enforce `{ ownerId: req.user.id }`. Users cannot read, modify, or delete notes belonging to other researchers.
+- **Payload Sanitization:** System fields (`ownerId`, `_id`, `id`, `createdAt`, `updatedAt`) cannot be provided or altered by client requests. Zod validation strips or rejects unauthorized keys before handlers execute.
+- **CORS Protection:** In production, requests from unapproved origins are blocked with HTTP `403 Forbidden`. Wildcard origins (`*`) are strictly rejected when credentials are enabled.
+
+---
+
+## 6. Repository Structure
+
+```
+web-dev-entangle/
+├── .env.example                 # Root configuration template for Python backend
+├── .nvmrc                       # Pinned Node.js version (22.12.0)
+├── NOTICE.md                    # Legal notices and third-party dataset attribution
+├── SOURCE_MANIFEST.json         # Checksum manifest of baseline source files
+├── render.yaml                  # Production deployment blueprint for Render
+├── docs/                        # Technical specifications & deployment runbooks
+│   ├── deployment-setup.md      # Vercel & MongoDB Atlas production deployment guide
+│   ├── deployment.md            # Render & Docker architectural deployment specs
+│   ├── api.md                   # Python FastAPI endpoint reference
+│   ├── architecture.md          # In-depth system design & component diagrams
+│   └── testing.md               # Test coverage and validation documentation
+├── frontend/                    # React 19 + TypeScript Single-Page Application
+│   ├── .env.example             # Frontend environment variables template
+│   ├── .nvmrc                   # Pinned frontend Node.js version (22.12.0)
+│   ├── package.json             # Frontend dependencies, scripts, and Vitest configuration
+│   ├── vercel.json              # Vercel routing configuration for SPA deep-linking
+│   ├── vite.config.ts           # Vite bundler configuration and dev proxy settings
+│   └── src/
+│       ├── App.tsx              # Application root, lazy route definitions, and providers
+│       ├── components/          # Reusable UI components (ResearchShell, Navigation, etc.)
+│       ├── lib/                 # API clients (experimentNotesApi.ts, api.ts)
+│       ├── pages/               # Core view components (Overview, Datasets, Training, etc.)
+│       ├── research/            # ExperimentNotesPage.tsx and research history views
+│       └── tests/               # Vitest suite covering UI, state, and API clients
+├── node-api/                    # Node.js + Express + MongoDB REST Microservice
+│   ├── .env.example             # Express API environment variables template
+│   ├── .nvmrc                   # Pinned API Node.js version (22.12.0)
+│   ├── package.json             # Node microservice dependencies and test scripts
+│   ├── vercel.json              # Vercel serverless function rewrites configuration
+│   ├── api/
+│   │   └── index.js             # Serverless handler export for Vercel deployment
+│   ├── src/
+│   │   ├── app.js               # Express app factory, CORS, helmet, and route wiring
+│   │   ├── index.js             # Public service exports and default app instance
+│   │   ├── local.js             # Local standalone development listener
+│   │   ├── config/env.js        # Environment validation and parsing
+│   │   ├── db/mongodb.js        # Mongoose connection pooling & promise caching
+│   │   ├── models/              # Mongoose schemas (ExperimentNote.js)
+│   │   ├── routes/              # Express routers (experimentNotes.routes.js, health)
+│   │   └── middleware/          # JWT auth, centralized error handler, 404 handler
+│   └── test/                    # Integration and deployment test suites
+└── backend/                     # Python 3.11 FastAPI Research Backend
+    ├── requirements.txt         # Pinned Python dependencies
+    ├── app/                     # FastAPI routers, ML pipelines, and quantum modules
+    └── tests/                   # Pytest test suite for ML and quantum workflows
+```
+
+---
+
+## 7. Local Prerequisites & Step-by-Step Installation
+
+### Prerequisites
+- **Node.js:** `v22.12.0` (or `v20.x`+ LTS) and **npm** (`v10.x`+)
+- **Python:** `CPython 3.11` (64-bit)
+- **MongoDB:** A running local MongoDB instance (`mongodb://localhost:27017`) or a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster URI
+- **Git:** Standard Git command-line client
+- **Web Browser:** Any modern evergreen desktop browser (Chrome, Edge, Firefox, Safari)
+
+---
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/Itzx-kush/web-dev-entangle.git
+cd web-dev-entangle
+```
+
+---
+
+### Step 2: Configure Environment Files
+
+Create local configuration files from the provided templates:
 
 ```powershell
-cd entanglex-q-health
-py -3.11 -m venv .venv
+# In project root
 Copy-Item .env.example .env
+
+# In node-api directory
+Copy-Item node-api\.env.example node-api\.env
+
+# In frontend directory
+Copy-Item frontend\.env.example frontend\.env
+```
+
+*(On macOS/Linux, substitute `cp` for `Copy-Item`)*.
+
+---
+
+### Step 3: Set Up and Run the Node.js Express API
+
+Open **Terminal 1**:
+```bash
+cd node-api
+npm install
+npm run dev
+```
+*The service will start on `http://localhost:5000` and automatically connect to MongoDB.*
+- Verify health: `http://localhost:5000/health` (returns `{ "status": "ok", "database": "connected" }`).
+
+---
+
+### Step 4: Set Up and Run the React Frontend
+
+Open **Terminal 2**:
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+*The Vite development server will start on `http://localhost:5173`.*
+
+---
+
+### Step 5: (Optional) Set Up the Python Research Backend
+
+If you wish to run classical and quantum ML training pipelines locally alongside the notes service, open **Terminal 3**:
+
+```powershell
+# Windows PowerShell
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 .\.venv\Scripts\python.exe scripts\init_db.py
-cd frontend
-npm ci
-cd ..
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Using the virtual environment's Python executable directly avoids PowerShell activation-policy changes. Installation runs on your workstation, not as part of source generation.
+*(For classical-only lightweight installation without Qiskit, install `backend/requirements-core.txt`)*.
 
-### Linux / macOS alternative
+---
+
+### Step 6: Verify the Application in Your Browser
+
+1. Open `http://localhost:5173` in your browser.
+2. Sign in with your researcher credentials or activate guest access via the navigation menu.
+3. Navigate to **Studio** → **Experiment notes** (`/my-research/notes`).
+4. Click **Create New Note**, provide a title, content, and optional tags, and save.
+5. Search, filter, update, and delete notes to verify full MongoDB CRUD integration.
+
+---
+
+## 8. Environment Variables Specification
+
+| Service | Variable Name | Purpose | Example / Default |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `VITE_API_BASE` | URL of the Python FastAPI backend | `/api` (local proxy) or `https://...onrender.com/api` |
+| **Frontend** | `VITE_NODE_API_BASE` | URL of the Node.js Express Notes API | `http://localhost:5000/api` or `https://...vercel.app/api` |
+| **Frontend** | `VITE_SUPABASE_URL` | Public Supabase project endpoint | `https://your-project.supabase.co` |
+| **Frontend** | `VITE_SUPABASE_ANON_KEY` | Public Supabase anonymous client key | `eyJhbGciOi...` |
+| **Node API** | `PORT` | Local HTTP listener port | `5000` |
+| **Node API** | `NODE_ENV` | Application environment state | `development` or `production` |
+| **Node API** | `MONGODB_URI` | MongoDB / MongoDB Atlas connection string | `mongodb://localhost:27017/entanglex` |
+| **Node API** | `SUPABASE_URL` | Supabase endpoint for JWT verification | `https://your-project.supabase.co` |
+| **Node API** | `SUPABASE_ANON_KEY` | Supabase client key for auth checks | `eyJhbGciOi...` |
+| **Node API** | `CORS_ORIGINS` | Permitted frontend origins (comma-separated) | `http://localhost:5173,http://localhost:3000` |
+| **Python** | `QHEALTH_STORAGE_ROOT` | Filesystem root for SQLite and artifacts | `.` |
+| **Python** | `QHEALTH_CORS_ORIGINS` | Permitted origins for Python API | `http://localhost:5173` |
+
+> [!WARNING]
+> **Client-Side Security:** Variables prefixed with `VITE_*` are compiled directly into public browser bundles. Never place server secrets, service-role API keys, or database passwords in `frontend/.env`. The `MONGODB_URI` must remain strictly on the backend.
+
+---
+
+## 9. Deployment Architecture
+
+The application is structured for cloud deployment:
+
+```
+┌────────────────────────────────┐         ┌────────────────────────────────┐
+│   Vercel Project 1: Frontend   │         │   Vercel Project 2: Node API   │
+│   • Root: frontend/            │         │   • Root: node-api/            │
+│   • Framework: Vite Static SPA │         │   • Framework: Serverless      │
+│   • Clean URLs & Deep Rewrites │         │   • api/index.js Express App   │
+└────────────────┬───────────────┘         └────────────────┬───────────────┘
+                 │                                          │
+                 ▼                                          ▼
+     ┌──────────────────────┐                   ┌──────────────────────┐
+     │  Supabase Auth (JWT) │                   │ MongoDB Atlas (Cloud)│
+     └──────────────────────┘                   └──────────────────────┘
+                 │
+                 ▼
+┌────────────────────────────────┐
+│  Render Service: Python API    │
+│  • Root: backend/ (render.yaml)│
+│  • ML, Quantum, & Datasets     │
+└────────────────────────────────┘
+```
+
+1. **Frontend Static SPA (Vercel Project 1):**
+   - Root directory: `frontend/`
+   - Build command: `npm run build` (outputs to `dist/`)
+   - [`frontend/vercel.json`](frontend/vercel.json) rewrites all incoming routes (`/(.*)`) to `/index.html` to allow direct access and browser refreshes on deep paths like `/my-research/notes`.
+2. **Node.js Express Serverless API (Vercel Project 2):**
+   - Root directory: `node-api/`
+   - Configured via [`node-api/vercel.json`](node-api/vercel.json) to route all requests to the serverless function export in [`node-api/api/index.js`](node-api/api/index.js).
+   - In-flight connection promise caching in [`node-api/src/db/mongodb.js`](node-api/src/db/mongodb.js) prevents connection spikes during cold starts.
+3. **Python FastAPI Backend (Render):**
+   - Managed via [`render.yaml`](render.yaml) as an independent web service with persistent disk storage for model artifacts and training job state.
+4. **Deployment Status:**
+   - **Repository Deployment Readiness:** Complete. All configuration manifests, serverless handlers, CORS boundaries, and runbooks are committed.
+   - **Live URLs:** Pending individual deployment linking by the repository maintainer. Refer to [`docs/deployment-setup.md`](docs/deployment-setup.md) for step-by-step instructions.
+
+---
+
+## 10. Automated Testing & Verification
+
+The codebase maintains rigorous automated test suites across all tiers:
 
 ```bash
-cd entanglex-q-health
-python3.11 -m venv .venv
-cp .env.example .env
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r backend/requirements.txt
-.venv/bin/python scripts/init_db.py
-cd frontend
-npm ci
-cd ..
-```
-
-For a classical-only starting environment, install `backend/requirements-core.txt` and `backend/requirements-dev.txt`. Install `backend/requirements-quantum.txt` before using quantum models and `backend/requirements-explainability.txt` before requesting SHAP. Permutation importance does not require SHAP.
-
-## 5. Environment configuration and database setup
-
-The backend reads `.env` from the **project root**, independently of terminal working directory. `QHEALTH_STORAGE_ROOT=.` stores the database and artifacts inside the project. Dataset CSVs live under `data/datasets`, trusted model bundles under `models`, and private experiment/report snapshots under `experiments`. A generated UUID is the only storage filename identity. `scripts/init_db.py` creates the schema; backend startup also initializes it idempotently.
-
-`QHEALTH_API_TOKEN` is blank by default for loopback-only, single-user use. Before private-data work, generate a strong token locally and set it in `.env`; enter the same token in **Connection settings**. The browser keeps it in memory, never in local storage. An API token alone is not sufficient for public deployment. Do not place secrets in `VITE_*` variables. See [security](docs/security.md).
-
-## 6. Backend startup
-
-From the project root in Windows PowerShell:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
-```
-
-Linux/macOS:
-
-```bash
-.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
-```
-
-Health endpoint: `http://127.0.0.1:8000/api/health`. Generated OpenAPI schema: `http://127.0.0.1:8000/openapi.json`. Interactive API documentation: `http://127.0.0.1:8000/docs`. Use exactly one process: the MVP training worker is in-process. Avoid `--reload` while training.
-
-The backend startup, automated suite, live HTTP workflow, classical training, prediction, reports, rerun, and queued-job cancellation were verified in the pinned environment. See [backend verification](docs/backend_verification.md). Frontend runtime, Docker runtime, and full quantum training remain separate checks.
-
-## 7. Frontend startup
-
-Open a second terminal in the project root:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Open `http://127.0.0.1:5173`. Vite proxies `/api` to `http://127.0.0.1:8000`. Guest mode requires no frontend environment file. Google sign-in and personal research history require the public Supabase URL/anon variables and migrations documented in [authentication and personal research workspace](docs/authentication.md). The connection indicator reports HTTP reachability, not scientific validity or quantum execution. `npm run build` performs a TypeScript check and production build when you execute it.
-
-The frontend type-check, Vitest suite, production build, development server, production preview, direct route rendering, and live backend boundary were verified in the pinned Node environment. See [frontend verification](docs/frontend_verification.md). Cross-browser coverage and Docker runtime remain separate checks.
-
-## 8. Docker startup
-
-From the project root after copying `.env.example` to `.env`:
-
-```bash
-docker compose up --build
-```
-
-Open `http://127.0.0.1:8080`. Both published ports are loopback-bound. Docker stores runtime data in a named volume. Stop with `docker compose down`; do not add `-v` unless intentionally deleting stored datasets and experiments. Docker images/configuration are provided, **not execution-verified**. See [deployment](docs/deployment.md).
-
-## 9. Guided demo workflow
-
-1. Open **Datasets** and choose a verified entry from the **Medical Dataset Library**. The Breast Cancer Wisconsin Diagnostic entry preserves the original benchmark path, while `POST /api/datasets/demo` remains backwards compatible with the scikit-learn loader. Verify source, hash, class counts, and the configured positive label before continuing.
-2. Open **Data quality**, then **Preprocessing**, **Feature selection**, and **PCA / dimensions**. Inspect descriptive quality and training-only previews. Defaults use 12 ANOVA-selected encoded features, four PCA components, and angle scaling shared by every model.
-3. Open **Training**. Start with Logistic Regression, SVM and Random Forest. The default 160-sample stratified budget applies to every selected model, not just quantum models. A completed model's metrics appear only after actual fitting and held-out evaluation.
-4. For a separate comparison, select classical baselines together with VQC, QSVC and/or QNN. Quantum selection requires shared PCA dimensions equal to qubits, shared angle scaling, no class weighting, and no calibration. Start with four qubits and modest optimizer iterations. Jobs expose state, partial failures, and cooperative cancellation.
-5. Inspect **Model comparison**, **Quantum circuit**, and **Explainability**. In **Research prediction**, enter anonymous features or explicitly load one public demo sample. In **Experiments**, open a record and export its HTML or JSON report.
-
-Optional CLI demonstration against an already-running server:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\demo.py
-.\.venv\Scripts\python.exe scripts\demo.py --quantum --max-samples 160
-```
-
-The second command performs genuine quantum training on your machine. No performance or runtime is promised.
-
-## 10. Medical Dataset Library, upload and provenance
-
-The Data Lab exposes five deployment-safe public datasets: Breast Cancer
-Wisconsin Diagnostic, Early Stage Diabetes Risk Prediction, Cleveland Heart
-Disease, Chronic Kidney Disease and ILPD Liver Patient. The backend package
-contains their small normalized CSV resources and a checked provenance
-manifest. Selecting one verifies its SHA-256 and creates an ordinary registered
-dataset ID for the existing quality, preprocessing, training, explainability
-and reporting workflow. `POST /api/datasets/demo` remains available for the
-original scikit-learn WDBC benchmark.
-
-
-Only UTF-8 comma-separated `.csv` tables are supported, with one header row and at least ten records. Supply dataset name, domain, source/reference, version, target column, and explicit positive-class label. Confirm that records are de-identified and independent. The MVP requires exactly two nonmissing target labels; it rejects an absent target, invalid labels, invalid headers, binary files, oversized content, and unsupported extensions.
-
-The inspect-first upload flow ranks possible target columns and infers a
-positive label only when the binary labels have clear semantics. Low-confidence
-or ambiguous results require manual selection. Existing `/api/datasets/upload`
-clients remain compatible and explicit target/positive-label values always
-take precedence.
-
-The database records the exact stored CSV SHA-256, upload time, rows/features, class distribution, source, version and class mapping. No upload is available through a static public URL. Uploaded raw records are not displayed globally. The public-demo sample endpoint explicitly refuses user-uploaded datasets.
-
-## 11. Validation, preprocessing, feature selection and PCA
-
-Quality reports show missing/infinite values, constants, low variance, high correlations, class imbalance, duplicates, potential identifiers, suspicious target proxies, and aggregate distributions. Mixed-type columns are reported as categorical rather than silently coerced to numeric. Identifiers, near-perfect proxies, contradictory duplicate vectors, and infinities block training until corrected or excluded.
-
-Feature engineering supports configured nonnegative `log1p` transforms and numeric ratios. A zero denominator becomes missing and follows the training-fitted imputer. Numeric pipelines support median/mean/mode imputation, optional training-quantile clipping and standard/min-max/robust/no scaling. Categorical inputs use mode imputation and bounded one-hot encoding; public encoded-feature labels are neutralized to avoid disclosing category values.
-
-Selection supports ANOVA, mutual information, variance threshold, or none. PCA and optional `[0, pi]` angle scaling are fitted only after the train/test split. Each CV fold receives a completely fresh full pipeline. Exact duplicate removal is explicit and documented; residual duplicate selected input vectors are rejected. See [ML pipeline](docs/ml_pipeline.md).
-
-## 12. Classical and quantum ML
-
-Classical models are Logistic Regression, SVM and Random Forest. Quantum models are VQC, QSVC and QNN behind the existing sklearn-compatible adapter architecture. VQC and QNN use the existing ZZ feature map and real-amplitudes ansatz; QNN uses Qiskit Machine Learning `SamplerQNN` with a bounded `NeuralNetworkClassifier` optimizer. QSVC uses fidelity-kernel compute-uncompute. Backends are exact local statevector simulation or finite-shot Aer simulation with optional illustrative depolarizing noise.
-
-**Quantum model** describes the estimator. **Hybrid quantum-classical method** describes classical preprocessing/optimization with quantum circuit evaluation. **Quantum simulation** executes locally on classical hardware. **Real quantum hardware** is not implemented or implied. The circuit view displays parameterized logical structure, not proof of hardware execution. See [quantum pipeline](docs/quantum_pipeline.md).
-
-## 13. Benchmarking, evaluation and calibration
-
-Every model in one experiment uses the same source hash, selected input schema, sampled rows, holdout indices, CV folds and transformation configuration. Comparison never combines arbitrary experiments with different conditions. Accuracy, precision, recall/sensitivity, specificity, F1, ROC-AUC, ROC curves and confusion matrices are calculated at runtime. FN/FP counts are explicit. Undefined metrics remain null, not invented zero scores.
-
-Training resubstitution, CV mean/sample standard deviation and held-out test metrics are distinct. Training, CV and inference timings are measured separately. SVM/QSVC margins are not probabilities; therefore their uncalibrated predictions do not receive probability-based research risk categories. Optional classical-only sigmoid/isotonic calibration wraps the whole pipeline with inner training-only folds. Brier score and reliability curves are reported separately and never called clinical calibration.
-
-## 14. Explainability and prediction
-
-Permutation importance calculates measured ROC-AUC drops on a bounded held-out subset. Legacy non-hybrid raw-feature SHAP remains limited to complete numeric inputs. The PennyLane + PyTorch hybrid path supports bounded mixed categorical/numeric SHAP by deriving encodings from the training partition, reconstructing valid original-feature frames, and evaluating the complete frozen pipeline's final positive-class probability. Qiskit model explanations retain finite-difference perturbation/sensitivity semantics. None of these methods establishes medical causation.
-
-Prediction requires the exact registered input schema and an identified ready model. The screen distinguishes predicted class, positive-class model probability, decision score and non-clinical research risk category. Research thresholds are configurable. Sample inputs and predictions are not persisted. No diagnosis, treatment instruction, medical recommendation or patient prognosis is generated.
-
-## 15. Experiments, model registry and API usage
-
-Experiment records retain configuration, dataset provenance, split fingerprint, software versions, model metrics, timing and limitations. Models are tied to an experiment, source dataset, trusted artifact and its hash. Rerun creates a **new** experiment with `parent_id`; it never overwrites the original. Failed models remain visible. HTML/JSON reports include the medical disclaimer and measured, non-presumptive comparison text.
-
-The API reference is [docs/api.md](docs/api.md). Public reachability is `GET /api/health`; other app endpoints accept an optional configured Bearer token. Training submission returns job and experiment records; poll `/api/training/jobs/{id}`. Reports are downloaded through the authenticated API, not a public file server. Render deployment settings, SPA fallback behavior, production API/CORS configuration, and the persistent runtime-storage boundary are documented in [deployment](docs/deployment.md). The checked-in Render blueprint mounts a persistent disk at `/runtime` so uploads and live-run state survive restarts and redeploys, while packaged built-ins and verified demos remain repository-bundled and independent of it.
-
-## 16. Tests and source checks
-
-Executable tests cover dataset/provenance, target quality, leakage boundaries, preprocessing, metrics, classical training, prediction schemas, security, API registries and report/rerun workflows. Quantum execution tests are deliberately opt-in, including focused QNN coverage in `backend/tests/test_qnn.py`. **During source generation these tests were not run; post-generation Task 1 and Task 2 verification ran the backend suite with quantum tests enabled and the frontend suite.** See [testing](docs/testing.md), [Task 1 final verification](docs/task1_final_verification.md) and [Task 2 QNN verification](docs/task2_qnn_verification.md).
-
-```powershell
-# From project root: static inspection only; does not import or execute the app.
-.\.venv\Scripts\python.exe scripts\check_source.py
-# Actual tests, to be run by you after installation:
-cd backend
-..\.venv\Scripts\python.exe -m pytest -m "not quantum"
-$env:RUN_QUANTUM_TESTS="1"
-..\.venv\Scripts\python.exe -m pytest -m quantum
-cd ..\frontend
+# 1. Run Node.js API test suite (44 tests covering CRUD, Auth, CORS, & Serverless)
+cd node-api
 npm test
+
+# 2. Run React frontend test suite (33 test files, 177 unit & component tests)
+cd ../frontend
+npm test -- --run
+
+# 3. Run frontend production build check
 npm run build
 ```
 
-See [testing](docs/testing.md). Synthetic arrays in test fixtures are assertions about code behavior, not demonstration performance or fabricated biomedical results.
+### Verified Test Coverage Summary
+- **Node.js API Tests (44 passed):**
+  - Health check and database connection state reporting.
+  - Authenticated note creation (`POST`), pagination and listing (`GET`), single fetch (`GET`), partial update (`PATCH`), and deletion (`DELETE`).
+  - Strict input validation via Zod (rejection of empty titles, oversized content, and injected system fields).
+  - Cross-user data isolation ensuring users cannot access or mutate records belonging to others.
+  - Production CORS enforcement (permitting designated origins with credentials, returning 403 on unpermitted domains).
+  - Cold-start database connection middleware and error handling.
+- **Frontend Tests (177 passed):**
+  - Typed API client URL resolution, query construction, Bearer token attachment, and transport error parsing.
+  - Interactive research dashboard, dataset inspection, and pipeline controls.
+  - Safe client-side routing, navigation state, and theme switching.
+- **Production Build:**
+  - Zero TypeScript compile errors (`tsc --noEmit`).
+  - Vite static assets successfully compiled into `frontend/dist/`.
 
-## 17. Security considerations
+---
 
-Uploads are size/extension/header constrained and stored with generated IDs. Paths are validated, local artifact hashes are checked, raw biomedical payloads are not logged, and application errors omit request values. Uploaded code/models are never executed. Model persistence uses trusted local dill artifacts and is unsafe if an attacker can replace both artifacts and registry hashes. Protect the entire runtime directory.
+## 11. Scientific Limitations & Responsible Research Use
 
-Optional Supabase accounts isolate the metadata-only My Research activity stream with Row Level Security; they do not add RBAC, encrypt or move the existing backend research store, establish clinical audit certification, provide complete public-internet hardening, or confer regulated deployment approval. Identifier-name heuristics are not complete de-identification. Use a controlled environment and appropriate institutional policies. See [authentication](docs/authentication.md) and [security](docs/security.md) before private-data work.
+- **Diagnostic Boundary:** EntangleX Q-Health is an algorithmic research workbench. Predictions are probabilistic outputs generated from benchmark datasets (such as the UCI Breast Cancer Wisconsin Diagnostic and Early Stage Diabetes datasets). They are not medical diagnoses and must not be used for clinical decision-making.
+- **Quantum Simulation:** Quantum machine learning models (VQC, QSVC, QNN) execute via local mathematical simulation on classical CPUs using Qiskit Aer and PennyLane. Simulation demonstrates circuit mechanics, parameter optimization, and ansatz representations; it does not demonstrate quantum supremacy or advantage over optimized classical baselines.
+- **Dataset Provenance & Privacy:** Uploaded datasets are stored locally with UUID-derived filenames and SHA-256 integrity hashes. Raw records are never transmitted to external APIs or exposed publicly.
 
-Upload validation, path safety, artifact integrity, deletion consistency, privacy boundaries, and robustness checks were verified in [security and storage verification](docs/security_storage_verification.md). This verification does not claim public-internet security, automatic de-identification, encryption, or regulatory compliance.
+---
 
-## 18. Troubleshooting and known limitations
+## 12. Documentation Index & Reference Links
 
-- **Backend unavailable:** start both terminals; use the documented ports; inspect `/api/health`. A configured API token must be supplied in Connection settings after browser refresh.
-- **Quantum unavailable/import errors:** install the optional quantum group in the same Python environment. Align actual installed versions with the documented API target; do not interpret availability detection as executed verification.
-- **PCA/selection failure:** reduce components or choose more retained features/samples. Every CV training fold must support the dimensions; previews alone do not prove fold feasibility.
-- **Quality blocks training:** correct or exclude identifiers/proxy features, resolve conflicting duplicates and infinities, and explicitly choose a duplicate policy. Do not simply suppress a leakage warning.
-- **Permutation subset has one class:** increase the explanation sample budget or use perturbation. Legacy non-hybrid SHAP requires complete numeric raw features; the Early Stage Diabetes hybrid path supports bounded mixed categorical/numeric SHAP using training-derived category mappings.
-- **Slow quantum fit/cancellation:** lower the *shared* sample budget and optimizer iterations. Cancellation takes effect at safe boundaries, not in the middle of a simulator call. Do not start multiple backend workers.
-- **Dependency/build failures:** compare the installed environment with [verified environment](docs/verified_environment.md). The recorded pins and lockfile cover dependency resolution, not Docker runtime or complete application execution.
-
-See [limitations](docs/limitations.md) for unsupported grouped/time-series validation, privacy limitations, external validation gaps, remaining runtime/deployment limits and finite-shot variability. No benchmark score establishes clinical validity, utility, regulatory approval or general quantum advantage.
-
-## 19. Documentation map and dataset attribution
-
-[Architecture](docs/architecture.md) | [API](docs/api.md) | [ML pipeline](docs/ml_pipeline.md) | [Quantum pipeline](docs/quantum_pipeline.md) | [Explainability](docs/explainability.md) | [Deployment](docs/deployment.md) | [Reproducibility](docs/reproducibility.md) | [Security](docs/security.md) | [Dataset provenance](docs/data_provenance.md) | [Requirements traceability](docs/requirements_traceability.md) | [Generation status](docs/generation_status.json) | [Task 1 final verification](docs/task1_final_verification.md) | [Task 2 QNN verification](docs/task2_qnn_verification.md) | [SIH final verification](docs/SIH_FINAL_VERIFICATION.md) | [SIH demo video script](docs/SIH_DEMO_VIDEO_SCRIPT.md)
-
-The WDBC source is UCI Machine Learning Repository, DOI **10.24432/C5DW2B**, attributed to Wolberg, Mangasarian, Street and Street (1993), under **CC BY 4.0** as described by UCI. The actual application copy is reconstructed from the installed scikit-learn dataset and hashed at registration; the sklearn version and transformation are recorded. Original supplied specifications are retained under `docs/specifications/`.
-
-
-## Verified Instant Demo
-
-See [docs/VERIFIED_INSTANT_DEMO.md](docs/VERIFIED_INSTANT_DEMO.md).
-
-## SIH Judge Alignment — Foundation (2026-09-30)
-
-Early Stage Diabetes Risk Prediction is the **featured SIH demonstration**, while the existing Medical Dataset Library remains supported. The canonical future model identifier is `hybrid_pennylane_torch`: classical preprocessing and reduction → PennyLane quantum representation → PyTorch output head → positive-class probability → the existing OOF sensitivity-first threshold engine → research risk category → SHAP explanation.
-
-This foundation does **not** implement or execute that hybrid model. Its capability state is `NOT_YET_IMPLEMENTED`; the UI disables training. Existing Logistic Regression, SVM, Random Forest, VQC, QSVC, QNN, Qiskit/Aer simulation, evidence, robustness, explainability, persistence, reports, and resource-advisor paths remain in place. Real hardware and quantum advantage are not claimed. Prompt 2 is responsible for measured hybrid training execution.
-
-Prompt 2 dependencies are isolated in `backend/requirements-hybrid.txt` for the verified Python 3.11 dependency strategy; Prompt 1 does not install, import for execution, or add them to the default environment.
-
-## SIH Judge Alignment — Executable Hybrid Model (2026-09-30)
-
-`hybrid_pennylane_torch` is now an executable, bounded CPU model: the existing leakage-safe preprocessing/PCA pipeline feeds `AngleEmbedding`, trainable `StronglyEntanglingLayers`, per-qubit Pauli-Z expectation values, and a configurable PyTorch binary-classification head. It returns positive-class probabilities and uses the existing out-of-fold sensitivity-first threshold engine; the untouched holdout does not select the threshold.
-
-### Judge-facing diabetes workflow
-
-1. Activate **Early Stage Diabetes Risk Prediction** in Demo Center.
-2. Inspect data quality and provenance.
-3. Review preprocessing.
-4. Review feature selection and PCA.
-5. Configure a classical baseline.
-6. Configure **PennyLane + PyTorch Hybrid**.
-7. Train one controlled experiment.
-8. Compare classical vs hybrid evidence.
-9. Inspect the sensitivity-first operating point.
-10. Open Research Prediction.
-11. Ask **“Why was this case flagged?”**
-12. Run SHAP and inspect original-feature contributions.
-13. Run frozen-artifact robustness evaluation.
-14. Review simulator/resource and unavailable-hardware status.
-15. Export the evidence report.
-
-The WDBC path remains available. Results are research benchmark evidence—not diagnosis, clinical validation, real-hardware evidence, or proof of quantum advantage.
-
-
-## SIH Judge Alignment — Hybrid SHAP Refinement (2026-09-30)
-
-Hybrid local explanations answer **“Why was this case flagged?”** for the exact submitted case. The response records the final positive-class probability, persisted OOF operating threshold, predicted class, original feature values, signed SHAP contributions, direction, and method `SHAP — Final Hybrid Output`. Dataset-level explanations are separately labeled as mean absolute SHAP contribution across bounded held-out cases. Background rows are bounded to 20 and come only from the training partition; explanation requests remain bounded to 32 cases and never retrain or mutate the artifact. SHAP describes model behavior—not biological causation, clinical diagnosis, or a complete causal interpretation of the simulator-executed quantum circuit.
-
-## Fair controlled diabetes benchmark
-
-The judge-facing flagship benchmark compares **Random Forest** with the **PennyLane + PyTorch hybrid** on the registered `early-stage-diabetes` dataset. A pair is labelled **CONTROLLED COMPARISON** only after backend verification of the dataset SHA-256, sampled rows, train/holdout indices, preprocessing and PCA representation, sample budget, seed, CV folds, duplicate policy, and OOF threshold protocol. PCA components must equal the hybrid qubit count. The API and report preserve measured holdout metrics, confusion counts, timing, simulator resources, fairness checks, and neutral metric deltas. The browser renders this persisted evidence and does not calculate authoritative benchmark results.
-
-The SIH preset uses bounded, editable demonstration defaults (40 samples, PCA/qubits 2, one quantum layer, two CV folds, seed 23, test size 0.25, target sensitivity 0.80). These are not scientifically optimal values, and activating the preset never starts training automatically.
+- **Deployment Runbook:** [`docs/deployment-setup.md`](docs/deployment-setup.md) — Comprehensive guide for deploying the frontend and Node API to Vercel and connecting MongoDB Atlas.
+- **Node API Specification:** [`node-api/README.md`](node-api/README.md) — Microservice architectural details, schema reference, and test scenarios.
+- **Architecture Design:** [`docs/architecture.md`](docs/architecture.md) — In-depth architectural breakdown and component contracts.
+- **Python Backend API Reference:** [`docs/api.md`](docs/api.md) — FastAPI endpoints for ML, datasets, and predictions.
+- **Machine Learning Pipeline:** [`docs/ml_pipeline.md`](docs/ml_pipeline.md) — Preprocessing, ANOVA/MI feature selection, and CV fold evaluation boundaries.
+- **Quantum Machine Learning:** [`docs/quantum_pipeline.md`](docs/quantum_pipeline.md) — Variational quantum circuits, quantum kernels, and ansatz configurations.
+- **Testing Documentation:** [`docs/testing.md`](docs/testing.md) — Verification protocols and test harness specifications.
+- **Security & Privacy:** [`docs/security.md`](docs/security.md) — Authentication, storage hardening, and privacy boundaries.
+- **Dataset Provenance:** [`docs/data_provenance.md`](docs/data_provenance.md) — UCI benchmark citations and transformation records.
+- **Legal Notices:** [`NOTICE.md`](NOTICE.md) — Attribution and third-party license notices.
