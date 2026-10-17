@@ -162,24 +162,18 @@ Configure the following variables in the Node API Vercel project:
 
 ## 4. Supabase Postgres Notes Storage
 
-The notes table is created by `supabase/migrations/20261017_create_experiment_notes.sql`. It enables RLS and restricts select, insert, update, and delete operations to rows where `auth.uid() = owner_id`. The Express API must pass each verified user's Bearer token to the database client. Do not use a service-role key in this serverless API path.
-   - Create a free (M0) or dedicated cluster in your target cloud region.
-   - Database name: `entanglex`.
+The Experiment Notes table is created by `supabase/migrations/20261017_create_experiment_notes.sql` in the existing Supabase project. The migration has been applied to the project.
 
-2. **Database User**:
-   - Create a database user with `readWrite` permissions on the `entanglex` database.
-   - Use a strong, random password. Avoid URL-unsafe characters or percent-encode them in the connection URI.
+- Row-level security is enabled on `public.experiment_notes`.
+- Select, insert, update, and delete policies require `auth.uid() = owner_id`.
+- The Node API validates each access token and passes that same token to Postgres, so policies run as the authenticated user.
+- The API uses `SUPABASE_URL` and the public `SUPABASE_ANON_KEY`. It must not use a service-role key for normal notes CRUD.
+- No MongoDB URI or separate database host is required.
 
-3. **Network Access / IP Allowlist**:
-   - Because Vercel serverless functions execute from dynamic IP pools, configure MongoDB Atlas Network Access to allow access from anywhere (`0.0.0.0/0`) protected by standard username/password authentication, or configure Atlas Peering/PrivateLink if on an enterprise tier.
-
-4. **Connection Pooling & Cold-Start Caching**:
-   - The Mongoose connection manager in `node-api/src/db/mongodb.js` caches both the connection and the in-flight `connectionPromise`.
-   - Concurrent cold starts await the single shared promise, preventing redundant connection overhead.
-   - Reused warm lambdas return the existing connection immediately without overhead.
+The health endpoint performs a minimal relation probe. Anonymous requests can check that the table exists but have no policy allowing them to read note rows. Signed-in CRUD must be verified with a real user session.
 
 ---
-
+ 
 ## 5. Local Development vs. Production Configuration
 
 | Component | Local Development | Production |
