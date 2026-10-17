@@ -100,7 +100,7 @@ flowchart TD
         SqliteStore[("SQLite Storage (Jobs, Models, Experiments)")]
     end
 
-    subgraph MongoCloud["Cloud Database"]
+    subgraph SupabaseCloud["Supabase Postgres"]
         NotesDB[("Supabase Postgres (Experiment Notes)")]
     end
 
