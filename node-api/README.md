@@ -10,7 +10,7 @@ This service is architected as an independent Node.js microservice maintaining s
 
 - **Runtime & Module System**: Node.js (>= 20.0.0, pinned to Node 22 via root `.nvmrc`) using native ES modules (`"type": "module"`).
 - **Web Framework**: Express 4 with security headers (`helmet`), configurable CORS origins (`cors`), and rate limiting (`express-rate-limit`).
-- **Database & Persistence**: MongoDB managed via Mongoose 8. Includes connection caching, sanitized logging, automated reconnect handling, and ownership-scoped indexes.
+- **Database & Persistence**: Supabase Postgres. Every notes request uses the verified user's JWT and database row-level security (RLS); no service-role key or separate database URI is needed.
 - **Data Validation**: Strict runtime schema validation using Zod 3. Request payloads prevent injection or modification of system fields (`ownerId`, `_id`, timestamps).
 - **Authentication**: Validates incoming Bearer JWT tokens via Supabase Auth client (`supabase.auth.getUser()`), attaching verified user identity (`id`, `email`) to request context.
 - **Testing**: Built on native Node.js test runner (`node:test`) and `supertest`, executing in-memory without requiring live external services in continuous integration.
@@ -33,9 +33,9 @@ node-api/
 │   ├── config/
 │   │   └── env.js               # Environment variables parsing and validation
 │   ├── db/
-│   │   └── mongodb.js           # Mongoose connector, connection caching, status check
+│   │   └── supabase.js          # User-scoped Supabase client and database health probe
 │   ├── models/
-│   │   └── ExperimentNote.js    # Mongoose schema with ownership indexing & JSON transform
+├── supabase/migrations/         # Experiment Notes table, indexes, trigger, and RLS policies
 │   ├── validation/
 │   │   └── experimentNotes.schema.js # Zod schemas for CRUD payloads, IDs, and queries
 │   ├── services/
@@ -51,7 +51,7 @@ node-api/
 │       └── experimentNotes.routes.js # Authenticated CRUD endpoints
 └── test/
     ├── experimentNotes.test.js  # Comprehensive 12-scenario HTTP & business logic test suite
-    ├── schema.test.js           # Mongoose model schema integrity tests
+    ├── schema.test.js           # API payload and UUID validation tests
     └── helpers/
         └── inMemoryService.js   # Fast in-memory service mock for zero-dependency testing
 ```
@@ -64,7 +64,7 @@ node-api/
 | :--- | :--- | :--- | :--- |
 | `PORT` | Number | `5000` | Port for the HTTP server |
 | `NODE_ENV` | String | `development` | Runtime environment (`development`, `production`, `test`) |
-| `MONGODB_URI` | String | `mongodb://localhost:27017/entanglex` | MongoDB connection URI |
+| `SUPABASE_URL` | String | `""` | Supabase project URL |\n| `SUPABASE_ANON_KEY` | String | `""` | Public Supabase anon/publishable key used for Auth and user-scoped Postgres requests |
 | `SUPABASE_URL` | String | `""` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | String | `""` | Supabase anonymous API key |
 | `CORS_ORIGINS` | String | `http://localhost:5173,http://localhost:3000` | Comma-separated allowed origins |
@@ -132,7 +132,7 @@ Retrieve a paginated list of notes owned by the authenticated user.
 ```
 
 #### `GET /api/experiment-notes/:id`
-Fetch a single note by its 24-character hexadecimal ID.
+Fetch a single note by its UUID. RLS and explicit owner filters ensure other users' records are not visible.
 - **Response**: `200 OK` with note object, or `404 Not Found` if note does not exist or belongs to another user.
 
 #### `PATCH /api/experiment-notes/:id`
