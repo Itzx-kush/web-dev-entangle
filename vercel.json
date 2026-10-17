@@ -23,7 +23,8 @@
             }
           ]
         }
-      ]
+      ],
+      "entrypoint": "api/index.js"
     }
   },
   "rewrites": [
