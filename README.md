@@ -210,6 +210,7 @@ web-dev-entangle/
 ├── SOURCE_MANIFEST.json         # Checksum manifest of baseline source files
 ├── render.yaml                  # Production deployment blueprint for Render
 ├── docs/                        # Technical specifications & deployment runbooks
+│   ├── final-assignment-verification.md # Final full-stack verification report & evidence
 │   ├── deployment-setup.md      # Vercel & MongoDB Atlas production deployment guide
 │   ├── deployment.md            # Render & Docker architectural deployment specs
 │   ├── api.md                   # Python FastAPI endpoint reference
@@ -451,6 +452,7 @@ npm run build
 
 ## 12. Documentation Index & Reference Links
 
+- **Final Verification Report:** [`docs/final-assignment-verification.md`](docs/final-assignment-verification.md) — Comprehensive verification evidence, test results, and deployment readiness audit.
 - **Deployment Runbook:** [`docs/deployment-setup.md`](docs/deployment-setup.md) — Comprehensive guide for deploying the frontend and Node API to Vercel and connecting MongoDB Atlas.
 - **Node API Specification:** [`node-api/README.md`](node-api/README.md) — Microservice architectural details, schema reference, and test scenarios.
 - **Architecture Design:** [`docs/architecture.md`](docs/architecture.md) — In-depth architectural breakdown and component contracts.
