@@ -37,11 +37,20 @@ export const validateEnv = () => {
     if (!process.env.SUPABASE_ANON_KEY) {
       missing.push('SUPABASE_ANON_KEY');
     }
+    if (!process.env.CORS_ORIGINS) {
+      missing.push('CORS_ORIGINS');
+    }
   }
 
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables in production: ${missing.join(', ')}`
+    );
+  }
+
+  if (env.isProduction && env.corsOrigins.includes('*')) {
+    throw new Error(
+      "Wildcard CORS_ORIGINS ('*') is not allowed in production with credentials enabled"
     );
   }
 };
