@@ -41,7 +41,7 @@ This project fulfills all requirements of the full-stack web development assignm
 | **MongoDB CRUD Operations** | Complete Create, Read, Update, and Delete operations for user-scoped experiment notes with server-side validation and search filters. |
 | **Responsive UI Design** | Mobile-first and desktop-optimized layouts featuring collapsible sidebars, adaptive data grids, and responsive charts across all screen viewports. |
 | **GitHub Source Code** | Managed in Git with branch isolation, automated test verification, and pull requests targeting [`Itzx-kush/web-dev-entangle`](https://github.com/Itzx-kush/web-dev-entangle). |
-| **Vercel Deployment Readiness** | Multi-service routing in [`vercel.json`](vercel.json), SPA rewrites in [`frontend/vercel.json`](frontend/vercel.json), Express serverless entry point in [`node-api/vercel.json`](node-api/vercel.json), and the all-services deployment attempt in [`docs/vercel-multi-service-deployment.md`](docs/vercel-multi-service-deployment.md). |
+| **Vercel Deployment Readiness** | Shared frontend and Express service routing in [`vercel.json`](vercel.json); research API requests are proxied to the existing persistent FastAPI deployment. See [`docs/vercel-multi-service-deployment.md`](docs/vercel-multi-service-deployment.md) for routes and required environment variables. |
 | **README Documentation** | Comprehensive project documentation covering problem formulation, architecture, technology stack, CRUD endpoints, setup, testing, and deployment. |
 
 ---
