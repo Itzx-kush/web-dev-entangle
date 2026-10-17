@@ -1,6 +1,6 @@
 # EntangleX Q-Health — Node.js & Express Research Notes API
 
-The `node-api` package provides a production-conscious REST API service for EntangleX Q-Health. It enables authenticated researchers to record, organize, and manage persistent qualitative notes, observations, and hypotheses across datasets, models, and experiment runs.
+The `node-api` package provides a production-conscious REST API service for EntangleX Q-Health. It enables authenticated researchers to record, organize, and manage persistent qualitative notes, observations, and hypotheses across datasets, models, and experiment runs. The table definition and row-level security policies live in the repository-root `supabase/migrations/20261017_create_experiment_notes.sql`.
 
 ---
 
@@ -34,8 +34,6 @@ node-api/
 │   │   └── env.js               # Environment variables parsing and validation
 │   ├── db/
 │   │   └── supabase.js          # User-scoped Supabase client and database health probe
-│   ├── models/
-├── supabase/migrations/         # Experiment Notes table, indexes, trigger, and RLS policies
 │   ├── validation/
 │   │   └── experimentNotes.schema.js # Zod schemas for CRUD payloads, IDs, and queries
 │   ├── services/
