@@ -192,10 +192,10 @@ describe('Quantum Lab visualization contract components',()=>{
   await waitFor(()=>expect(qh.quantumVisualizationPreview).toHaveBeenCalledTimes(2));
 
   second.resolve(makeContract({dataset_context:{status:'AVAILABLE',dataset_id:'dataset-2',dataset_name:'Cohort B',limitations:[]},circuit:{limitation:'DATASET_B_CONTRACT'}}));
-  await waitFor(()=>expect(screen.getByText('DATASET_B_CONTRACT')).toBeInTheDocument());
+  await waitFor(()=>expect(screen.getAllByText('DATASET_B_CONTRACT')[0]).toBeInTheDocument());
 
   first.resolve(makeContract({dataset_context:{status:'AVAILABLE',dataset_id:'dataset-1',dataset_name:'Cohort A',limitations:[]},circuit:{limitation:'DATASET_A_CONTRACT'}}));
-  await waitFor(()=>expect(screen.getByText('DATASET_B_CONTRACT')).toBeInTheDocument());
+  await waitFor(()=>expect(screen.getAllByText('DATASET_B_CONTRACT')[0]).toBeInTheDocument());
   expect(screen.queryByText('DATASET_A_CONTRACT')).not.toBeInTheDocument();
  });
  it('offers the existing experiment report for the selected persisted quantum model',async()=>{

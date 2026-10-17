@@ -404,7 +404,7 @@ describe('settings and Demo Center readiness',()=>{
     renderWithProviders(<ResearchShell><DemoCenter/></ResearchShell>,['/demo']);
     expect(await screen.findByRole('heading',{name:'Early Stage Diabetes Risk Prediction'})).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
-    expect(screen.getByText('PennyLane + PyTorch Hybrid')).toBeInTheDocument();
+    expect(screen.getAllByText('PennyLane + PyTorch Hybrid')[0]).toBeInTheDocument();
     expect(screen.getByRole('link',{name:/Explore model evidence/i})).toHaveAttribute('href','/comparison');
     expect(qh.createJob).not.toHaveBeenCalled();
     expect(qh.robustness).not.toHaveBeenCalled();

@@ -282,7 +282,7 @@ export function Quantum(){
  const evidenceDataset=useQuery({queryKey:['dataset',selectedModel?.dataset_id],queryFn:()=>qh.dataset(selectedModel!.dataset_id),enabled:Boolean(selectedModel?.dataset_id),staleTime:300000});
  const selectedDatasetId=datasetId||selectedModel?.dataset_id||draft.dataset_id||'';
  const dataset=useQuery({queryKey:['dataset',selectedDatasetId],queryFn:()=>qh.dataset(selectedDatasetId),enabled:Boolean(selectedDatasetId),staleTime:300000});
- const diagnostics=useQuery({queryKey:['quantum-diagnostics',modelId],queryFn:()=>qh.quantum_diagnostics_by_run(modelId),enabled:Boolean(modelId),retry:false,staleTime:30000});
+ const diagnostics=useQuery({queryKey:['quantum-diagnostics',modelId],queryFn:async()=>((await qh.quantum_diagnostics_by_run(modelId))??null),enabled:Boolean(modelId),retry:false,staleTime:30000});
  const preview=useMutation({
   mutationFn:(request:QuantumVisualizationPreviewRequest)=>qh.quantumVisualizationPreview(request),
   onMutate:()=>{const requestId=++visualizationRequestRef.current;setContract(null);setCircuit(undefined);setCircuitSource(null);return {requestId}},
@@ -295,10 +295,12 @@ export function Quantum(){
  });
  const advisor=useMutation({mutationFn:()=>{if(kind==='hybrid_pennylane_torch')throw new Error('The resource advisor supports VQC, QSVC, and QNN only.');return qh.resourceAdvisor({model_type:kind,quantum:draft.quantum,feature_dimension:draft.pipeline.pca_components??draft.quantum.qubits,sample_count:draft.max_samples??160,dataset_id:selectedDatasetId||null,experiment_id:selectedModel?.dataset_id===selectedDatasetId?selectedModel.experiment_id:null})}});
  useEffect(()=>{
-  const nextDatasetId=demo.active&&demo.datasetId?demo.datasetId:draft.dataset_id;
-  if(datasetId!==nextDatasetId)setDatasetId(nextDatasetId||'');
-  if(!demo.active&&demoHydrated)setDemoHydrated(false);
- },[demo.active,demo.datasetId,draft.dataset_id,datasetId,demoHydrated]);
+  if(demo.active&&demo.datasetId){
+   setDatasetId(demo.datasetId);
+  } else if(!demo.active&&demoHydrated){
+   setDemoHydrated(false);
+  }
+ },[demo.active,demo.datasetId,demoHydrated]);
  useEffect(()=>{
   if(!demo.active||demoHydrated||!demo.datasetId||!demo.experimentId||!models.data)return;
   const candidates=models.data.filter(model=>model.dataset_id===demo.datasetId&&model.experiment_id===demo.experimentId&&isQiskitQuantumModel(model.model_type));
@@ -312,13 +314,15 @@ export function Quantum(){
  useEffect(()=>{advisor.reset()},[kind,draft.quantum,draft.pipeline.pca_components,draft.max_samples,draft.dataset_id,datasetId]);
  useEffect(()=>{
   visualizationRequestRef.current+=1;
+  preview.reset();
+  fitted.reset();
   setContract(null);
   setCircuit(undefined);
   setCircuitSource(null);
   setSelectedQubit(null);
   setSelectedFeatureIndex(null);
   setSelectedGateIndex(null);
- },[modelId,kind,datasetId,draft.quantum,draft.dataset_id,draft.pipeline.pca_components]);
+ },[modelId,kind,datasetId,draft.quantum,draft.pipeline.pca_components]);
  useEffect(()=>{
   const activeDataset=datasetId||draft.dataset_id||'';
   if(!modelId)return;
@@ -390,9 +394,16 @@ export function Quantum(){
    <Card title="Quantum capability and preview" description="Generate a bounded structural contract from the current quantum configuration. Preview does not train, create jobs, or simulate a state.">
     <div className="ql-form-grid">
      <label className="field"><span>Quantum model</span><Select aria-label="Quantum advisor model" value={kind} onChange={event=>setKind(event.target.value as 'vqc'|'qsvc'|'qnn'|'hybrid_pennylane_torch')}><option value="vqc">VQC · variational classifier</option><option value="qsvc">QSVC · feature-map kernel</option><option value="qnn">QNN · quantum neural network</option><option value="hybrid_pennylane_torch">PennyLane + PyTorch hybrid</option></Select></label>
-     <label className="field"><span>Dataset context</span><Select aria-label="Quantum dataset context" value={datasetId} onChange={event=>setDatasetId(event.target.value)}><option value="">No registered dataset context</option>{datasetId&&!((datasets.data||[]).some(item=>item.id===datasetId))&&<option value={datasetId}>Active draft dataset · {shortId(datasetId)}</option>}{(datasets.data||[]).map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</Select></label>
+     <label className="field"><span>Dataset context</span><Select aria-label="Quantum dataset context" value={datasetId} onChange={event=>{const val=event.target.value;setDatasetId(val);update({dataset_id:val});}}><option value="">No registered dataset context</option>{datasetId&&!((datasets.data||[]).some(item=>item.id===datasetId))&&<option value={datasetId}>Active draft dataset · {shortId(datasetId)}</option>}{(datasets.data||[]).map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</Select></label>
     </div>
-    <div className="ql-persisted-model-row"><label className="field"><span>Persisted model for diagnostics / fitted circuit</span><Select aria-label="Quantum persisted model" value={modelId} onChange={event=>setModelId(event.target.value)}><option value="">No persisted model selected</option>{(models.data||[]).filter(model=>isQiskitQuantumModel(model.model_type)&&(!datasetId||model.dataset_id===datasetId)&&model.model_type===kind).map(model=><option key={model.id} value={model.id}>{modelLabels[model.model_type]} · {shortId(model.id)}</option>)}</Select></label></div>
+    <div className="ql-persisted-model-row"><label className="field"><span>Persisted model for diagnostics / fitted circuit</span><Select aria-label="Quantum persisted model" value={modelId} onChange={event=>{
+     const nextId=event.target.value;
+     setModelId(nextId);
+     const found=models.data?.find(item=>item.id===nextId);
+     if(found&&isQiskitQuantumModel(found.model_type)){
+      setKind(found.model_type as 'vqc'|'qsvc'|'qnn'|'hybrid_pennylane_torch');
+     }
+    }}><option value="">No persisted model selected</option>{(models.data||[]).filter(model=>isQiskitQuantumModel(model.model_type)&&(!datasetId||model.dataset_id===datasetId)).map(model=><option key={model.id} value={model.id}>{modelLabels[model.model_type]} · {shortId(model.id)}</option>)}</Select></label></div>
    <div className="ql-context-note"><span className="ql-eyebrow">CURRENT CONFIGURATION</span><p>{kind==='hybrid_pennylane_torch'?`${draft.hybrid.qubits} qubits · ${draft.hybrid.quantum_layers} PennyLane circuit layers · ${draft.hybrid.backend} local simulator`:`${draft.quantum.qubits} qubits · ${draft.quantum.feature_map_reps} feature-map repetitions · ${draft.quantum.ansatz_reps} ansatz repetitions · ${draft.quantum.backend} local simulator`}</p></div>
     <div className="ql-action-row">
      <Button disabled={(kind!=='hybrid_pennylane_torch'&&cap.data?.available===false)||preview.isPending} onClick={requestPreview}><Play size={14}/>{preview.isPending?'Building backend contract…':'Generate structural preview'}</Button>
