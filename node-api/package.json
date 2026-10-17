@@ -1,0 +1,28 @@
+{
+  "name": "entanglex-node-api",
+  "version": "1.0.0",
+  "description": "Production-conscious Node.js and Express REST API for EntangleX Q-Health experiment notes",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/local.js",
+    "dev": "node --watch src/local.js",
+    "test": "node --test test/**/*.test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "mongoose": "^8.9.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

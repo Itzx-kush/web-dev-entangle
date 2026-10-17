@@ -1,0 +1,44 @@
+name: Node API Quality
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'node-api/**'
+      - '.github/workflows/node-api-quality.yml'
+      - '.nvmrc'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'node-api/**'
+      - '.github/workflows/node-api-quality.yml'
+      - '.nvmrc'
+
+permissions:
+  contents: read
+
+jobs:
+  node-api-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: node-api
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: node-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run automated tests
+        run: npm test
