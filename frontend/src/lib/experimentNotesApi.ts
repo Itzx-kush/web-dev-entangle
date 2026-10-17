@@ -76,7 +76,7 @@ export function resolveNodeApiBase(
     }
   }
 
-  const fallback = trimmed || 'http://localhost:4000/api';
+  const fallback = trimmed || 'http://localhost:5000/api';
   return fallback.length > 1 ? fallback.replace(/\/+$/, '') : fallback;
 }
 

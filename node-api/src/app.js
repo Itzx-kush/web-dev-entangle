@@ -10,6 +10,7 @@ import { createExperimentNotesRouter } from './routes/experimentNotes.routes.js'
 import { createAuthMiddleware } from './middleware/auth.js';
 import { createExperimentNotesController } from './controllers/experimentNotes.controller.js';
 import { defaultExperimentNotesService } from './services/experimentNotes.service.js';
+import { ensureDbConnected } from './db/mongodb.js';
 
 export const createApp = ({
   noteService = defaultExperimentNotesService,
@@ -17,6 +18,7 @@ export const createApp = ({
   authMiddleware = null,
   dbStateFn = undefined,
   enableRateLimit = !env.isTest,
+  ensureDb = false,
 } = {}) => {
   const app = express();
 
@@ -29,14 +31,17 @@ export const createApp = ({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin) return callback(null, true);
+        if (env.isProduction) {
+          if (env.corsOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error('Not allowed by CORS'));
+        }
+        // In non-production, permit configured origins or fallback to permissive
         if (env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) {
           return callback(null, true);
         }
-        // In non-production, be permissive to facilitate local development
-        if (!env.isProduction) {
-          return callback(null, true);
-        }
-        return callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -79,6 +84,10 @@ export const createApp = ({
     controller,
   });
 
+  if (ensureDb) {
+    app.use('/api/experiment-notes', ensureDbConnected);
+  }
+
   app.use('/api/experiment-notes', notesRouter);
 
   // 404 handler for unknown routes
@@ -90,5 +99,5 @@ export const createApp = ({
   return app;
 };
 
-export const app = createApp();
+export const app = createApp({ ensureDb: true });
 export default app;

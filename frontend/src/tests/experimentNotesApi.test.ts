@@ -14,10 +14,10 @@ afterEach(() => {
 });
 
 describe('Experiment Notes API client configuration and URL resolution', () => {
-  it('preserves default http://localhost:4000/api in development mode when unconfigured', () => {
-    expect(resolveNodeApiBase(undefined, false)).toBe('http://localhost:4000/api');
-    expect(resolveNodeApiBase('', false)).toBe('http://localhost:4000/api');
-    expect(resolveNodeApiBase('  ', false)).toBe('http://localhost:4000/api');
+  it('preserves default http://localhost:5000/api in development mode when unconfigured', () => {
+    expect(resolveNodeApiBase(undefined, false)).toBe('http://localhost:5000/api');
+    expect(resolveNodeApiBase('', false)).toBe('http://localhost:5000/api');
+    expect(resolveNodeApiBase('  ', false)).toBe('http://localhost:5000/api');
   });
 
   it('normalizes custom development URL by stripping trailing slashes', () => {

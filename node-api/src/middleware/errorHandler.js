@@ -44,10 +44,19 @@ export const errorHandler = (err, req, res, _next) => {
     });
   }
 
+  // CORS rejection
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Cross-Origin Request Blocked: Origin is not permitted.',
+    });
+  }
+
   // Database connection errors or network timeouts
   if (
     err.name === 'MongooseServerSelectionError' ||
     err.name === 'MongoNetworkError' ||
+    err.message?.includes('Database connection failed') ||
     err.message?.includes('buffering timed out') ||
     err.message?.includes('ECONNREFUSED')
   ) {
