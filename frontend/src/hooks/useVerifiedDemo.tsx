@@ -57,7 +57,10 @@ export function useFlagshipData(requireActive=false){
     retry:1,
   });
   const payload=verified.data;
-  const isLoading=alignment.isLoading||library.isLoading||(Boolean(experimentId)&&verified.isLoading);
+  // Alignment is supplemental: once the catalogue has selected a ready package, don't hold
+  // the demo UI behind a separate alignment request. Wait on alignment only when no catalogue
+  // item is available yet and the fallback decision is still unresolved.
+  const isLoading=library.isLoading||(!item&&alignment.isLoading)||(Boolean(experimentId)&&verified.isLoading);
   return {
     context,alignment,library,item,experimentId,verified,isLoading,
     payload,
