@@ -40,8 +40,8 @@ export function Overview(){
  const modelReadiness=system.data?.model_capabilities?.slice(0,6).map(m=>({label:m.display_name,detail:m.category, value:m.implementation_status==='AVAILABLE'?(m.executable?100:75):0}))??[];
  const focus=draft.dataset_id?registered.find(dataset=>dataset.id===draft.dataset_id):undefined;
  const focusClass=focus?Object.entries(focus.provenance.class_distribution).map(([name,value])=>({name,value})):[];
- const readinessLabel=flagship.library.isLoading?'CHECKING READINESS':flagship.available?'VERIFIED DEMO · READY':'VERIFIED DEMO UNAVAILABLE';
- const readinessTone=flagship.library.isLoading?'blue':flagship.available?'green':'red';
+ const readinessLabel=flagship.isLoading?'CHECKING READINESS':flagship.available?'VERIFIED DEMO · READY':'VERIFIED DEMO UNAVAILABLE';
+ const readinessTone=flagship.isLoading?'blue':flagship.available?'green':'red';
  const modelCount=flagship.models.length||flagship.item?.demo_readiness.model_ids.length||0;
  return <div className="tremor-dashboard">
   <section className="flagship-hero">
@@ -71,7 +71,7 @@ export function Overview(){
     <p>Controlled comparison · research evidence · local quantum simulation</p>
    </div>
   </section>
-  {!flagship.available&&!flagship.library.isLoading&&<Notice tone="amber">The verified flagship package is currently unavailable. No scientific placeholders are shown; the broader research platform remains available through Data Lab.</Notice>}
+  {!flagship.available&&!flagship.isLoading&&<Notice tone="amber">The verified flagship package is currently unavailable. No scientific placeholders are shown; the broader research platform remains available through Data Lab.</Notice>}
   {flagship.available&&<section className="mt-5 rounded-2xl border border-[#D8E2EF] bg-[#F7FAFD] p-4 md:p-5" aria-label="SIH judge-first journey">
    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
     <div><div className="eyebrow">JUDGE-FIRST JOURNEY</div><h2 className="section-title mt-1">See the flagship story in five steps</h2><p className="mt-1 text-sm muted">The primary route is promoted without restricting access to the full EntangleX Q-Health research platform.</p></div>
