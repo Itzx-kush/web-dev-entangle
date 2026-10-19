@@ -1,71 +1,56 @@
-# Single-Project Vercel Services Deployment
+# Single-Project Deployment with a Hosted Research API
 
-This is an experimental alternative to the split deployment described in [deployment-setup.md](deployment-setup.md). It configures the existing React/Vite frontend, Express Experiment Notes API, and FastAPI research backend as services in one Vercel project.
+The root [vercel.json](../vercel.json) deploys the existing React/Vite frontend and Express Experiment Notes API together. Research API requests are forwarded to the existing FastAPI deployment at `https://entanglex-q-health-api.onrender.com`. The Python service is intentionally not built as a serverless function in this project because its scientific dependency stack, SQLite database, local artifact storage, and background worker are designed for a persistent service.
 
-The repository root must be the Vercel project root directory, and the project framework/preset must be Services. The root [vercel.json](../vercel.json) is the source of truth for routing and service roots.
+The repository root must be the project root directory, and the project framework/preset must be **Services**. Do not set the project root to `frontend` or `node-api`; the root configuration owns the shared routing table.
 
-## Public service routes
+## Public routes
 
-| Service | Public path | Purpose |
+| Public path | Destination | Purpose |
 | --- | --- | --- |
-| frontend | / and other non-API routes | React/Vite single-page application |
-| node-api | /api/notes/* | Express Experiment Notes CRUD API |
-| backend | /api/*, except /api/notes/* | Python FastAPI research API |
+| `/` and other non-API paths | `frontend` service | React/Vite single-page application |
+| `/api/notes/*` | `node-api` service | Express Experiment Notes API |
+| `/api/*`, except `/api/notes/*` | Existing FastAPI deployment | Research API: datasets, experiments, training, quantum workflows, and reports |
 
-The notes route is listed before the general Python API route. A service-level request-path transform removes the public /api/notes prefix and restores the internal /api prefix expected by the existing Express routes. The FastAPI app already exposes routes under /api, so its path remains unchanged. The final catch-all rewrite sends page routes to the frontend.
+The notes rule must remain before the broader research API rule. Its service-level request-path transform maps `/api/notes/experiment-notes` to the existing Express `/api/experiment-notes` route. The final catch-all sends browser page routes to the frontend. The research API's external rewrite maps `/api/health` to the existing research service's `/api/health` endpoint without requiring browser CORS configuration for those same-origin requests.
 
-## Environment variables
+## Required environment variables
 
-Set values in the Vercel project settings for Production and Preview as applicable. Do not commit private database passwords, service-role keys, or provider API tokens.
+Set these in the Vercel project settings for **Production and Preview** as appropriate. Values containing credentials must remain private and must never be committed to source control.
 
-### Frontend build variables
+### Frontend service build
 
-- VITE_API_BASE=/api
-- VITE_NODE_API_BASE=/api/notes
-- VITE_SUPABASE_URL — the Supabase project URL
-- VITE_SUPABASE_ANON_KEY — the Supabase public anon/publishable key only; never use a service-role key here
+- `VITE_API_BASE=/api`
+- `VITE_NODE_API_BASE=/api/notes`
+- `VITE_SUPABASE_URL` — the existing Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — the public anon/publishable key only; never use a service-role key in a browser build
 
-The first two values use same-origin public routes configured in the root vercel.json.
+The first two values are same-origin paths and do not contain credentials. If the Supabase values are missing, the app can still render, but account sign-in will explicitly remain unavailable.
 
-### Node/Express service
+### Express Experiment Notes service
 
-- NODE_ENV=production
-- MONGODB_URI — a MongoDB Atlas URI for the entanglex database
-- SUPABASE_URL — the Supabase project URL
-- SUPABASE_ANON_KEY — the public anon key used to verify user tokens
-- CORS_ORIGINS — the exact Vercel site origin, for example https://your-project.vercel.app (no trailing slash)
+- `NODE_ENV=production`
+No database connection string is required. Experiment Notes are stored in the existing Supabase Postgres project.
+- `SUPABASE_URL` — the same Supabase project URL
+- `SUPABASE_ANON_KEY` — the public anon key used to verify user tokens
+- `CORS_ORIGINS` — exact allowed browser origins, comma-separated, with no wildcard
 
-MongoDB Atlas must allow connections from the deployed service. Use a database user with only the permissions it needs, and keep the connection URI private.
+The API requires the Supabase URL and public anon key, plus a valid user access token at request time. The `experiment_notes` table uses Postgres row-level security so each signed-in user can access only their own records.
 
-### Python/FastAPI service
+## Why the research API stays on the existing service
 
-- QHEALTH_DEPLOYMENT_MODE=production
-- QHEALTH_TRUSTED_HOSTS — the exact Vercel hostname, such as your-project.vercel.app (host only, no scheme); comma-separate additional hostnames when required
-- QHEALTH_CORS_ORIGINS — the exact HTTPS site origin, such as https://your-project.vercel.app
-- QHEALTH_STORAGE_ROOT=/tmp/qhealth — makes the service use writable temporary storage for a best-effort deployment attempt; this storage is ephemeral
-- QHEALTH_SUPABASE_URL and QHEALTH_SUPABASE_SERVICE_ROLE_KEY only if backend-only saved-report persistence is needed
-- QHEALTH_GROQ_API_KEY only if the optional Groq-backed features are needed
+The Python API is not included in the Vercel service list. Previous real deployment attempts showed dependency installation failing in the serverless build environment: first the Python requirements included nested `-r` files, then the available Python 3.12 environment failed building `llvmlite==0.36.0`, whose own build guard supports Python versions below 3.10. The dependency set also contains large scientific and quantum packages, including SHAP and the PennyLane/PyTorch hybrid stack.
 
-The project may also need adjustments for authentication and provider-specific callback URLs after the Vercel hostname is known.
-
-## Internal service bindings
-
-No service binding is added in this configuration because code review found no server-to-server call between the frontend, Node API, and Python API. Frontend API requests are made by the user's browser to the public same-origin rewrite paths; a static Vite build cannot consume a runtime-only binding. The Node API accesses MongoDB and Supabase directly and does not call the Python service. Adding an unused binding would not change runtime behavior.
-
-If a server-side service-to-service call is introduced later, add the binding to the caller service and update that caller's runtime code to use the injected environment variable. Do not hardcode a private service URL or try to use a runtime binding during the Vite build.
+Keeping FastAPI on the existing persistent deployment preserves its current Python environment and data lifecycle instead of reducing model capability to make a serverless build pass. Its current SQLite database, uploaded dataset files, model artifacts, and in-process training thread pool are not suitable for being moved blindly into ephemeral serverless function storage. Do not remove or alter the existing persistent-service deployment as part of this Vercel change.
 
 ## Verification after deployment
 
-1. Open the generated site and refresh a nested frontend page to verify SPA routing.
-2. Request /api/health and confirm FastAPI returns its health response.
-3. Request /api/notes/health and confirm the Node API health endpoint reports its database state.
-4. Sign in and test create, list, update, and delete for a test note.
-5. Test one research workflow only after confirming the Python service is ready and its dependencies were installed.
+1. Open the generated site and refresh a nested browser route to verify the single-page-app routing.
+2. Request `/api/health`; confirm it returns the FastAPI health response from the research service.
+3. Request `/api/notes/health`; confirm the Express health endpoint responds.
+4. Once the Supabase URL/public anon key are configured, sign in and test creating, listing, updating, and deleting a test note.
+5. Run a small research workflow and confirm the returned dataset or experiment is present in the existing backend service.
 
-## Important runtime limitations
+This configuration keeps the frontend and notes API under one domain while preserving the current research backend deployment. Supabase is already configured in the Vercel project; the notes table is protected by owner-level RLS, and the live CRUD path must still be tested with an authenticated session.
 
-This configuration is a deployment attempt, not confirmation that the entire research backend is production-compatible with serverless execution. The existing Python service uses SQLite, local files for uploaded datasets and model artifacts, and an in-process background training thread pool. The temporary directory on Vercel is not durable or shared between separate function instances, and serverless execution does not guarantee a long-running worker will continue after a request ends. Those features may therefore lose state or fail to complete reliably, even if the service builds and its health endpoint responds.
-
-The Python requirements also include scientific and quantum dependencies (including Qiskit, SHAP, and PyTorch/PennyLane), so dependency installation and function packaging may exceed the limits or constraints of the selected Vercel plan. The current persistent-storage/container deployment in [render.yaml](../render.yaml) remains the reliable fallback until storage and training jobs are redesigned around external durable storage and a managed queue/worker. Do not remove the Render configuration based only on a successful Vercel build.
-
-See Vercel's [Services documentation](https://vercel.com/docs/services), [service bindings](https://vercel.com/docs/services/bindings), and [FastAPI deployment guide](https://vercel.com/docs/frameworks/backend/fastapi) for platform behavior and supported configuration.
+See [deployment-setup.md](deployment-setup.md) for the fuller architecture and setup notes, and Vercel's [Services documentation](https://vercel.com/kb/guide/vercel-services) and [external rewrite documentation](https://vercel.com/docs/routing/rewrites) for routing behavior.

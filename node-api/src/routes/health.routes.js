@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { getDbState } from '../db/mongodb.js';
+import { checkSupabaseConnection } from '../db/supabase.js';
 
-export const createHealthRouter = (dbStateFn = getDbState) => {
+export const createHealthRouter = (dbStateFn = checkSupabaseConnection) => {
   const router = Router();
 
-  router.get('/', (req, res) => {
-    const dbStatus = dbStateFn();
+  router.get('/', async (req, res) => {
+    const dbStatus = await dbStateFn();
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -17,4 +17,4 @@ export const createHealthRouter = (dbStateFn = getDbState) => {
   return router;
 };
 
-export const defaultHealthRouter = createHealthRouter(getDbState);
+export const defaultHealthRouter = createHealthRouter(checkSupabaseConnection);

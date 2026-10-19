@@ -1,42 +1,28 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { ExperimentNote } from '../src/models/ExperimentNote.js';
+import { createNoteSchema, updateNoteSchema, objectIdSchema } from '../src/validation/experimentNotes.schema.js';
 
-describe('ExperimentNote Mongoose Schema', () => {
-  test('schema requires title, content, and ownerId', () => {
-    const paths = ExperimentNote.schema.paths;
-    assert.ok(paths.title.isRequired, 'title must be required');
-    assert.ok(paths.content.isRequired, 'content must be required');
-    assert.ok(paths.ownerId.isRequired, 'ownerId must be required');
+describe('Experiment Notes validation schemas', () => {
+  test('creation requires a title and content', () => {
+    assert.equal(createNoteSchema.safeParse({ title: 'Valid', content: 'Content' }).success, true);
+    assert.equal(createNoteSchema.safeParse({ content: 'Missing title' }).success, false);
+    assert.equal(createNoteSchema.safeParse({ title: 'Missing content' }).success, false);
   });
 
-  test('schema defines optional fields with defaults', () => {
-    const paths = ExperimentNote.schema.paths;
-    assert.equal(paths.datasetName.defaultValue, '');
-    assert.equal(paths.modelName.defaultValue, '');
-    assert.equal(paths.experimentReference.defaultValue, '');
-    assert.ok(Array.isArray(paths.tags.defaultValue) || typeof paths.tags.defaultValue === 'function');
+  test('rejects client-supplied ownership and timestamps', () => {
+    assert.equal(createNoteSchema.safeParse({
+      title: 'Valid', content: 'Valid', ownerId: 'attacker',
+    }).success, false);
+    assert.equal(updateNoteSchema.safeParse({ updatedAt: '2026-01-01' }).success, false);
   });
 
-  test('schema indexes include compound ownerId and updatedAt index', () => {
-    const indexes = ExperimentNote.schema.indexes();
-    const compoundIndexExists = indexes.some(([fields]) => {
-      return fields.ownerId === 1 && fields.updatedAt === -1;
-    });
-    assert.ok(compoundIndexExists, 'Compound index { ownerId: 1, updatedAt: -1 } must be registered');
+  test('IDs must be valid UUIDs', () => {
+    assert.equal(objectIdSchema.safeParse('00000000-0000-4000-8000-000000000001').success, true);
+    assert.equal(objectIdSchema.safeParse('not-a-uuid').success, false);
   });
 
-  test('toJSON transform replaces _id with string id and removes __v', () => {
-    const doc = new ExperimentNote({
-      title: 'Transformation Test',
-      content: 'Testing toJSON transform behavior',
-      ownerId: 'usr_transform_test',
-    });
-
-    const json = doc.toJSON();
-    assert.ok(json.id, 'id field must be present');
-    assert.equal(typeof json.id, 'string');
-    assert.equal(json._id, undefined, '_id should be deleted');
-    assert.equal(json.__v, undefined, '__v should be deleted');
+  test('updates require at least one mutable field', () => {
+    assert.equal(updateNoteSchema.safeParse({ title: 'New title' }).success, true);
+    assert.equal(updateNoteSchema.safeParse({}).success, false);
   });
 });

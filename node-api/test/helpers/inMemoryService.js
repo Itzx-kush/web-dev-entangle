@@ -1,8 +1,8 @@
 let counter = 1;
 
 export const generateObjectId = () => {
-  const hex = (counter++).toString(16).padStart(24, '0');
-  return hex;
+  const suffix = (counter++).toString(16).padStart(12, '0');
+  return `00000000-0000-4000-8000-${suffix}`;
 };
 
 export const createInMemoryNotesService = (initialNotes = []) => {
@@ -10,15 +10,12 @@ export const createInMemoryNotesService = (initialNotes = []) => {
 
   return {
     _getRawNotes: () => notes,
-    _setNotes: (newNotes) => {
-      notes = [...newNotes];
-    },
+    _setNotes: (newNotes) => { notes = [...newNotes]; },
 
     async createNote(ownerId, data) {
       const now = new Date().toISOString();
-      const id = generateObjectId();
       const newNote = {
-        id,
+        id: generateObjectId(),
         title: data.title,
         content: data.content,
         datasetName: data.datasetName || '',
@@ -34,87 +31,47 @@ export const createInMemoryNotesService = (initialNotes = []) => {
     },
 
     async listNotes(ownerId, query = {}) {
-      const {
-        page = 1,
-        limit = 10,
-        datasetName,
-        modelName,
-        experimentReference,
-        tag,
-        search,
-      } = query;
-
-      let filtered = notes.filter((n) => n.ownerId === ownerId);
-
-      if (datasetName) {
-        filtered = filtered.filter((n) => n.datasetName === datasetName);
-      }
-      if (modelName) {
-        filtered = filtered.filter((n) => n.modelName === modelName);
-      }
-      if (experimentReference) {
-        filtered = filtered.filter((n) => n.experimentReference === experimentReference);
-      }
-      if (tag) {
-        filtered = filtered.filter((n) => n.tags && n.tags.includes(tag));
-      }
+      const { page = 1, limit = 10, datasetName, modelName, experimentReference, tag, search } = query;
+      let filtered = notes.filter((note) => note.ownerId === ownerId);
+      if (datasetName) filtered = filtered.filter((note) => note.datasetName === datasetName);
+      if (modelName) filtered = filtered.filter((note) => note.modelName === modelName);
+      if (experimentReference) filtered = filtered.filter((note) => note.experimentReference === experimentReference);
+      if (tag) filtered = filtered.filter((note) => note.tags && note.tags.includes(tag));
       if (search) {
         const lowerSearch = search.toLowerCase();
-        filtered = filtered.filter(
-          (n) =>
-            n.title.toLowerCase().includes(lowerSearch) ||
-            n.content.toLowerCase().includes(lowerSearch)
+        filtered = filtered.filter((note) =>
+          note.title.toLowerCase().includes(lowerSearch) ||
+          note.content.toLowerCase().includes(lowerSearch)
         );
       }
-
-      // Sort by updatedAt descending
       filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-
       const total = filtered.length;
       const skip = (page - 1) * limit;
-      const paginatedNotes = filtered.slice(skip, skip + limit);
-
       return {
-        notes: paginatedNotes.map((n) => ({ ...n })),
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit) || 1,
-        },
+        notes: filtered.slice(skip, skip + limit).map((note) => ({ ...note })),
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
       };
     },
 
     async getNoteById(ownerId, noteId) {
-      const note = notes.find((n) => n.id === noteId && n.ownerId === ownerId);
+      const note = notes.find((item) => item.id === noteId && item.ownerId === ownerId);
       return note ? { ...note } : null;
     },
 
     async updateNote(ownerId, noteId, updateData) {
-      const noteIndex = notes.findIndex(
-        (n) => n.id === noteId && n.ownerId === ownerId
-      );
-      if (noteIndex === -1) {
-        return null;
-      }
-
-      const existing = notes[noteIndex];
-      const { ownerId: _o, _id: _i, id: _id, createdAt: _c, updatedAt: _u, ...cleanData } =
-        updateData;
-
-      const updated = {
-        ...existing,
-        ...cleanData,
-        updatedAt: new Date().toISOString(),
-      };
-      notes[noteIndex] = updated;
+      const index = notes.findIndex((item) => item.id === noteId && item.ownerId === ownerId);
+      if (index === -1) return null;
+      const existing = notes[index];
+      const { ownerId: _ownerId, _id: _mongoId, id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...cleanData } = updateData;
+      const updated = { ...existing, ...cleanData, updatedAt: new Date().toISOString() };
+      notes[index] = updated;
       return { ...updated };
     },
 
     async deleteNote(ownerId, noteId) {
-      const initialLength = notes.length;
-      notes = notes.filter((n) => !(n.id === noteId && n.ownerId === ownerId));
-      return notes.length < initialLength;
+      const length = notes.length;
+      notes = notes.filter((note) => !(note.id === noteId && note.ownerId === ownerId));
+      return notes.length < length;
     },
   };
 };

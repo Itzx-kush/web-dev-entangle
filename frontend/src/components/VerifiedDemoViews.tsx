@@ -36,7 +36,7 @@ function EvidenceStrip({source='Verified artifact package',scope='Early Stage Di
 
 function DemoBoundary({children}:{children:(data:NonNullable<ReturnType<typeof useFlagshipData>['payload']>,alignment:AlignmentContract|undefined)=>React.ReactNode}){
   const data=useFlagshipData(true);
-  if(data.verified.isLoading)return <Loading/>;
+  if(data.isLoading)return <Loading/>;
   if(data.verified.error)return <><ErrorBanner error={(data.verified.error as Error).message}/><EmptyState title="Verified demo unavailable">The verified package could not be loaded. Continue with the normal dataset and training workflow.</EmptyState></>;
   if(!data.payload)return <EmptyState title="Verified demo unavailable">No validated precomputed artifact is available. Continue with the normal research workflow.</EmptyState>;
   return <>{children(data.payload,data.alignment.data)}</>;
@@ -59,7 +59,7 @@ export function VerifiedDemoLanding({current='/demo'}:{current?:string}){
   useEffect(()=>{
     if(data.available&&data.experimentId&&data.payload?.dataset.id)data.context.activate(data.experimentId,data.payload.dataset.id);
   },[data.available,data.experimentId,data.payload?.dataset.id]);
-  if(data.library.isLoading||data.verified.isLoading)return <Loading/>;
+  if(data.isLoading)return <Loading/>;
   if(!data.available||!data.payload)return <div><PageHeader eyebrow="Featured SIH demonstration" title="Verified demo unavailable" description="The backend did not validate an instant research package. No placeholder scientific values are shown."/><ErrorBanner error={data.verified.error instanceof Error?data.verified.error.message:undefined}/><Link className="btn btn-primary" to="/datasets">Open normal research workflow</Link></div>;
   const {dataset,models,evidence,artifact_version}=data.payload;
   return <div className="tremor-dashboard">

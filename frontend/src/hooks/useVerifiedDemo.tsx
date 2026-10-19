@@ -2,6 +2,7 @@ import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from
 import {useQuery} from '@tanstack/react-query';
 import {qh} from '../lib/api';
 import type {Dataset,DatasetLibraryItem,ModelRecord,VerifiedEvidencePackage} from '../types/qhealth';
+import {selectFlagshipDataset} from '../lib/verifiedDemoReadiness';
 
 type DemoContextValue={
   active:boolean;
@@ -41,8 +42,12 @@ export function useFlagshipData(requireActive=false){
   const alignment=useQuery({queryKey:['alignment'],queryFn:qh.alignment,staleTime:300000});
   const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,staleTime:30000});
   const slug=alignment.data?.showcase.featured_dataset_slug;
-  const item=useMemo<DatasetLibraryItem|undefined>(()=>library.data?.find(value=>value.slug===slug),[library.data,slug]);
-  const experimentId=context.experimentId||item?.demo_readiness.experiment_id||null;
+  const item=useMemo<DatasetLibraryItem|undefined>(()=>selectFlagshipDataset(library.data,slug),[library.data,slug]);
+  // The verified package is selected from the backend readiness catalogue, so a slow or failed
+  // alignment request cannot make an otherwise-ready instant demo appear unavailable.
+  // The catalogue's ID is authoritative once loaded; ignore stale IDs saved by older sessions.
+  const catalogExperimentId=item?.demo_readiness.status==='ready'?item.demo_readiness.experiment_id:null;
+  const experimentId=catalogExperimentId||(!item?context.experimentId:null)||null;
   const enabled=Boolean(experimentId)&&(!requireActive||context.active);
   const verified=useQuery({
     queryKey:['verified-evidence',experimentId],
@@ -52,8 +57,9 @@ export function useFlagshipData(requireActive=false){
     retry:1,
   });
   const payload=verified.data;
+  const isLoading=alignment.isLoading||library.isLoading||(Boolean(experimentId)&&verified.isLoading);
   return {
-    context,alignment,library,item,experimentId,verified,
+    context,alignment,library,item,experimentId,verified,isLoading,
     payload,
     dataset:payload?.dataset as Dataset|undefined,
     models:(payload?.models||[]) as ModelRecord[],

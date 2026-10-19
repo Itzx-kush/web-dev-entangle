@@ -14,107 +14,45 @@ const checkForbiddenFields = (data, ctx) => {
   }
 };
 
-export const objectIdSchema = z
-  .string()
-  .trim()
-  .regex(/^[0-9a-fA-F]{24}$/, {
-    message: 'Invalid ID format: must be a 24-character hexadecimal string',
-  });
+export const objectIdSchema = z.string().trim().uuid({
+  message: 'Invalid ID format: must be a valid UUID',
+});
 
 export const createNoteSchema = z
   .object({
-    title: z
-      .string({ required_error: 'Title is required' })
-      .trim()
-      .min(1, 'Title cannot be empty')
-      .max(200, 'Title cannot exceed 200 characters'),
-    content: z
-      .string({ required_error: 'Content is required' })
-      .trim()
-      .min(1, 'Content cannot be empty')
-      .max(10000, 'Content cannot exceed 10000 characters'),
-    datasetName: z
-      .string()
-      .trim()
-      .max(100, 'Dataset name cannot exceed 100 characters')
-      .optional()
-      .default(''),
-    modelName: z
-      .string()
-      .trim()
-      .max(100, 'Model name cannot exceed 100 characters')
-      .optional()
-      .default(''),
-    experimentReference: z
-      .string()
-      .trim()
-      .max(100, 'Experiment reference cannot exceed 100 characters')
-      .optional()
-      .default(''),
-    tags: z
-      .array(
-        z
-          .string()
-          .trim()
-          .max(50, 'Individual tag cannot exceed 50 characters')
-      )
-      .max(20, 'Maximum of 20 tags allowed')
-      .optional()
-      .default([]),
+    title: z.string({ required_error: 'Title is required' }).trim()
+      .min(1, 'Title cannot be empty').max(200, 'Title cannot exceed 200 characters'),
+    content: z.string({ required_error: 'Content is required' }).trim()
+      .min(1, 'Content cannot be empty').max(10000, 'Content cannot exceed 10000 characters'),
+    datasetName: z.string().trim().max(100, 'Dataset name cannot exceed 100 characters')
+      .optional().default(''),
+    modelName: z.string().trim().max(100, 'Model name cannot exceed 100 characters')
+      .optional().default(''),
+    experimentReference: z.string().trim().max(100, 'Experiment reference cannot exceed 100 characters')
+      .optional().default(''),
+    tags: z.array(z.string().trim().max(50, 'Individual tag cannot exceed 50 characters'))
+      .max(20, 'Maximum of 20 tags allowed').optional().default([]),
   })
   .passthrough()
-  .superRefine((data, ctx) => {
-    checkForbiddenFields(data, ctx);
-  });
+  .superRefine(checkForbiddenFields);
 
 export const updateNoteSchema = z
   .object({
-    title: z
-      .string()
-      .trim()
-      .min(1, 'Title cannot be empty')
-      .max(200, 'Title cannot exceed 200 characters')
-      .optional(),
-    content: z
-      .string()
-      .trim()
-      .min(1, 'Content cannot be empty')
-      .max(10000, 'Content cannot exceed 10000 characters')
-      .optional(),
-    datasetName: z
-      .string()
-      .trim()
-      .max(100, 'Dataset name cannot exceed 100 characters')
-      .optional(),
-    modelName: z
-      .string()
-      .trim()
-      .max(100, 'Model name cannot exceed 100 characters')
-      .optional(),
-    experimentReference: z
-      .string()
-      .trim()
-      .max(100, 'Experiment reference cannot exceed 100 characters')
-      .optional(),
-    tags: z
-      .array(
-        z
-          .string()
-          .trim()
-          .max(50, 'Individual tag cannot exceed 50 characters')
-      )
-      .max(20, 'Maximum of 20 tags allowed')
-      .optional(),
+    title: z.string().trim().min(1, 'Title cannot be empty')
+      .max(200, 'Title cannot exceed 200 characters').optional(),
+    content: z.string().trim().min(1, 'Content cannot be empty')
+      .max(10000, 'Content cannot exceed 10000 characters').optional(),
+    datasetName: z.string().trim().max(100, 'Dataset name cannot exceed 100 characters').optional(),
+    modelName: z.string().trim().max(100, 'Model name cannot exceed 100 characters').optional(),
+    experimentReference: z.string().trim().max(100, 'Experiment reference cannot exceed 100 characters').optional(),
+    tags: z.array(z.string().trim().max(50, 'Individual tag cannot exceed 50 characters'))
+      .max(20, 'Maximum of 20 tags allowed').optional(),
   })
   .passthrough()
   .superRefine((data, ctx) => {
     checkForbiddenFields(data, ctx);
-
-    // Filter out forbidden fields when checking if any updatable field is provided
     const validFields = ['title', 'content', 'datasetName', 'modelName', 'experimentReference', 'tags'];
-    const hasAtLeastOneField = validFields.some((f) => f in data && data[f] !== undefined);
-
-    if (!hasAtLeastOneField) {
+    if (!validFields.some((field) => field in data && data[field] !== undefined)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'At least one valid field must be provided for update',
