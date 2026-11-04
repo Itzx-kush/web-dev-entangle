@@ -11,6 +11,7 @@ const experimentNoteSchema = new mongoose.Schema(
     content: {
       type: String,
       required: [true, 'Content is required'],
+      trim: true,
       maxlength: [10000, 'Content cannot exceed 10000 characters'],
     },
     datasetName: {
@@ -40,10 +41,15 @@ const experimentNoteSchema = new mongoose.Schema(
         },
       ],
       default: [],
+      validate: {
+        validator: (arr) => !Array.isArray(arr) || arr.length <= 20,
+        message: 'Maximum of 20 tags allowed',
+      },
     },
     ownerId: {
       type: String,
       required: [true, 'Owner ID is required'],
+      trim: true,
       index: true,
     },
   },
@@ -70,8 +76,10 @@ const experimentNoteSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for querying user's notes sorted by update time
+// Compound indexes for owner-scoped sorting and filtering
 experimentNoteSchema.index({ ownerId: 1, updatedAt: -1 });
+experimentNoteSchema.index({ ownerId: 1, datasetName: 1 });
+experimentNoteSchema.index({ ownerId: 1, modelName: 1 });
 experimentNoteSchema.index({ ownerId: 1, tags: 1 });
 experimentNoteSchema.index({ ownerId: 1, experimentReference: 1 });
 

@@ -6,13 +6,8 @@ import {
   createInMemoryNotesService,
   generateObjectId,
 } from './helpers/inMemoryService.js';
-import {
-  createNoteSchema,
-  updateNoteSchema,
-  objectIdSchema,
-} from '../src/validation/experimentNotes.schema.js';
 
-describe('Experiment Notes API Test Suite', () => {
+describe('Experiment Notes API & MongoDB Service Test Suite', () => {
   const user1 = { id: 'usr_user1_test_id', email: 'user1@example.com' };
   const user2 = { id: 'usr_user2_test_id', email: 'user2@example.com' };
 
@@ -75,7 +70,7 @@ describe('Experiment Notes API Test Suite', () => {
 
   // Scenario 2: Authenticated user can create a note with valid payload
   describe('2. Note Creation (Authenticated)', () => {
-    test('POST /api/experiment-notes creates note and returns 201 with ownerId matching session', async () => {
+    test('POST /api/experiment-notes creates note and returns 201 with 24-hex ObjectId and ownerId matching session', async () => {
       const payload = {
         title: 'Quantum Variational Classifier Baseline',
         content: 'Evaluated accuracy across 50 iterations on dataset Q-Health-v1.',
@@ -92,6 +87,9 @@ describe('Experiment Notes API Test Suite', () => {
 
       assert.equal(res.status, 201);
       assert.ok(res.body.id);
+      assert.match(res.body.id, /^[0-9a-fA-F]{24}$/);
+      assert.equal(res.body._id, undefined);
+      assert.equal(res.body.__v, undefined);
       assert.equal(res.body.title, payload.title);
       assert.equal(res.body.content, payload.content);
       assert.equal(res.body.datasetName, payload.datasetName);
@@ -193,16 +191,18 @@ describe('Experiment Notes API Test Suite', () => {
     });
   });
 
-  // Scenario 5: Pagination works as expected
-  describe('5. Pagination and Listing', () => {
+  // Scenario 5: Pagination and filtering work as expected
+  describe('5. Pagination, Filtering, and Search', () => {
     beforeEach(async () => {
       // Seed 15 notes for user 1
       for (let i = 1; i <= 15; i++) {
         await service.createNote(user1.id, {
-          title: `Note #${i}`,
+          title: `Note #${i} ${i === 3 ? '(VQC Special)' : ''}`.trim(),
           content: `Content for note ${i}`,
           datasetName: i % 2 === 0 ? 'Dataset-Even' : 'Dataset-Odd',
-          tags: [`tag-${i}`],
+          modelName: i <= 5 ? 'VQC' : 'RandomForest',
+          experimentReference: `exp-${i}`,
+          tags: [`tag-${i}`, i % 2 === 0 ? 'even' : 'odd'],
         });
       }
     });
@@ -230,16 +230,37 @@ describe('Experiment Notes API Test Suite', () => {
       assert.equal(res.body.pagination.page, 2);
     });
 
-    test('filters notes by datasetName correctly', async () => {
-      const res = await request(app)
+    test('filters notes by datasetName, modelName, experimentReference, tag, and regex-safe search', async () => {
+      const dsRes = await request(app)
         .get('/api/experiment-notes?datasetName=Dataset-Even')
         .set('Authorization', 'Bearer valid-user1-token');
 
-      assert.equal(res.status, 200);
-      assert.equal(res.body.pagination.total, 7);
-      res.body.notes.forEach((note) => {
+      assert.equal(dsRes.status, 200);
+      assert.equal(dsRes.body.pagination.total, 7);
+      dsRes.body.notes.forEach((note) => {
         assert.equal(note.datasetName, 'Dataset-Even');
       });
+
+      const modelRes = await request(app)
+        .get('/api/experiment-notes?modelName=VQC')
+        .set('Authorization', 'Bearer valid-user1-token');
+      assert.equal(modelRes.status, 200);
+      assert.equal(modelRes.body.pagination.total, 5);
+
+      const tagRes = await request(app)
+        .get('/api/experiment-notes?tag=tag-4')
+        .set('Authorization', 'Bearer valid-user1-token');
+      assert.equal(tagRes.status, 200);
+      assert.equal(tagRes.body.pagination.total, 1);
+      assert.equal(tagRes.body.notes[0].experimentReference, 'exp-4');
+
+      // Search with regex metacharacters like parentheses
+      const searchRes = await request(app)
+        .get('/api/experiment-notes?search=(VQC%20Special)')
+        .set('Authorization', 'Bearer valid-user1-token');
+      assert.equal(searchRes.status, 200);
+      assert.equal(searchRes.body.pagination.total, 1);
+      assert.ok(searchRes.body.notes[0].title.includes('(VQC Special)'));
     });
   });
 
@@ -364,8 +385,8 @@ describe('Experiment Notes API Test Suite', () => {
     });
   });
 
-  // Scenario 10: Malformed ID returns 400 Bad Request
-  describe('10. Malformed ID Handling', () => {
+  // Scenario 10: Malformed ObjectId returns 400 Bad Request
+  describe('10. Malformed ObjectId Handling', () => {
     test('GET /api/experiment-notes/:id with invalid hex ID returns 400', async () => {
       const res = await request(app)
         .get('/api/experiment-notes/invalid-not-24-hex-chars')

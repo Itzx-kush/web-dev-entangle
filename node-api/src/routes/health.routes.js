@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { checkSupabaseConnection } from '../db/supabase.js';
+import { getDbState } from '../db/mongodb.js';
 
-export const createHealthRouter = (dbStateFn = checkSupabaseConnection) => {
+export const createHealthRouter = (dbStateFn = getDbState) => {
   const router = Router();
 
   router.get('/', async (req, res) => {
@@ -17,4 +17,4 @@ export const createHealthRouter = (dbStateFn = checkSupabaseConnection) => {
   return router;
 };
 
-export const defaultHealthRouter = createHealthRouter(checkSupabaseConnection);
+export const defaultHealthRouter = createHealthRouter(getDbState);

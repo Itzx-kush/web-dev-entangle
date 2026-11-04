@@ -1,6 +1,6 @@
 # EntangleX Q-Health — Node.js & Express Research Notes API
 
-The `node-api` package provides a production-conscious REST API service for EntangleX Q-Health. It enables authenticated researchers to record, organize, and manage persistent qualitative notes, observations, and hypotheses across datasets, models, and experiment runs. The table definition and row-level security policies live in the repository-root `supabase/migrations/20261017_create_experiment_notes.sql`.
+The `node-api` package provides a production-conscious REST API service for EntangleX Q-Health. It enables authenticated researchers to record, organize, and manage persistent qualitative notes, observations, and hypotheses across datasets, models, and experiment runs using **MongoDB Atlas** and **Mongoose**.
 
 ---
 
@@ -8,12 +8,12 @@ The `node-api` package provides a production-conscious REST API service for Enta
 
 This service is architected as an independent Node.js microservice maintaining strict isolation from the existing React frontend (`frontend/`) and Python FastAPI backend (`backend/`):
 
-- **Runtime & Module System**: Node.js (>= 20.0.0, pinned to Node 22 via root `.nvmrc`) using native ES modules (`"type": "module"`).
+- **Runtime & Module System**: Node.js (>= 20.0.0, pinned to Node 22 via `.nvmrc`) using native ES modules (`"type": "module"`).
 - **Web Framework**: Express 4 with security headers (`helmet`), configurable CORS origins (`cors`), and rate limiting (`express-rate-limit`).
-- **Database & Persistence**: Supabase Postgres. Every notes request uses the verified user's JWT and database row-level security (RLS); no service-role key or separate database URI is needed.
-- **Data Validation**: Strict runtime schema validation using Zod 3. Request payloads prevent injection or modification of system fields (`ownerId`, `_id`, timestamps).
-- **Authentication**: Validates incoming Bearer JWT tokens via Supabase Auth client (`supabase.auth.getUser()`), attaching verified user identity (`id`, `email`) to request context.
-- **Testing**: Built on native Node.js test runner (`node:test`) and `supertest`, executing in-memory without requiring live external services in continuous integration.
+- **Database & Persistence**: MongoDB Atlas managed via Mongoose 8 (`src/db/mongodb.js` and `src/models/ExperimentNote.js`). Includes serverless connection-promise caching, credential-redacted logging, reconnect handling, and compound ownership-scoped indexes.
+- **Data Validation**: Strict runtime schema validation using Zod 3 (`src/validation/experimentNotes.schema.js`) alongside Mongoose schema validators. Request payloads prevent injection or modification of system fields (`ownerId`, `_id`, `id`, `createdAt`, `updatedAt`).
+- **Authentication**: Validates incoming Bearer JWT tokens via Supabase Auth client (`supabase.auth.getUser()`), attaching verified user identity (`id`, `email`) to `req.user` before database-backed CRUD operations execute.
+- **Testing**: Built on native Node.js test runner (`node:test`) and `supertest`, executing 56 automated tests across 20 suites without requiring live external credentials in continuous integration.
 
 ---
 
@@ -26,6 +26,8 @@ node-api/
 ├── package.json                 # Package definition, scripts, and dependencies
 ├── package-lock.json            # Deterministic dependency lockfile
 ├── README.md                    # Service documentation
+├── api/
+│   └── index.js                 # Serverless entrypoint for Vercel deployment
 ├── src/
 │   ├── app.js                   # Express application factory and middleware wiring
 │   ├── index.js                 # Public library exports
@@ -33,25 +35,28 @@ node-api/
 │   ├── config/
 │   │   └── env.js               # Environment variables parsing and validation
 │   ├── db/
-│   │   └── supabase.js          # User-scoped Supabase client and database health probe
+│   │   └── mongodb.js           # Mongoose connector, promise caching, and status check
+│   ├── models/
+│   │   └── ExperimentNote.js    # Mongoose schema with ownership indexing & JSON transform
 │   ├── validation/
-│   │   └── experimentNotes.schema.js # Zod schemas for CRUD payloads, IDs, and queries
+│   │   └── experimentNotes.schema.js # Zod schemas for CRUD payloads, ObjectIds, and queries
 │   ├── services/
-│   │   └── experimentNotes.service.js # Business logic and ownership-scoped queries
+│   │   └── experimentNotes.service.js # Mongoose CRUD business logic & ownerId scoping
 │   ├── controllers/
 │   │   └── experimentNotes.controller.js # HTTP request handlers and standard responses
 │   ├── middleware/
-│   │   ├── auth.js              # Bearer token verification with dependency injection
+│   │   ├── auth.js              # Supabase Bearer token verification with dependency injection
 │   │   ├── errorHandler.js      # Centralized error handler with sanitized responses
 │   │   └── notFound.js          # Standard 404 handler for unknown routes
 │   └── routes/
-│       ├── health.routes.js     # Health check and DB status endpoints
+│       ├── health.routes.js     # Health check and MongoDB status endpoints
 │       └── experimentNotes.routes.js # Authenticated CRUD endpoints
 └── test/
-    ├── experimentNotes.test.js  # Comprehensive 12-scenario HTTP & business logic test suite
-    ├── schema.test.js           # API payload and UUID validation tests
+    ├── deployment.test.js       # CORS, env validation, serverless exports & connection caching tests
+    ├── experimentNotes.test.js  # Comprehensive 12-scenario HTTP & Mongoose service test suite
+    ├── schema.test.js           # Mongoose model & Zod payload/ObjectId validation tests
     └── helpers/
-        └── inMemoryService.js   # Fast in-memory service mock for zero-dependency testing
+        └── inMemoryService.js   # Mongoose-backed in-memory model adapter for isolated testing
 ```
 
 ---
@@ -60,11 +65,11 @@ node-api/
 
 | Variable | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `PORT` | Number | `5000` | Port for the HTTP server |
+| `PORT` | Number | `5000` | Port for the local HTTP server |
 | `NODE_ENV` | String | `development` | Runtime environment (`development`, `production`, `test`) |
-| `SUPABASE_URL` | String | `""` | Supabase project URL |\n| `SUPABASE_ANON_KEY` | String | `""` | Public Supabase anon/publishable key used for Auth and user-scoped Postgres requests |
-| `SUPABASE_URL` | String | `""` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | String | `""` | Supabase anonymous API key |
+| `MONGODB_URI` | String | `mongodb://localhost:27017/entanglex` | MongoDB Atlas (`mongodb+srv://...`) or local MongoDB connection URI (required in production) |
+| `SUPABASE_URL` | String | `""` | Supabase project URL for JWT authentication verification |
+| `SUPABASE_ANON_KEY` | String | `""` | Public Supabase anonymous API key for JWT verification |
 | `CORS_ORIGINS` | String | `http://localhost:5173,http://localhost:3000` | Comma-separated allowed origins |
 
 ---
@@ -89,10 +94,10 @@ node-api/
 
 ### 2. Experiment Notes
 
-All experiment notes endpoints require an `Authorization: Bearer <token>` header.
+All experiment notes endpoints require an `Authorization: Bearer <token>` header. Authentication runs first, followed by `ensureDbConnected` middleware, and then the CRUD controller.
 
 #### `POST /api/experiment-notes`
-Create a new research note. `ownerId` is derived from the authenticated session.
+Create a new research note in MongoDB. `ownerId` is derived exclusively from the verified `req.user.id`.
 - **Request Body**:
 ```json
 {
@@ -104,7 +109,7 @@ Create a new research note. `ownerId` is derived from the authenticated session.
   "tags": ["quantum", "baseline", "v1"]
 }
 ```
-- **Response**: `201 Created` with the created note document.
+- **Response**: `201 Created` with the created note document (`id` serialized from MongoDB `_id`).
 
 #### `GET /api/experiment-notes`
 Retrieve a paginated list of notes owned by the authenticated user.
@@ -115,11 +120,12 @@ Retrieve a paginated list of notes owned by the authenticated user.
   - `modelName`: Filter by exact model name
   - `experimentReference`: Filter by experiment reference identifier
   - `tag`: Filter by presence of tag
-  - `search`: Case-insensitive text search across title and content
+  - `search`: Case-insensitive regex-escaped text search across title and content
 - **Response**: `200 OK`
 ```json
 {
   "notes": [ ... ],
+  "data": [ ... ],
   "pagination": {
     "total": 15,
     "page": 1,
@@ -130,16 +136,16 @@ Retrieve a paginated list of notes owned by the authenticated user.
 ```
 
 #### `GET /api/experiment-notes/:id`
-Fetch a single note by its UUID. RLS and explicit owner filters ensure other users' records are not visible.
-- **Response**: `200 OK` with note object, or `404 Not Found` if note does not exist or belongs to another user.
+Fetch a single note by its 24-character hexadecimal MongoDB ObjectId (`{ _id: id, ownerId: req.user.id }`).
+- **Response**: `200 OK` with note object, `400 Bad Request` if ID is not a valid 24-character hex ObjectId, or `404 Not Found` if note does not exist or belongs to another user.
 
 #### `PATCH /api/experiment-notes/:id`
-Partially update allowed fields (`title`, `content`, `datasetName`, `modelName`, `experimentReference`, `tags`).
+Partially update allowed fields (`title`, `content`, `datasetName`, `modelName`, `experimentReference`, `tags`) via `ExperimentNote.findOneAndUpdate({ _id: id, ownerId: req.user.id }, { $set: cleanData }, { new: true, runValidators: true })`.
 - Any attempt to modify `ownerId`, `_id`, `id`, `createdAt`, or `updatedAt` returns `400 Bad Request`.
 - **Response**: `200 OK` with updated note object, or `404 Not Found`.
 
 #### `DELETE /api/experiment-notes/:id`
-Delete an existing note.
+Delete an existing note owned by the authenticated user via `ExperimentNote.deleteOne({ _id: id, ownerId: req.user.id })`.
 - **Response**: `200 OK` `{ "message": "Experiment note deleted successfully" }`, or `404 Not Found`.
 
 ---
@@ -150,19 +156,19 @@ Delete an existing note.
 
 ```bash
 cd node-api
-npm install
+npm ci
 ```
 
 ### Running Locally
 
 ```bash
-# Copy template and configure variables
+# Copy template and configure MONGODB_URI, SUPABASE_URL, and SUPABASE_ANON_KEY
 cp .env.example .env
 
 # Start in development mode with automatic reload
 npm run dev
 
-# Or start standard production server
+# Or start standard server
 npm start
 ```
 
@@ -171,4 +177,4 @@ npm start
 ```bash
 npm test
 ```
-The test suite utilizes Node's built-in test runner (`node:test`) and `supertest`, executing all validation, authentication, authorization, ownership isolation, pagination, and error scenarios.
+The test suite utilizes Node's built-in test runner (`node:test`) and `supertest`, executing all 56 tests across Mongoose schema validation, Zod payload validation, authentication, ownership isolation, pagination, filtering, serverless connection reuse, and database error handling.

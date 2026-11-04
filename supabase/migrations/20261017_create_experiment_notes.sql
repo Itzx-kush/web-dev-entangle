@@ -1,6 +1,8 @@
--- Owner-scoped Experiment Notes for the existing Supabase project.
--- RLS is enforced by Postgres; API calls use the requester's Supabase JWT,
--- never a service-role key.
+-- HISTORICAL / SUPERSEDED MIGRATION:
+-- This PostgreSQL migration is retained for historical reference only.
+-- Active Experiment Notes CRUD persistence is implemented with MongoDB Atlas and
+-- Mongoose (`node-api/src/models/ExperimentNote.js` and `node-api/src/services/experimentNotes.service.js`).
+-- Supabase remains the authentication and JWT verification provider (`node-api/src/middleware/auth.js`).
 
 create table if not exists public.experiment_notes (
   id uuid primary key default gen_random_uuid(),
