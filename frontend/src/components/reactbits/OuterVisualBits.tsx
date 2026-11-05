@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 
-const glyphs='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·/—';
+const glyphs='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ΔΨΩλ';
 
 export function DecryptedText({text,className=''}:{text:string;className?:string}){
   const [value,setValue]=useState(text);
@@ -48,45 +48,7 @@ export function OuterAurora(){
 }
 
 export function OuterMagnet({children,className=''}:{children:ReactNode;className?:string}){
-  const ref=useRef<HTMLDivElement|null>(null);
-  const frame=useRef(0);
-  const current=useRef({x:0,y:0});
-  const target=useRef({x:0,y:0});
-
-  useEffect(()=>()=>cancelAnimationFrame(frame.current),[]);
-
-  const animate=()=>{
-    const node=ref.current;
-    if(!node)return;
-    current.current.x+=(target.current.x-current.current.x)*.18;
-    current.current.y+=(target.current.y-current.current.y)*.18;
-    node.style.setProperty('--magnet-x',`${current.current.x.toFixed(2)}px`);
-    node.style.setProperty('--magnet-y',`${current.current.y.toFixed(2)}px`);
-    if(Math.abs(target.current.x-current.current.x)>.05||Math.abs(target.current.y-current.current.y)>.05){
-      frame.current=requestAnimationFrame(animate);
-    }else frame.current=0;
-  };
-  const schedule=()=>{if(!frame.current)frame.current=requestAnimationFrame(animate)};
-  const move=(event:React.PointerEvent<HTMLDivElement>)=>{
-    if(event.pointerType==='touch'||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    const rect=ref.current?.getBoundingClientRect();
-    if(!rect)return;
-    target.current.x=(event.clientX-rect.left-rect.width/2)*.09;
-    target.current.y=(event.clientY-rect.top-rect.height/2)*.12;
-    schedule();
-  };
-  const leave=()=>{target.current={x:0,y:0};schedule()};
-  const spark=(event:React.PointerEvent<HTMLDivElement>)=>{
-    const node=ref.current;
-    if(!node)return;
-    const rect=node.getBoundingClientRect();
-    node.style.setProperty('--spark-x',`${event.clientX-rect.left}px`);
-    node.style.setProperty('--spark-y',`${event.clientY-rect.top}px`);
-    node.classList.remove('is-sparking');
-    requestAnimationFrame(()=>node.classList.add('is-sparking'));
-  };
-
-  return <div ref={ref} className={`outer-rb-magnet ${className}`} onPointerMove={move} onPointerLeave={leave} onPointerDown={spark} onAnimationEnd={event=>{if(event.animationName==='outer-rb-spark')ref.current?.classList.remove('is-sparking')}}>{children}</div>;
+  return <div className={`outer-rb-magnet ${className}`}>{children}</div>;
 }
 
 export function OuterSpotlight({children,className=''}:{children:ReactNode;className?:string}){

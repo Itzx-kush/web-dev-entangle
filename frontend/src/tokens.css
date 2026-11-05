@@ -1,22 +1,36 @@
-:root {
+/* ==========================================================================
+   ENTANGLEX Q-HEALTH — AUTHORITATIVE DESIGN SYSTEM TOKENS
+   Aesthetic: Precision Scientific SaaS · Hybrid Quantum-Classical Workstation
+   ========================================================================== */
+
+:root,
+[data-theme="research"],
+[data-theme="light"] {
   color-scheme: light;
-  --qh-font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --qh-font-sans: var(--qh-font-family);
-  --qh-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --qh-font-display: var(--qh-font-family);
-  --qh-text-xs: 0.6875rem;
-  --qh-text-sm: 0.8125rem;
-  --qh-text-md: 0.9375rem;
-  --qh-text-lg: 1.125rem;
-  --qh-text-xl: clamp(1.5rem, 2.1vw, 2rem);
-  --qh-text-2xl: clamp(1.9rem, 3vw, 2.75rem);
+
+  /* 1. Typography System */
+  --qh-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --qh-font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --qh-font-family: var(--qh-font-sans);
+  --qh-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Modular Type Scale */
+  --qh-text-2xs: 0.6875rem;   /* 11px */
+  --qh-text-xs: 0.75rem;      /* 12px */
+  --qh-text-sm: 0.8125rem;    /* 13px */
+  --qh-text-md: 0.9375rem;    /* 15px */
+  --qh-text-lg: 1.125rem;     /* 18px */
+  --qh-text-xl: clamp(1.375rem, 2vw, 1.875rem);
+  --qh-text-2xl: clamp(1.75rem, 2.6vw, 2.375rem);
+
   --qh-title-size: var(--qh-text-2xl);
   --qh-title-weight: 680;
   --qh-body-line-height: 1.6;
-  --qh-heading-line-height: 1.2;
+  --qh-heading-line-height: 1.15;
   --qh-label-tracking: 0.08em;
-  --qh-type-display: clamp(1.8rem, 3.5vw, 3.2rem);
-  --qh-type-page-title: clamp(1.35rem, 2.1vw, 2rem);
+
+  --qh-type-display: clamp(1.85rem, 3.2vw, 2.85rem);
+  --qh-type-page-title: clamp(1.45rem, 2.2vw, 2.125rem);
   --qh-type-section-title: 1rem;
   --qh-type-subsection-title: 0.875rem;
   --qh-type-body: 0.875rem;
@@ -24,89 +38,9 @@
   --qh-type-label: 0.75rem;
   --qh-type-eyebrow: 0.6875rem;
   --qh-type-metadata: 0.6875rem;
-  --qh-motion-fast: 120ms;
-  --qh-motion-standard: 180ms;
-  --qh-motion-moderate: 240ms;
-  --qh-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --qh-type-metric: clamp(1.5rem, 2.5vw, 2rem);
-  --qh-space-section: clamp(20px, 2.5vw, 32px);
-  --qh-space-stack: clamp(12px, 1.5vw, 16px);
-  --qh-surface-accent: color-mix(in srgb, #1a2f38 3%, #fff);
-  --qh-surface-quantum: color-mix(in srgb, #3a4259 4%, #fff);
-  --qh-surface-research: color-mix(in srgb, #1a2f38 2%, #fff);
-  --qh-surface-warning: color-mix(in srgb, #b8860b 6%, #fff);
-  --qh-surface-danger: color-mix(in srgb, #c73a3a 4%, #fff);
-  --qh-border-interactive: color-mix(in srgb, #1a2f38 24%, #d9e2e6);
-  --qh-shadow-none: none;
-  --qh-shadow-low: 0 1px 2px rgba(24, 47, 59, 0.04);
-  --qh-shadow-medium: 0 3px 10px rgba(24, 47, 59, 0.07);
-  --qh-shadow-high: 0 10px 28px rgba(24, 47, 59, 0.14);
-  --qh-z-base: 0;
-  --qh-z-sticky: 20;
-  --qh-z-sidebar: 30;
-  --qh-z-dropdown: 40;
-  --qh-z-drawer: 60;
-  --qh-z-modal: 70;
-  --qh-z-toast: 80;
-  --qh-z-intro: 100;
+  --qh-type-metric: clamp(1.5rem, 2.3vw, 2rem);
 
-  --qh-color-background: #f8f9fc;
-  --qh-color-foreground: #171b26;
-  --qh-color-muted-foreground: #667085;
-  --qh-color-subtle-foreground: #98a3b3;
-  --qh-color-surface: #ffffff;
-  --qh-color-surface-soft: #f1f3f9;
-  --qh-color-surface-raised: #ffffff;
-  --qh-color-surface-inset: #f8f9fc;
-  --qh-color-overlay: rgba(17, 20, 24, 0.4);
-  --qh-color-border: #e2e6ef;
-  --qh-color-border-subtle: #eef0f5;
-  --qh-color-border-strong: #cbd2e0;
-  --qh-color-primary: #5b5bd6;
-  --qh-color-primary-strong: #4949b8;
-  --qh-color-primary-foreground: #ffffff;
-  --qh-color-secondary: #f3f4f6;
-  --qh-color-secondary-foreground: #475467;
-  --qh-color-accent: #1da9bc;
-  --qh-color-accent-soft: #e8f7fa;
-  --qh-color-quantum: #7c4dff;
-  --qh-color-quantum-soft: #f1edff;
-  --qh-color-research: #18865c;
-  --qh-color-research-soft: #e9f8f1;
-  --qh-color-success: #10b981;
-  --qh-color-success-soft: #ecfdf5;
-  --qh-color-warning: #f59e0b;
-  --qh-color-warning-soft: #fffbeb;
-  --qh-color-danger: #ef4444;
-  --qh-color-danger-soft: #fef2f2;
-  --qh-color-info: #3987c9;
-  --qh-color-info-soft: #eaf4ff;
-  --qh-color-focus: rgba(91, 91, 214, 0.45);
-  --qh-color-sidebar: #ffffff;
-  --qh-color-sidebar-raised: #f1f3f9;
-  --qh-color-sidebar-foreground: #171b26;
-  --qh-color-sidebar-muted: #667085;
-
-  /* Semantic visual layer. Components should consume these meanings, not palette literals. */
-  --qh-color-text-primary: var(--qh-color-foreground);
-  --qh-color-text-secondary: var(--qh-color-muted-foreground);
-  --qh-color-text-muted: var(--qh-color-subtle-foreground);
-  --qh-color-text-inverse: var(--qh-color-primary-foreground);
-  --qh-color-surface-hover: #f1f0ff;
-  --qh-color-surface-selected: var(--qh-color-research-soft);
-  --qh-color-border-interactive: var(--qh-border-interactive);
-  --qh-color-data-accent: #3987c9;
-  --qh-color-data-accent-soft: #eaf4ff;
-  --qh-color-model-accent: var(--qh-color-quantum);
-  --qh-color-model-accent-soft: var(--qh-color-quantum-soft);
-  --qh-color-studio-accent: #7c4dff;
-  --qh-color-studio-accent-soft: #f1edff;
-  --qh-surface-accent: var(--qh-color-surface-hover);
-  --qh-surface-quantum: var(--qh-color-quantum-soft);
-  --qh-surface-research: var(--qh-color-research-soft);
-  --qh-surface-warning: var(--qh-color-warning-soft);
-  --qh-surface-danger: var(--qh-color-danger-soft);
-
+  /* 2. Spacing Scale (8px Grid) */
   --qh-space-1: 4px;
   --qh-space-2: 8px;
   --qh-space-3: 12px;
@@ -117,36 +51,197 @@
   --qh-space-10: 40px;
   --qh-space-12: 48px;
   --qh-space-16: 64px;
+  --qh-space-section: clamp(20px, 2.4vw, 32px);
+  --qh-space-stack: clamp(12px, 1.4vw, 16px);
 
+  /* 3. Radii & Borders */
+  --qh-radius-xs: 5px;
   --qh-radius-sm: 6px;
   --qh-radius-md: 8px;
   --qh-radius-lg: 10px;
-  --qh-radius-xl: 12px;
-  --qh-radius-pill: 999px;
-
+  --qh-radius-xl: 14px;
+  --qh-radius-pill: 9999px;
   --qh-border-thin: 1px;
-  --qh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --qh-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --qh-shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px var(--qh-color-focus);
 
+  /* 4. Light Mode Surface Palette — Cool Laboratory Slate */
+  --qh-color-background: #f8fafc;
+  --qh-color-background-elevated: #f1f5f9;
+  --qh-color-surface: #ffffff;
+  --qh-color-surface-soft: #f1f5f9;
+  --qh-color-surface-raised: #ffffff;
+  --qh-color-surface-inset: #f8fafc;
+  --qh-color-surface-muted: #e2e8f0;
+  --qh-color-surface-hover: rgba(79, 70, 229, 0.055);
+  --qh-color-surface-glass: rgba(255, 255, 255, 0.88);
+  --qh-color-overlay: rgba(15, 23, 42, 0.45);
+
+  /* 5. Light Mode Text Hierarchy — WCAG AA/AAA Verified */
+  --qh-color-foreground: #0f172a;
+  --qh-color-secondary-foreground: #334155;
+  --qh-color-muted-foreground: #475569;
+  --qh-color-subtle-foreground: #64748b;
+
+  /* 6. Light Mode Borders & Hairlines */
+  --qh-color-border: #e2e8f0;
+  --qh-color-border-subtle: #eef2f6;
+  --qh-color-border-strong: #cbd5e1;
+  --qh-border-interactive: #94a3b8;
+
+  /* 7. Scientific & Semantic Accents */
+  --qh-color-primary: #4f46e5;
+  --qh-color-primary-hover: #4338ca;
+  --qh-color-primary-strong: #4338ca;
+  --qh-color-primary-soft: rgba(79, 70, 229, 0.08);
+  --qh-color-primary-foreground: #ffffff;
+
+  --qh-color-secondary: #f1f5f9;
+
+  --qh-color-accent: #0d9488;
+  --qh-color-accent-hover: #0f766e;
+  --qh-color-accent-soft: #f0fdfa;
+  --qh-color-accent-foreground: #ffffff;
+
+  --qh-color-quantum: #7c3aed;
+  --qh-color-quantum-soft: #f5f3ff;
+
+  --qh-color-research: #059669;
+  --qh-color-research-soft: #ecfdf5;
+
+  --qh-color-success: #059669;
+  --qh-color-success-soft: #ecfdf5;
+  --qh-color-warning: #d97706;
+  --qh-color-warning-soft: #fffbeb;
+  --qh-color-danger: #e11d48;
+  --qh-color-danger-soft: #fff1f2;
+  --qh-color-info: #2563eb;
+  --qh-color-info-soft: #eff6ff;
+  --qh-color-focus: rgba(79, 70, 229, 0.36);
+
+  /* 8. Sidebar Command Rail Tokens (Obsidian Precision Rail) */
+  --qh-color-sidebar: #ffffff;
+  --qh-color-sidebar-raised: #f1f5f9;
+  --qh-color-sidebar-foreground: #0f172a;
+  --qh-color-sidebar-muted: #475569;
+
+  --qh-sidebar-bg: #0b0f19;
+  --qh-sidebar-surface: rgba(255, 255, 255, 0.045);
+  --qh-sidebar-border: rgba(148, 163, 184, 0.16);
+  --qh-sidebar-foreground: #f8fafc;
+  --qh-sidebar-text: #cbd5e1;
+  --qh-sidebar-muted: #94a3b8;
+  --qh-sidebar-active-bg: rgba(99, 102, 241, 0.18);
+  --qh-sidebar-active-accent: #818cf8;
+
+  /* 9. Semantic Role Aliases */
+  --qh-color-text-primary: var(--qh-color-foreground);
+  --qh-color-text-secondary: var(--qh-color-muted-foreground);
+  --qh-color-text-muted: var(--qh-color-subtle-foreground);
+  --qh-color-text-inverse: var(--qh-color-primary-foreground);
+  --qh-color-surface-selected: var(--qh-color-research-soft);
+  --qh-color-border-interactive: var(--qh-border-interactive);
+  --qh-color-data-accent: #2563eb;
+  --qh-color-data-accent-soft: #eff6ff;
+  --qh-color-model-accent: var(--qh-color-quantum);
+  --qh-color-model-accent-soft: var(--qh-color-quantum-soft);
+  --qh-color-studio-accent: #7c3aed;
+  --qh-color-studio-accent-soft: #f5f3ff;
+  --qh-surface-accent: var(--qh-color-surface-hover);
+  --qh-surface-quantum: var(--qh-color-quantum-soft);
+  --qh-surface-research: var(--qh-color-research-soft);
+  --qh-surface-warning: var(--qh-color-warning-soft);
+  --qh-surface-danger: var(--qh-color-danger-soft);
+
+  /* 10. Elevation & Shadows */
+  --qh-shadow-none: none;
+  --qh-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --qh-shadow-low: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --qh-shadow-medium: 0 4px 16px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --qh-shadow-high: 0 18px 42px -6px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --qh-shadow-sm: var(--qh-shadow-low);
+  --qh-shadow-md: var(--qh-shadow-medium);
+  --qh-shadow-lg: var(--qh-shadow-high);
+  --qh-shadow-focus: 0 0 0 2px var(--qh-color-surface), 0 0 0 4px var(--qh-color-focus);
+
+  /* 11. Z-Index Scale */
+  --qh-z-base: 0;
+  --qh-z-sticky: 20;
+  --qh-z-shell: 20;
+  --qh-z-sidebar: 30;
+  --qh-z-dropdown: 40;
+  --qh-z-Popover: 45;
+  --qh-z-drawer: 60;
+  --qh-z-modal: 70;
+  --qh-z-toast: 80;
+  --qh-z-intro: 100;
+
+  /* 12. Motion System — Fast, Restrained, Analytical */
+  --qh-motion-instant: 0ms;
   --qh-motion-fast: 120ms;
-  --qh-motion-standard: 180ms;
-  --qh-motion-slow: 320ms;
-  /* 3.11 semantic motion vocabulary: instant feedback, micro, component, navigation. */
+  --qh-motion-standard: 160ms;
+  --qh-motion-moderate: 220ms;
+  --qh-motion-slow: 300ms;
+  --qh-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --qh-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --qh-ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --qh-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --qh-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+
   --motion-instant: 0ms;
   --motion-fast: 120ms;
-  --motion-standard: 180ms;
-  --motion-moderate: 240ms;
-  --motion-slow: 320ms;
-  --qh-ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --qh-ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-standard: 160ms;
+  --motion-moderate: 220ms;
+  --motion-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
   --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
   --ease-linear: linear;
 
-  /* Public aliases for future components and environment surfaces. */
+  --qh-motion-page-enter: 160ms;
+  --qh-motion-page-exit: 120ms;
+  --qh-motion-reveal: 240ms;
+  --qh-motion-modal: 160ms;
+  --qh-motion-state: 160ms;
+  --qh-motion-hover: 120ms;
+  --qh-motion-intro: 120ms;
+
+  /* 13. 7-Series Scientific Chart & Tremor Workbench Palette */
+  --tremor-bg: var(--qh-color-background);
+  --tremor-bg-soft: var(--qh-color-background-elevated);
+  --tremor-card: var(--qh-color-surface);
+  --tremor-border: var(--qh-color-border);
+  --tremor-grid: #e2e8f0;
+  --tremor-muted: var(--qh-color-muted-foreground);
+  --tremor-text: var(--qh-color-foreground);
+  --tremor-accent: #4f46e5;
+  --tremor-accent-2: #7c3aed;
+  --tremor-accent-3: #0d9488;
+  --tremor-accent-4: #0284c7;
+  --tremor-accent-5: #d97706;
+  --tremor-hover: var(--qh-color-surface-hover);
+  --tremor-good: var(--qh-color-success);
+  --tremor-warn: var(--qh-color-warning);
+  --tremor-bad: var(--qh-color-danger);
+  --tremor-neutral: #64748b;
+  --tremor-shadow: var(--qh-shadow-low);
+
+  --chart-blue: #4f46e5;
+  --chart-teal: #0d9488;
+  --chart-amber: #d97706;
+  --chart-purple: #7c3aed;
+  --chart-magenta: #db2777;
+  --chart-cyan: #0284c7;
+  --chart-red: #e11d48;
+
+  --wb-blue: var(--qh-color-primary);
+  --wb-green: var(--qh-color-success);
+  --wb-amber: var(--qh-color-warning);
+  --wb-red: var(--qh-color-danger);
+  --wb-purple: var(--qh-color-quantum);
+  --wb-slate: var(--qh-color-subtle-foreground);
+  --wb-line: var(--qh-color-border);
+
+  /* 14. Public & Tailwind / Shadcn Compatibility Aliases */
   --qh-color-app-background: var(--qh-color-background);
   --qh-color-surface-primary: var(--qh-color-surface);
   --qh-color-surface-secondary: var(--qh-color-surface-soft);
@@ -166,62 +261,198 @@
   --qh-elevation-subtle: var(--qh-shadow-low);
   --qh-elevation-raised: var(--qh-shadow-medium);
   --qh-elevation-dialog: var(--qh-shadow-high);
+
+  /* HSL channel triplets for Tailwind hsl(var(--*)) utilities */
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215 19% 35%;
+  --accent: 175 84% 32%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 347 77% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 213 27% 84%;
+  --ring: 243 75% 59%;
+  --radius: 0.625rem;
+
+  --qh-page-bg: var(--qh-color-background);
+  --qh-surface: var(--qh-color-surface);
+  --qh-surface-2: var(--qh-color-surface-soft);
+  --qh-surface-3: var(--qh-color-surface-muted);
+  --qh-surface-glass: var(--qh-color-surface-glass);
+  --qh-border: var(--qh-color-border);
+  --qh-border-strong: var(--qh-color-border-strong);
+  --qh-text: var(--qh-color-foreground);
+  --qh-text-secondary: var(--qh-color-secondary-foreground);
+  --qh-muted: var(--qh-color-muted-foreground);
+  --qh-subtle: var(--qh-color-subtle-foreground);
+  --qh-primary: var(--qh-color-primary);
+  --qh-primary-strong: var(--qh-color-primary-hover);
+  --qh-primary-soft: var(--qh-color-primary-soft);
+  --qh-accent: var(--qh-color-accent);
+  --qh-accent-soft: var(--qh-color-accent-soft);
+  --qh-success: var(--qh-color-success);
+  --qh-warning: var(--qh-color-warning);
+  --qh-danger: var(--qh-color-danger);
+  --qh-info: var(--qh-color-info);
+  --qh-color-muted: var(--qh-color-muted-foreground);
+  --qh-color-subtle: var(--qh-color-subtle-foreground);
 }
 
+/* ==========================================================================
+   DARK THEME — OBSIDIAN CARBON SLATE WORKSTATION
+   ========================================================================== */
+.dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --qh-color-background: #080a0d;
-  --qh-color-foreground: #f4f7fb;
-  --qh-color-muted-foreground: #a6b0bf;
-  --qh-color-subtle-foreground: #98a3b3;
-  --qh-color-surface: #11161d;
-  --qh-color-surface-soft: #1d2631;
-  --qh-color-surface-raised: #151c25;
-  --qh-color-surface-inset: #0e141b;
-  --qh-color-overlay: rgba(0, 0, 0, 0.68);
-  --qh-color-border: rgba(202, 213, 225, 0.14);
-  --qh-color-border-subtle: rgba(202, 213, 225, 0.09);
-  --qh-color-border-strong: rgba(202, 213, 225, 0.24);
-  --qh-color-primary: #8a83ff;
-  --qh-color-primary-strong: #a29dff;
-  --qh-color-primary-foreground: #080a0d;
-  --qh-color-secondary: #151c25;
-  --qh-color-secondary-foreground: #e8edf5;
-  --qh-color-accent: #22c4d6;
-  --qh-color-accent-soft: rgba(34, 196, 214, 0.14);
-  --qh-color-quantum: #a996ff;
-  --qh-color-quantum-soft: rgba(169, 150, 255, 0.14);
-  --qh-color-research: #53d48f;
-  --qh-color-research-soft: rgba(83, 212, 143, 0.13);
-  --qh-color-success: #53d48f;
-  --qh-color-success-soft: rgba(83, 212, 143, 0.14);
-  --qh-color-warning: #f0bc6e;
-  --qh-color-warning-soft: rgba(240, 188, 110, 0.14);
-  --qh-color-danger: #ff8f8f;
-  --qh-color-danger-soft: rgba(255, 143, 143, 0.14);
-  --qh-color-info: #8fc8ff;
-  --qh-color-info-soft: rgba(143, 200, 255, 0.14);
-  --qh-color-focus: #a29dff;
-  --qh-color-sidebar: #0b0e12;
-  --qh-color-sidebar-raised: #121923;
-  --qh-color-sidebar-foreground: #f4f7fb;
-  --qh-color-sidebar-muted: #9aa7b7;
-  --qh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 5px 16px rgba(0, 0, 0, 0.12);
-  --qh-shadow-md: 0 14px 34px rgba(0, 0, 0, 0.24), 0 3px 8px rgba(0, 0, 0, 0.16);
-  --qh-shadow-low: 0 6px 18px rgba(0, 0, 0, .18);
-  --qh-shadow-medium: 0 12px 28px rgba(0, 0, 0, .25);
-  --qh-shadow-high: 0 22px 56px rgba(0, 0, 0, .4);
-  --qh-color-surface-hover: #1d2631;
+
+  --qh-color-background: #090d16;
+  --qh-color-background-elevated: #0f1623;
+  --qh-color-surface: #111827;
+  --qh-color-surface-soft: #162032;
+  --qh-color-surface-raised: #161f32;
+  --qh-color-surface-inset: #0b101b;
+  --qh-color-surface-muted: #1e293b;
+  --qh-color-surface-hover: rgba(99, 102, 241, 0.11);
+  --qh-color-surface-glass: rgba(17, 24, 39, 0.88);
+  --qh-color-overlay: rgba(2, 6, 23, 0.72);
+
+  --qh-color-foreground: #f8fafc;
+  --qh-color-secondary-foreground: #cbd5e1;
+  --qh-color-muted-foreground: #94a3b8;
+  --qh-color-subtle-foreground: #64748b;
+
+  --qh-color-border: #1e293b;
+  --qh-color-border-subtle: #162032;
+  --qh-color-border-strong: #334155;
+  --qh-border-interactive: #475569;
+
+  --qh-color-primary: #818cf8;
+  --qh-color-primary-hover: #a5b4fc;
+  --qh-color-primary-strong: #a5b4fc;
+  --qh-color-primary-soft: rgba(129, 140, 248, 0.15);
+  --qh-color-primary-foreground: #090d16;
+
+  --qh-color-secondary: #162032;
+
+  --qh-color-accent: #2dd4bf;
+  --qh-color-accent-hover: #5eead4;
+  --qh-color-accent-soft: rgba(45, 212, 191, 0.14);
+  --qh-color-accent-foreground: #042f2e;
+
+  --qh-color-quantum: #a78bfa;
+  --qh-color-quantum-soft: rgba(167, 139, 250, 0.15);
+
+  --qh-color-research: #34d399;
+  --qh-color-research-soft: rgba(52, 211, 153, 0.14);
+
+  --qh-color-success: #34d399;
+  --qh-color-success-soft: rgba(52, 211, 153, 0.14);
+  --qh-color-warning: #fbbf24;
+  --qh-color-warning-soft: rgba(251, 191, 36, 0.15);
+  --qh-color-danger: #fb7185;
+  --qh-color-danger-soft: rgba(251, 113, 133, 0.15);
+  --qh-color-info: #60a5fa;
+  --qh-color-info-soft: rgba(96, 165, 250, 0.15);
+  --qh-color-focus: rgba(129, 140, 248, 0.45);
+
+  --qh-color-sidebar: #070a12;
+  --qh-color-sidebar-raised: #0f1623;
+  --qh-color-sidebar-foreground: #f8fafc;
+  --qh-color-sidebar-muted: #94a3b8;
+
+  --qh-sidebar-bg: #070a12;
+  --qh-sidebar-surface: rgba(148, 163, 184, 0.06);
+  --qh-sidebar-border: #1e293b;
+  --qh-sidebar-foreground: #f8fafc;
+  --qh-sidebar-text: #cbd5e1;
+  --qh-sidebar-muted: #94a3b8;
+  --qh-sidebar-active-bg: rgba(129, 140, 248, 0.16);
+  --qh-sidebar-active-accent: #818cf8;
+
+  --qh-shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.45);
+  --qh-shadow-low: 0 2px 8px rgba(2, 6, 23, 0.45), 0 1px 2px rgba(2, 6, 23, 0.35);
+  --qh-shadow-medium: 0 10px 26px rgba(2, 6, 23, 0.55), 0 2px 6px rgba(2, 6, 23, 0.4);
+  --qh-shadow-high: 0 22px 54px rgba(2, 6, 23, 0.72), 0 4px 14px rgba(2, 6, 23, 0.5);
+  --qh-shadow-sm: var(--qh-shadow-low);
+  --qh-shadow-md: var(--qh-shadow-medium);
+  --qh-shadow-lg: var(--qh-shadow-high);
+
   --qh-color-surface-selected: var(--qh-color-research-soft);
-  --qh-color-data-accent: #8fc8ff;
-  --qh-color-data-accent-soft: rgba(143, 200, 255, .14);
-  --qh-color-studio-accent: #bba7ff;
-  --qh-color-studio-accent-soft: rgba(187, 167, 255, .14);
+  --qh-color-data-accent: #60a5fa;
+  --qh-color-data-accent-soft: rgba(96, 165, 250, 0.14);
+  --qh-color-studio-accent: #a78bfa;
+  --qh-color-studio-accent-soft: rgba(167, 139, 250, 0.14);
   --qh-surface-accent: var(--qh-color-surface-hover);
   --qh-surface-quantum: var(--qh-color-quantum-soft);
   --qh-surface-research: var(--qh-color-research-soft);
   --qh-surface-warning: var(--qh-color-warning-soft);
   --qh-surface-danger: var(--qh-color-danger-soft);
+
+  --tremor-bg: var(--qh-color-background);
+  --tremor-bg-soft: var(--qh-color-background-elevated);
+  --tremor-card: var(--qh-color-surface);
+  --tremor-border: var(--qh-color-border);
+  --tremor-grid: #1e293b;
+  --tremor-muted: var(--qh-color-muted-foreground);
+  --tremor-text: var(--qh-color-foreground);
+  --tremor-accent: #818cf8;
+  --tremor-accent-2: #a78bfa;
+  --tremor-accent-3: #2dd4bf;
+  --tremor-accent-4: #38bdf8;
+  --tremor-accent-5: #fbbf24;
+  --tremor-hover: var(--qh-color-surface-hover);
+  --tremor-good: var(--qh-color-success);
+  --tremor-warn: var(--qh-color-warning);
+  --tremor-bad: var(--qh-color-danger);
+  --tremor-neutral: #64748b;
+  --tremor-shadow: var(--qh-shadow-low);
+
+  --chart-blue: #818cf8;
+  --chart-teal: #2dd4bf;
+  --chart-amber: #fbbf24;
+  --chart-purple: #c084fc;
+  --chart-magenta: #f472b6;
+  --chart-cyan: #38bdf8;
+  --chart-red: #fb7185;
+
+  --wb-blue: #818cf8;
+  --wb-green: var(--qh-color-success);
+  --wb-amber: var(--qh-color-warning);
+  --wb-red: var(--qh-color-danger);
+  --wb-purple: var(--qh-color-quantum);
+  --wb-slate: var(--qh-color-subtle-foreground);
+  --wb-line: var(--qh-color-border);
+
+  /* HSL channel triplets for Tailwind hsl(var(--*)) utilities in Dark Mode */
+  --background: 222 42% 6%;
+  --foreground: 210 40% 98%;
+  --card: 221 39% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 221 39% 14%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 234 89% 74%;
+  --primary-foreground: 222 42% 6%;
+  --secondary: 219 39% 14%;
+  --secondary-foreground: 213 27% 84%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 172 66% 50%;
+  --accent-foreground: 179 84% 10%;
+  --destructive: 351 95% 71%;
+  --destructive-foreground: 222 42% 6%;
+  --border: 217 33% 17%;
+  --input: 215 25% 27%;
+  --ring: 234 89% 74%;
 }
 
 [data-theme="system"] {
@@ -230,55 +461,102 @@
 
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
-    --qh-color-background: #080a0d;
-    --qh-color-foreground: #f4f7fb;
-    --qh-color-muted-foreground: #a6b0bf;
-    --qh-color-subtle-foreground: #98a3b3;
-    --qh-color-surface: #11161d;
-    --qh-color-surface-soft: #1d2631;
-    --qh-color-surface-raised: #151c25;
-    --qh-color-surface-inset: #0e141b;
-    --qh-color-border: rgba(202, 213, 225, 0.14);
-    --qh-color-border-subtle: rgba(202, 213, 225, 0.09);
-    --qh-color-border-strong: rgba(202, 213, 225, 0.24);
-    --qh-color-primary: #8a83ff;
-    --qh-color-primary-strong: #a29dff;
-    --qh-color-primary-foreground: #080a0d;
-    --qh-color-secondary: #151c25;
-    --qh-color-secondary-foreground: #e8edf5;
-    --qh-color-accent: #22c4d6;
-    --qh-color-accent-soft: rgba(34, 196, 214, 0.14);
-    --qh-color-quantum: #a996ff;
-    --qh-color-quantum-soft: rgba(169, 150, 255, 0.14);
-    --qh-color-research: #53d48f;
-    --qh-color-research-soft: rgba(83, 212, 143, 0.13);
-    --qh-color-success: #53d48f;
-    --qh-color-success-soft: rgba(83, 212, 143, 0.14);
-    --qh-color-warning: #f0bc6e;
-    --qh-color-warning-soft: rgba(240, 188, 110, 0.14);
-    --qh-color-danger: #ff8f8f;
-    --qh-color-danger-soft: rgba(255, 143, 143, 0.14);
-    --qh-color-info: #8fc8ff;
-    --qh-color-info-soft: rgba(143, 200, 255, 0.14);
-    --qh-color-focus: #a29dff;
-    --qh-color-sidebar: #0b0e12;
-    --qh-color-sidebar-raised: #121923;
-    --qh-color-sidebar-foreground: #f4f7fb;
-    --qh-color-sidebar-muted: #9aa7b7;
-    --qh-shadow-low: 0 6px 18px rgba(0, 0, 0, .18);
-    --qh-shadow-medium: 0 12px 28px rgba(0, 0, 0, .25);
-    --qh-shadow-high: 0 22px 56px rgba(0, 0, 0, .4);
-    --qh-color-surface-hover: #1d2631;
+    color-scheme: dark;
+    --qh-color-background: #090d16;
+    --qh-color-background-elevated: #0f1623;
+    --qh-color-surface: #111827;
+    --qh-color-surface-soft: #162032;
+    --qh-color-surface-raised: #161f32;
+    --qh-color-surface-inset: #0b101b;
+    --qh-color-surface-muted: #1e293b;
+    --qh-color-surface-hover: rgba(99, 102, 241, 0.11);
+    --qh-color-surface-glass: rgba(17, 24, 39, 0.88);
+    --qh-color-foreground: #f8fafc;
+    --qh-color-secondary-foreground: #cbd5e1;
+    --qh-color-muted-foreground: #94a3b8;
+    --qh-color-subtle-foreground: #64748b;
+    --qh-color-border: #1e293b;
+    --qh-color-border-subtle: #162032;
+    --qh-color-border-strong: #334155;
+    --qh-color-primary: #818cf8;
+    --qh-color-primary-hover: #a5b4fc;
+    --qh-color-primary-strong: #a5b4fc;
+    --qh-color-primary-soft: rgba(129, 140, 248, 0.15);
+    --qh-color-primary-foreground: #090d16;
+    --qh-color-secondary: #162032;
+    --qh-color-accent: #2dd4bf;
+    --qh-color-accent-hover: #5eead4;
+    --qh-color-accent-soft: rgba(45, 212, 191, 0.14);
+    --qh-color-accent-foreground: #042f2e;
+    --qh-color-quantum: #a78bfa;
+    --qh-color-quantum-soft: rgba(167, 139, 250, 0.15);
+    --qh-color-research: #34d399;
+    --qh-color-research-soft: rgba(52, 211, 153, 0.14);
+    --qh-color-success: #34d399;
+    --qh-color-success-soft: rgba(52, 211, 153, 0.14);
+    --qh-color-warning: #fbbf24;
+    --qh-color-warning-soft: rgba(251, 191, 36, 0.15);
+    --qh-color-danger: #fb7185;
+    --qh-color-danger-soft: rgba(251, 113, 133, 0.15);
+    --qh-color-info: #60a5fa;
+    --qh-color-info-soft: rgba(96, 165, 250, 0.15);
+    --qh-color-focus: rgba(129, 140, 248, 0.45);
+    --qh-color-sidebar: #070a12;
+    --qh-color-sidebar-raised: #0f1623;
+    --qh-color-sidebar-foreground: #f8fafc;
+    --qh-color-sidebar-muted: #94a3b8;
+    --qh-sidebar-bg: #070a12;
+    --qh-sidebar-surface: rgba(148, 163, 184, 0.06);
+    --qh-sidebar-border: #1e293b;
+    --qh-sidebar-foreground: #f8fafc;
+    --qh-sidebar-text: #cbd5e1;
+    --qh-sidebar-muted: #94a3b8;
+    --qh-sidebar-active-bg: rgba(129, 140, 248, 0.16);
+    --qh-sidebar-active-accent: #818cf8;
+    --qh-shadow-low: 0 2px 8px rgba(2, 6, 23, 0.45), 0 1px 2px rgba(2, 6, 23, 0.35);
+    --qh-shadow-medium: 0 10px 26px rgba(2, 6, 23, 0.55), 0 2px 6px rgba(2, 6, 23, 0.4);
+    --qh-shadow-high: 0 22px 54px rgba(2, 6, 23, 0.72), 0 4px 14px rgba(2, 6, 23, 0.5);
     --qh-color-surface-selected: var(--qh-color-research-soft);
-    --qh-color-data-accent: #8fc8ff;
-    --qh-color-data-accent-soft: rgba(143, 200, 255, .14);
-    --qh-color-studio-accent: #bba7ff;
-    --qh-color-studio-accent-soft: rgba(187, 167, 255, .14);
+    --qh-color-data-accent: #60a5fa;
+    --qh-color-data-accent-soft: rgba(96, 165, 250, 0.14);
+    --qh-color-studio-accent: #a78bfa;
+    --qh-color-studio-accent-soft: rgba(167, 139, 250, 0.14);
     --qh-surface-accent: var(--qh-color-surface-hover);
     --qh-surface-quantum: var(--qh-color-quantum-soft);
     --qh-surface-research: var(--qh-color-research-soft);
     --qh-surface-warning: var(--qh-color-warning-soft);
     --qh-surface-danger: var(--qh-color-danger-soft);
+    --tremor-bg: var(--qh-color-background);
+    --tremor-bg-soft: var(--qh-color-background-elevated);
+    --tremor-card: var(--qh-color-surface);
+    --tremor-border: var(--qh-color-border);
+    --tremor-grid: #1e293b;
+    --tremor-muted: var(--qh-color-muted-foreground);
+    --tremor-text: var(--qh-color-foreground);
+    --tremor-accent: #818cf8;
+    --tremor-accent-2: #a78bfa;
+    --tremor-accent-3: #2dd4bf;
+    --tremor-accent-4: #38bdf8;
+    --tremor-accent-5: #fbbf24;
+    --tremor-hover: var(--qh-color-surface-hover);
+    --tremor-good: var(--qh-color-success);
+    --tremor-warn: var(--qh-color-warning);
+    --tremor-bad: var(--qh-color-danger);
+    --tremor-neutral: #64748b;
+    --chart-blue: #818cf8;
+    --chart-teal: #2dd4bf;
+    --chart-amber: #fbbf24;
+    --chart-purple: #c084fc;
+    --chart-magenta: #f472b6;
+    --chart-cyan: #38bdf8;
+    --chart-red: #fb7185;
+    --wb-blue: #818cf8;
+    --wb-green: var(--qh-color-success);
+    --wb-amber: var(--qh-color-warning);
+    --wb-red: var(--qh-color-danger);
+    --wb-purple: var(--qh-color-quantum);
+    --wb-slate: var(--qh-color-subtle-foreground);
+    --wb-line: var(--qh-color-border);
   }
 }
 
@@ -287,12 +565,16 @@
     --qh-motion-fast: 0ms;
     --qh-motion-standard: 0ms;
     --qh-motion-slow: 0ms;
+    --qh-motion-page-enter: 1ms;
+    --qh-motion-page-exit: 1ms;
+    --qh-motion-reveal: 1ms;
+    --qh-motion-modal: 1ms;
+    --qh-motion-state: 1ms;
+    --qh-motion-hover: 1ms;
+    --qh-motion-intro: 1ms;
     --motion-fast: 0ms;
     --motion-standard: 0ms;
     --motion-moderate: 0ms;
     --motion-slow: 0ms;
   }
 }
-/* Q-Health 3.3 motion language: short, purposeful, and removable. */
-:root { --qh-motion-page-enter: 260ms; --qh-motion-page-exit: 180ms; --qh-motion-reveal: 420ms; --qh-motion-modal: 220ms; --qh-motion-state: 240ms; --qh-motion-hover: 140ms; --qh-motion-intro: 1680ms; --qh-ease-enter: cubic-bezier(0.16, 1, 0.3, 1); --qh-ease-exit: cubic-bezier(0.7, 0, 0.84, 0); }
-@media (prefers-reduced-motion: reduce) { :root { --qh-motion-page-enter: 1ms; --qh-motion-page-exit: 1ms; --qh-motion-reveal: 1ms; --qh-motion-modal: 1ms; --qh-motion-state: 1ms; --qh-motion-hover: 1ms; --qh-motion-intro: 550ms; --motion-fast: 0ms; --motion-standard: 0ms; --motion-moderate: 0ms; --motion-slow: 0ms; } }

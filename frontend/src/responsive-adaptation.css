@@ -170,8 +170,10 @@
 
   .mobile-menu {
     display: inline-flex;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     flex: 0 0 auto;
     padding: 0;
   }
@@ -205,13 +207,17 @@
   }
 
   .command-trigger {
-    width: 36px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
     justify-content: center;
     padding-inline: 0;
   }
 
   .icon-button {
-    width: 36px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
     flex: 0 0 auto;
   }
 
@@ -485,11 +491,11 @@
     max-width: 38vw;
   }
 
-  .mobile-brand-mark,
   .mobile-menu,
   .command-trigger,
   .icon-button {
-    width: 34px;
-    min-width: 34px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }

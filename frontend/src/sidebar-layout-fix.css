@@ -1,88 +1,326 @@
-/* Final Q-Health sidebar edge alignment fix.
- * Preserve the existing width, theme, typography, navigation, hover states and motion.
- * Only remove the outer viewport gutter around the sidebar.
- */
-html,
-body,
-#root {
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 100%;
-}
+/* ==========================================================================
+   AUTHORITATIVE SHELL & SIDEBAR ARCHITECTURE
+   Supports:
+   - Sidebar Variants: sidebar (flush), floating (detached card), inset (recessed frame)
+   - Layout Modes: default (248px), icon (72px rail + tooltips), offcanvas (drawer)
+   - Responsive Breakpoints: Desktop (>=1024px), Tablet (768-1023px), Mobile (<768px)
+   ========================================================================== */
 
 #root .research-shell {
-  min-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  display: block;
+  min-height: 100dvh;
+  position: relative;
 }
 
+/* Base Sidebar Positioning */
 #root .research-shell .research-sidebar {
-  position: fixed !important;
-  inset: 0 auto 0 0 !important;
-  top: 0 !important;
-  right: auto !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  z-index: 40 !important;
-}
-
-#root .research-shell .research-sidebar::before,
-#root .research-shell .research-sidebar::after {
-  border-radius: 0 !important;
-}
-
-
-/*
- * Layer 3 independent-scroll correction.
- *
- * Desktop/tablet: the research shell owns the viewport and the workspace
- * becomes the primary vertical scroll container. The sidebar remains fixed
- * to the viewport and only its navigation list may scroll internally.
- *
- * Mobile deliberately restores the existing document/drawer scroll model.
- */
-#root .research-shell {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 248px;
+  min-width: 248px;
+  max-width: 248px;
   height: 100dvh;
-  min-height: 100dvh !important;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  z-index: 45;
+  background: var(--qh-sidebar-bg) !important;
+  border-right: 1px solid var(--qh-sidebar-border) !important;
+  transition: width 160ms var(--qh-ease-standard), min-width 160ms var(--qh-ease-standard), transform 180ms var(--qh-ease-standard), border-radius 160ms ease;
 }
 
-#root .research-shell .research-workspace {
-  height: 100dvh;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
+#root .research-shell .sidebar-brand {
+  flex: 0 0 auto;
+  min-height: 64px !important;
+  padding: 12px 16px !important;
 }
 
-#root .research-shell .research-sidebar {
-  overflow: hidden !important;
+#root .research-shell .sidebar-context {
+  flex: 0 0 auto;
+  margin: 10px 12px 6px !important;
+  padding: 10px 12px !important;
 }
 
-#root .research-shell .research-sidebar .sidebar-nav {
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+#root .research-shell .sidebar-nav {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 6px 10px 12px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overscroll-behavior: contain;
 }
 
-#root .research-shell .research-sidebar .sidebar-bottom {
-  flex: 0 0 auto;
+#root .research-shell .sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 !important;
+  padding-top: 8px;
 }
 
-@media (max-width: 767px) {
-  #root .research-shell {
-    height: auto;
-    min-height: 100dvh !important;
+#root .research-shell .sidebar-group:first-child {
+  padding-top: 2px;
+}
+
+#root .research-shell .sidebar-label {
+  padding: 4px 10px 4px !important;
+  margin: 0 !important;
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.14em !important;
+}
+
+#root .research-shell .sidebar-link {
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+  border-radius: 7px !important;
+  position: relative;
+}
+
+#root .research-shell .sidebar-bottom {
+  flex: 0 0 auto;
+  padding: 8px 10px 10px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--qh-sidebar-bg);
+  border-top: 1px solid var(--qh-sidebar-border);
+}
+
+#root .research-shell .collapse-button {
+  min-height: 34px !important;
+  margin-top: 4px !important;
+  padding: 6px 10px !important;
+}
+
+#root .research-shell .research-workspace {
+  min-width: 0;
+  min-height: 100dvh;
+  margin-left: 248px;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 160ms var(--qh-ease-standard);
+}
+
+/* ==========================================================================
+   DESKTOP SIDEBAR VARIANTS (>= 1024px)
+   ========================================================================== */
+@media (min-width: 1024px) {
+  /* 1. FLOATING VARIANT — Detached elevated rail card */
+  #root .research-shell .research-sidebar.variant-floating {
+    inset: 10px auto 10px 10px;
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.28), 0 2px 8px rgba(2, 6, 23, 0.16) !important;
+  }
+
+  #root .research-shell.variant-floating:not(.is-collapsed):not(.is-offcanvas) .research-workspace {
+    margin-left: 260px;
+  }
+
+  /* 2. INSET VARIANT — Recessed shell perimeter with framed workspace canvas */
+  #root .research-shell.variant-inset:not(.is-offcanvas) {
+    background: var(--qh-sidebar-bg) !important;
+    padding: 8px 8px 8px 0;
+  }
+
+  #root .research-shell .research-sidebar.variant-inset {
+    border-right: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #root .research-shell.variant-inset:not(.is-offcanvas) .research-workspace {
+    min-height: calc(100dvh - 16px);
+    border-radius: 14px;
+    border: 1px solid var(--qh-color-border);
+    background: var(--qh-color-background) !important;
+    box-shadow: var(--qh-shadow-medium);
+    overflow-x: clip;
+  }
+
+  #root .research-shell.variant-inset:not(.is-offcanvas) .research-topbar {
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+  }
+
+  /* 3. COLLAPSED ICON MODE (layout="icon") */
+  #root .research-shell.is-collapsed .research-sidebar,
+  html[data-layout="icon"] #root .research-shell .research-sidebar {
+    width: 72px;
+    min-width: 72px;
+    max-width: 72px;
     overflow: visible;
   }
 
+  #root .research-shell.is-collapsed .research-sidebar .sidebar-nav,
+  html[data-layout="icon"] #root .research-shell .research-sidebar .sidebar-nav {
+    overflow: visible !important;
+  }
+
+  #root .research-shell.is-collapsed .research-workspace,
+  html[data-layout="icon"] #root .research-shell .research-workspace {
+    margin-left: 72px;
+  }
+
+  #root .research-shell.variant-floating.is-collapsed .research-workspace,
+  html[data-layout="icon"] #root .research-shell.variant-floating .research-workspace {
+    margin-left: 92px;
+  }
+
+  #root .research-shell.is-collapsed .sidebar-brand,
+  html[data-layout="icon"] #root .research-shell .sidebar-brand {
+    justify-content: center;
+    padding-inline: 10px !important;
+  }
+
+  #root .research-shell.is-collapsed .brand-copy,
+  #root .research-shell.is-collapsed .sidebar-context,
+  #root .research-shell.is-collapsed .sidebar-label,
+  #root .research-shell.is-collapsed .sidebar-link span:not(.sidebar-pulse),
+  #root .research-shell.is-collapsed .sidebar-link kbd,
+  #root .research-shell.is-collapsed .collapse-button span,
+  html[data-layout="icon"] #root .research-shell .brand-copy,
+  html[data-layout="icon"] #root .research-shell .sidebar-context,
+  html[data-layout="icon"] #root .research-shell .sidebar-label,
+  html[data-layout="icon"] #root .research-shell .sidebar-link span:not(.sidebar-pulse),
+  html[data-layout="icon"] #root .research-shell .sidebar-link kbd,
+  html[data-layout="icon"] #root .research-shell .collapse-button span {
+    display: none !important;
+  }
+
+  #root .research-shell.is-collapsed .sidebar-link,
+  #root .research-shell.is-collapsed .collapse-button,
+  html[data-layout="icon"] #root .research-shell .sidebar-link,
+  html[data-layout="icon"] #root .research-shell .collapse-button {
+    justify-content: center;
+    padding-inline: 0 !important;
+  }
+
+  /* Accessible CSS Tooltip on Collapsed Sidebar Links */
+  #root .research-shell.is-collapsed .sidebar-link[data-tooltip]:hover::after,
+  #root .research-shell.is-collapsed .sidebar-link[data-tooltip]:focus-visible::after,
+  html[data-layout="icon"] #root .research-shell .sidebar-link[data-tooltip]:hover::after,
+  html[data-layout="icon"] #root .research-shell .sidebar-link[data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 95;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+    pointer-events: none;
+  }
+
+  /* 4. OFF-CANVAS MODE (layout="offcanvas") */
+  #root .research-shell.is-offcanvas .research-sidebar:not(.is-mobile-open),
+  html[data-layout="offcanvas"] #root .research-shell .research-sidebar:not(.is-mobile-open) {
+    transform: translateX(-105%);
+  }
+
+  #root .research-shell.is-offcanvas .research-workspace,
+  html[data-layout="offcanvas"] #root .research-shell .research-workspace {
+    margin-left: 0 !important;
+  }
+
+  #root .research-shell.is-offcanvas .mobile-menu,
+  html[data-layout="offcanvas"] #root .research-shell .mobile-menu {
+    display: inline-flex !important;
+  }
+
+  #root .research-shell.is-offcanvas .research-sidebar.is-mobile-open .sidebar-close,
+  html[data-layout="offcanvas"] #root .research-shell .research-sidebar.is-mobile-open .sidebar-close {
+    display: inline-flex !important;
+  }
+}
+
+/* ==========================================================================
+   TABLET ICON RAIL (768px – 1023px)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #root .research-shell .research-sidebar {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+  }
+
   #root .research-shell .research-workspace {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-    overscroll-behavior-y: auto;
-    scrollbar-gutter: auto;
+    margin-left: 72px !important;
+    width: auto !important;
+  }
+
+  #root .research-shell .sidebar-brand {
+    justify-content: center;
+    padding-inline: 10px !important;
+  }
+
+  #root .research-shell .brand-copy,
+  #root .research-shell .sidebar-context,
+  #root .research-shell .sidebar-label,
+  #root .research-shell .sidebar-link span:not(.sidebar-pulse),
+  #root .research-shell .sidebar-link kbd,
+  #root .research-shell .collapse-button {
+    display: none !important;
+  }
+
+  #root .research-shell .sidebar-link {
+    justify-content: center;
+    padding-inline: 0 !important;
+  }
+
+  #root .research-shell .sidebar-link[data-tooltip]:hover::after,
+  #root .research-shell .sidebar-link[data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 95;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+    pointer-events: none;
+  }
+}
+
+/* ==========================================================================
+   MOBILE VIEWPORT (< 768px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  #root .research-shell .research-sidebar {
+    display: none !important;
+  }
+
+  #root .research-shell .research-workspace {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }

@@ -248,7 +248,7 @@
 .flagship-hero{
   width:100%;
   min-width:0;
-  grid-template-columns:minmax(0,1.55fr) minmax(250px,.55fr)!important;
+  grid-template-columns:minmax(0,1.7fr) minmax(220px,.48fr)!important;
   gap:16px!important;
   padding:clamp(18px,2.6vw,30px)!important;
   border-radius:12px!important;
@@ -278,7 +278,7 @@
   background:color-mix(in srgb,var(--tremor-card) 88%,transparent)!important;
 }
 .flagship-stats div:last-child{border-right:0!important}
-.flagship-stats strong{margin-top:5px!important;font-size:16px!important}
+.flagship-stats strong{margin-top:4px!important;font-size:clamp(12px,1.05vw,15px)!important;white-space:nowrap}
 .flagship-hero-visual{
   min-height:220px!important;
   border-radius:9px!important;
