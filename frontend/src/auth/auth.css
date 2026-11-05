@@ -319,6 +319,8 @@
 .workspace-reveal-shell.is-ready{
   filter:none;
   transform:none;
+  /* Release the containing block so fixed desktop navigation stays viewport-anchored. */
+  will-change:auto;
 }
 @media(prefers-reduced-motion:reduce){
   .workspace-reveal-shell{
