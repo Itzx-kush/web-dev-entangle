@@ -4,7 +4,16 @@ import type {CalibrationDiagnostics,Dataset,Influence,MetricName,Metrics,ModelRe
 import {metric,modelLabels} from '../utils/format';
 import {TremorChartTooltip} from './TremorUI';
 
-const modelColors:Record<string,string>={logistic_regression:'var(--chart-blue)',svm:'var(--chart-teal)',random_forest:'var(--chart-amber)',vqc:'var(--chart-purple)',qsvc:'var(--chart-magenta)',qnn:'var(--chart-cyan)'};
+const modelColors:Record<string,string>={
+  logistic_regression:'var(--chart-blue)',
+  svm:'var(--chart-teal)',
+  random_forest:'var(--chart-amber)',
+  gradient_boosting:'var(--chart-indigo, #4f46e5)',
+  vqc:'var(--chart-purple)',
+  qsvc:'var(--chart-magenta)',
+  qnn:'var(--chart-cyan)',
+  hybrid_pennylane_torch:'var(--chart-emerald, #059669)',
+};
 
 export function ClassBalance({dataset}:{dataset:Dataset}){
  const items=Object.entries(dataset.provenance.class_distribution).map(([name,value])=>({name,value}));
@@ -46,8 +55,8 @@ export function RocChart({models}:{models:ModelRecord[]}){
   if(!curve||!curve.fpr.length||curve.fpr.length!==curve.tpr.length)return [];
   return [{name:modelLabels[model.model_type],kind:model.model_type,auc:model.metrics.test?.roc_auc,points:curve.fpr.map((fpr,index)=>({fpr,tpr:curve.tpr[index]}))}];
  });
- if(!curves.length)return <div className="h-[300px] grid place-items-center text-sm muted">No persisted held-out ROC curve is available. Models without valid curve coordinates are excluded.</div>;
- return <div><div className="mb-3 flex flex-wrap gap-2">{curves.map(curve=><span className="rounded-full border px-2.5 py-1 text-[10px]" key={curve.name}><strong>{curve.name}</strong> · ROC-AUC {metric(curve.auc)}</span>)}</div><div className="tremor-chart h-[320px]" role="img" aria-label="Persisted held-out ROC curves"><ResponsiveContainer width="100%" height="100%"><ScatterChart accessibilityLayer margin={{top:10,right:16,left:0,bottom:18}}><CartesianGrid stroke="var(--tremor-grid)"/><XAxis type="number" dataKey="fpr" name="False-positive rate" domain={[0,1]} tick={{fill:'var(--tremor-muted)'}} tickLine={false} axisLine={false} tickFormatter={v=>Number(v).toFixed(1)}/><YAxis type="number" dataKey="tpr" name="True-positive rate" domain={[0,1]} tick={{fill:'var(--tremor-muted)'}} tickLine={false} axisLine={false} tickFormatter={v=>Number(v).toFixed(1)}/><Tooltip cursor={{stroke:'var(--tremor-border)'}} content={<TremorChartTooltip valueFormatter={value=>value.toFixed(3)}/>}/><Scatter name="Chance reference" data={[{fpr:0,tpr:0},{fpr:1,tpr:1}]} line={{stroke:'var(--tremor-muted)',strokeDasharray:'4 4'}} shape={<circle r={0}/>}/>{curves.map(curve=><Scatter key={curve.name} name={curve.name} data={curve.points} line={{stroke:modelColors[curve.kind]||'var(--tremor-accent)',strokeWidth:2}} fill={modelColors[curve.kind]||'var(--tremor-accent)'} shape={<circle r={0}/>}/>)}</ScatterChart></ResponsiveContainer></div><p className="mt-1 text-center text-[11px] muted">Held-out/test evidence only. Curves use persisted false-positive and true-positive coordinates; ranking remains tied to the stated metric.</p></div>;
+ if(!curves.length)return <div className="h-[300px] grid place-items-center rounded-xl border border-dashed bg-muted/20 p-4 text-center text-sm muted">No persisted held-out ROC curve is available. Models without valid curve coordinates are excluded.</div>;
+ return <div><div className="mb-3 flex flex-wrap gap-2">{curves.map(curve=><span className="inline-flex items-center gap-1.5 rounded-full border bg-card/70 px-2.5 py-1 text-[10px]" key={curve.name}><span className="inline-block h-2 w-2 rounded-full" style={{background:modelColors[curve.kind]||'var(--tremor-accent)'}}/><strong>{curve.name}</strong> · ROC-AUC <span className="mono font-semibold">{metric(curve.auc)}</span></span>)}</div><div className="tremor-chart h-[320px]" role="img" aria-label="Persisted held-out ROC curves"><ResponsiveContainer width="100%" height="100%"><ScatterChart accessibilityLayer margin={{top:10,right:16,left:0,bottom:18}}><CartesianGrid stroke="var(--tremor-grid)"/><XAxis type="number" dataKey="fpr" name="False-positive rate" domain={[0,1]} tick={{fill:'var(--tremor-muted)'}} tickLine={false} axisLine={false} tickFormatter={v=>Number(v).toFixed(1)}/><YAxis type="number" dataKey="tpr" name="True-positive rate" domain={[0,1]} tick={{fill:'var(--tremor-muted)'}} tickLine={false} axisLine={false} tickFormatter={v=>Number(v).toFixed(1)}/><Tooltip cursor={{stroke:'var(--tremor-border)'}} content={<TremorChartTooltip valueFormatter={value=>value.toFixed(3)}/>}/><Scatter name="Chance reference" data={[{fpr:0,tpr:0},{fpr:1,tpr:1}]} line={{stroke:'var(--tremor-muted)',strokeDasharray:'4 4'}} shape={<circle r={0}/>}/>{curves.map(curve=><Scatter key={curve.name} name={curve.name} data={curve.points} line={{stroke:modelColors[curve.kind]||'var(--tremor-accent)',strokeWidth:2.2}} fill={modelColors[curve.kind]||'var(--tremor-accent)'} shape={<circle r={0}/>}/>)}</ScatterChart></ResponsiveContainer></div><p className="mt-1 text-center text-[11px] muted">Held-out/test evidence only. Curves use persisted false-positive and true-positive coordinates; ranking remains tied to the stated metric.</p></div>;
 }
 
 export function ThresholdTradeoffChart({operatingPoint}:{operatingPoint:OperatingPoint}){
@@ -87,14 +96,18 @@ export function ModelMetricBars({models,metricName}:{models:ModelRecord[];metric
 export function MetricMatrix({models}:{models:ModelRecord[]}){
  const rows=models.filter(model=>Object.values(model.metrics.test||{}).some(value=>typeof value==='number'&&Number.isFinite(value)));
  const columns:MetricName[]=['accuracy','precision','recall','sensitivity','specificity','f1','roc_auc'];
- if(!rows.length)return <div className="h-[240px] grid place-items-center text-sm muted">No persisted model metrics are available for the matrix.</div>;
+ if(!rows.length)return <div className="h-[240px] grid place-items-center rounded-xl border border-dashed bg-muted/20 p-4 text-center text-sm muted">No persisted model metrics are available for the matrix.</div>;
+ const bestByCol=Object.fromEntries(columns.map(col=>{
+  const vals=rows.map(m=>m.metrics.test?.[col]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  return [col,vals.length?Math.max(...vals):null];
+ }));
  return <div className="table-wrap overflow-x-auto"><div className="min-w-[900px] rounded-xl border" role="table" aria-label="Held-out metric matrix">
-  <div className="grid items-center border-b bg-muted/20 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide muted" style={{gridTemplateColumns:`minmax(190px,1.6fr) repeat(${columns.length},minmax(92px,1fr))`}} role="row">
-   <span role="columnheader">Model</span>{columns.map(name=><span role="columnheader" key={name}>{chartMetricLabel(name)}</span>)}
+  <div className="grid items-center border-b bg-muted/30 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide muted" style={{gridTemplateColumns:`minmax(195px,1.6fr) repeat(${columns.length},minmax(92px,1fr))`}} role="row">
+   <span role="columnheader">Model</span>{columns.map(name=><span className="text-center" role="columnheader" key={name}>{chartMetricLabel(name)}</span>)}
   </div>
-  {rows.map(model=><div className="grid items-center gap-0 border-b last:border-b-0" style={{gridTemplateColumns:`minmax(190px,1.6fr) repeat(${columns.length},minmax(92px,1fr))`}} role="row" key={model.id}>
-   <div className="px-3 py-3 text-xs font-semibold" role="rowheader">{modelLabels[model.model_type]}</div>
-   {columns.map(name=>{const value=model.metrics.test?.[name];const normalized=typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(1,value)):null;return <div className="px-2 py-2" role="cell" key={name}><div className="rounded-lg border px-2 py-2 text-center mono text-[11px] font-semibold" style={normalized===null?undefined:{background:`color-mix(in srgb, var(--chart-purple) ${Math.round(8+normalized*18)}%, transparent)`}}>{normalized===null?'—':normalized.toFixed(3)}</div></div>})}
+  {rows.map(model=><div className="grid items-center gap-0 border-b last:border-b-0 hover:bg-primary/[0.02]" style={{gridTemplateColumns:`minmax(195px,1.6fr) repeat(${columns.length},minmax(92px,1fr))`}} role="row" key={model.id}>
+   <div className="flex items-center gap-2 px-3 py-3 text-xs font-semibold" role="rowheader"><span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{background:modelColors[model.model_type]||'var(--tremor-accent)'}}/><span>{modelLabels[model.model_type]}</span></div>
+   {columns.map(name=>{const value=model.metrics.test?.[name];const normalized=typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(1,value)):null;const isBest=normalized!==null&&bestByCol[name]!==null&&Math.abs(normalized-bestByCol[name]!)<1e-6;return <div className="px-2 py-2" role="cell" key={name}><div className={`rounded-lg border px-2 py-2 text-center mono text-[11px] font-semibold ${isBest?'border-primary/40 ring-1 ring-primary/25':''}`} style={normalized===null?undefined:{background:`color-mix(in srgb, ${isBest?'var(--chart-blue)':'var(--chart-purple)'} ${Math.round(8+normalized*20)}%, transparent)`}}>{normalized===null?'—':normalized.toFixed(3)}</div></div>})}
   </div>)}
  </div></div>;
 }

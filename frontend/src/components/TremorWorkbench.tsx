@@ -89,7 +89,7 @@ export function ProbabilityBand({probability,threshold,label='Positive-class pro
       {value!=null&&<span className="probability-band-fill" style={{width:(value*100)+'%'}}/>}
       {cut!=null&&<i className="probability-band-threshold" style={{left:(cut*100)+'%'}}><em>Threshold {(cut*100).toFixed(1)}%</em></i>}
     </div>
-    <div className="probability-band-scale"><span>0%</span><span>50%</span><span>100%</span></div>
+    <div className="probability-band-scale"><span>0%</span><span>{value!=null&&cut!=null?(value>=cut?'Above operating threshold':'Below operating threshold'):'50%'}</span><span>100%</span></div>
   </div>;
 }
 

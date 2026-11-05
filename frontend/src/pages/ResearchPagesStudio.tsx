@@ -300,9 +300,9 @@ export function ExperimentLineagePanel({experimentId}:{experimentId:string}){
       {value.status==='LEGACY_UNRESOLVED'&&<Notice tone="amber">Partial provenance — some historical references are unavailable. This is not a model failure.</Notice>}
       {(value.status==='INTEGRITY_REVIEW'||issueCount>0)&&<Notice tone="amber">Provenance integrity requires review. {issueCount} structured issue{issueCount===1?'':'s'} detected.</Notice>}
       {value.nodes.length<=1?<EmptyState title="Lineage not available for this experiment">No supported persisted relationships are available yet.</EmptyState>:<div className="mt-4 overflow-x-auto">
-        <div className="flex min-w-max items-start gap-4 pb-2">{layers.map((layer,index)=><div className="w-56" key={layer}>
-          <div className="mb-2 flex items-center gap-2"><span className="metric-label">{index===0?'ORIGIN':'DEPTH '+layer}</span>{index>0&&<span className="muted">→</span>}</div>
-          <div className="space-y-2">{visibleNodes.filter(node=>node.depth===layer).map(node=><button key={node.id} onClick={()=>setSelected(node)} className={`w-full rounded-xl border p-3 text-left transition ${selected?.id===node.id?'border-primary bg-primary/5':'hover:border-primary/40'}`}>
+        <div className="flex min-w-max items-start gap-4 pb-2">{layers.map((layer,index)=><div className="w-60" key={layer}>
+          <div className="mb-2.5 flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-2.5 py-1.5"><span className="metric-label">{index===0?'ORIGIN':'DEPTH '+layer}</span>{index>0&&<span className="mono text-xs text-primary">→</span>}</div>
+          <div className="space-y-2">{visibleNodes.filter(node=>node.depth===layer).map(node=><button key={node.id} onClick={()=>setSelected(node)} className={`w-full rounded-xl border p-3 text-left transition ${selected?.id===node.id?'border-primary bg-primary/[0.06] ring-1 ring-primary/25':'hover:border-primary/40 hover:bg-muted/30'}`}>
             <div className="flex items-center justify-between gap-2"><Badge tone={lineageTone(node.object_type)}>{node.object_type.replaceAll('_',' ')}</Badge>{!node.exists&&<Badge tone="amber">unresolved</Badge>}</div>
             <strong className="mt-2 block truncate text-xs">{node.label}</strong><span className="mono mt-1 block truncate text-[10px] muted">{node.object_id}</span>
           </button>)}</div>
@@ -422,10 +422,10 @@ export function ScientificAuditTimelinePanel({experimentId}:{experimentId:string
       {integrity.data?.issues.length? <Notice tone="amber">Audit integrity warning: {integrity.data.issues.map(i=>i.message).join('; ')}</Notice>:null}
       {value.legacy_disclaimer&&<Notice tone="blue">{value.legacy_disclaimer}</Notice>}
 
-      {value.events.length===0?<EmptyState title="No audit events found">No recorded platform events match the active category filter.</EmptyState>:<div className="mt-4 space-y-3">
+      {value.events.length===0?<EmptyState title="No audit events found">No recorded platform events match the active category filter.</EmptyState>:<div className="mt-4 relative border-l-2 border-primary/25 pl-4 space-y-3">
         {value.events.map(event=>{
           const isExpanded=expandedEventId===event.id;
-          return <div key={event.id} className="rounded-xl border p-3.5 transition hover:border-primary/30">
+          return <div key={event.id} className="relative rounded-xl border bg-card/70 p-3.5 transition hover:border-primary/35">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={auditCategoryTone(event.event_category)}>{event.event_category}</Badge>

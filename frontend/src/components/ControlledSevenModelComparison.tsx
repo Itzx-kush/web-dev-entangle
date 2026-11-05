@@ -172,7 +172,7 @@ export function ControlledSevenModelComparison({
       description="Exact persisted held-out metrics plus evidence availability. Missing measurements remain visibly unavailable."
     >
       <div className="table-wrap overflow-x-auto">
-        <table className="data-table min-w-[1500px]">
+        <table className="data-table sticky-col-table min-w-[1500px]">
           <thead>
             <tr>
               <th>Family</th>
