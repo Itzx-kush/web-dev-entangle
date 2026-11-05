@@ -1,4 +1,5 @@
 import {useEffect,useRef} from 'react';
+import {isReducedMotionActive} from './motion/usePointerMotion';
 
 type Node={
   nx:number;

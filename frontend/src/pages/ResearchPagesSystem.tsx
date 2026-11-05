@@ -157,7 +157,20 @@ export function SettingsPage(){
   const [density,setDensity]=useState<'comfortable'|'compact'>(()=>(localStorage.getItem('qhealth-density') as 'comfortable'|'compact')||'comfortable');
   const [motion,setMotion]=useState<'full'|'reduced'>(()=>(localStorage.getItem('qhealth-motion') as 'full'|'reduced')||'full');
   const [inspector,setInspector]=useState(localStorage.getItem('qhealth-inspector')!=='hidden');
-  useEffect(()=>{localStorage.setItem('qhealth-theme',theme);localStorage.setItem('qhealth-sidebar-variant',sidebar);localStorage.setItem('qhealth-layout',layout);localStorage.setItem('qhealth-density',density);localStorage.setItem('qhealth-motion',motion);localStorage.setItem('qhealth-inspector',inspector?'visible':'hidden');window.dispatchEvent(new Event('qhealth-settings-changed'))},[theme,sidebar,layout,density,motion,inspector]);
+  useEffect(()=>{
+    localStorage.setItem('qhealth-theme',theme);
+    localStorage.setItem('qhealth-sidebar-variant',sidebar);
+    localStorage.setItem('qhealth-layout',layout);
+    localStorage.setItem('qhealth-density',density);
+    localStorage.setItem('qhealth-motion',motion);
+    localStorage.setItem('qhealth-inspector',inspector?'visible':'hidden');
+    const dark=theme==='dark'||(theme==='system'&&window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark',Boolean(dark));
+    document.documentElement.dataset.theme=dark?'dark':'research';
+    document.documentElement.dataset.density=density;
+    document.documentElement.dataset.motion=motion;
+    window.dispatchEvent(new Event('qhealth-settings-changed'));
+  },[theme,sidebar,layout,density,motion,inspector]);
   return <div className="layer3-final-workspace layer3-settings-workspace">
     <PageHeader eyebrow="Workspace controls" title="Settings center" description="Manage account access, interface preferences, accessibility, and research safeguards."/>
     <WorkbenchRail items={[{label:'Account',value:isAuthenticated?'Signed in':'Guest mode',detail:isAuthenticated?'Personal workspace':'Prototype access',tone:isAuthenticated?'green':'slate'},{label:'Theme',value:theme==='research'?'Research light':theme==='dark'?'Deep research':'System',detail:'Workspace appearance',tone:theme==='dark'?'purple':'blue'},{label:'Density',value:density,detail:'Layout spacing',tone:'blue'},{label:'Motion',value:motion,detail:'Accessibility preference',tone:motion==='reduced'?'green':'purple'}]}/>

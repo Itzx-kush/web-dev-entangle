@@ -1,4 +1,6 @@
 import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
+import gsap from 'gsap';
+import {isReducedMotionActive} from '../motion/usePointerMotion';
 
 const glyphs='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ΔΨΩλ';
 
@@ -6,15 +8,14 @@ export function DecryptedText({text,className=''}:{text:string;className?:string
   const [value,setValue]=useState(text);
 
   useEffect(()=>{
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduced){setValue(text);return}
+    if(isReducedMotionActive()){setValue(text);return}
     let frame=0;
     let iteration=0;
     let last=0;
     const tick=(time:number)=>{
       if(time-last<36){frame=requestAnimationFrame(tick);return}
       last=time;
-      iteration+=.7;
+      iteration+=.85;
       setValue(Array.from(text).map((character,index)=>{
         if(character===' '||index<iteration)return character;
         return glyphs[Math.floor((index*17+iteration*13)%glyphs.length)];
@@ -33,7 +34,31 @@ export function DecryptedText({text,className=''}:{text:string;className?:string
 }
 
 export function SplitReveal({text,className=''}:{text:string;className?:string}){
-  return <span className={`outer-rb-split ${className}`} aria-label={text}>
+  const hostRef=useRef<HTMLSpanElement|null>(null);
+
+  useEffect(()=>{
+    const host=hostRef.current;
+    if(!host||isReducedMotionActive())return;
+    const words=host.querySelectorAll('span');
+    if(!words.length)return;
+    const ctx=gsap.context(()=>{
+      gsap.fromTo(
+        words,
+        {opacity:0,y:10},
+        {
+          opacity:1,
+          y:0,
+          duration:0.42,
+          stagger:0.032,
+          ease:'power2.out',
+          clearProps:'transform,opacity',
+        }
+      );
+    },host);
+    return()=>ctx.revert();
+  },[text]);
+
+  return <span ref={hostRef} className={`outer-rb-split ${className}`} aria-label={text}>
     {text.split(' ').map((word,index)=><span aria-hidden="true" key={`${word}-${index}`} style={{'--word-index':index} as CSSProperties}>{word}</span>)}
   </span>;
 }
@@ -54,8 +79,9 @@ export function OuterMagnet({children,className=''}:{children:ReactNode;classNam
 export function OuterSpotlight({children,className=''}:{children:ReactNode;className?:string}){
   const ref=useRef<HTMLDivElement|null>(null);
   const move=(event:React.PointerEvent<HTMLDivElement>)=>{
+    if(isReducedMotionActive()||event.pointerType==='touch')return;
     const rect=ref.current?.getBoundingClientRect();
-    if(!rect||event.pointerType==='touch')return;
+    if(!rect)return;
     ref.current?.style.setProperty('--spotlight-x',`${event.clientX-rect.left}px`);
     ref.current?.style.setProperty('--spotlight-y',`${event.clientY-rect.top}px`);
   };
@@ -88,7 +114,7 @@ export function PixelTrail(){
       frame.current=requestAnimationFrame(draw);
     };
     const move=(event:PointerEvent)=>{
-      if(reduced.matches||coarse.matches||event.pointerType==='touch')return;
+      if(isReducedMotionActive()||reduced.matches||coarse.matches||event.pointerType==='touch')return;
       target.x=event.clientX-bounds.left;
       target.y=event.clientY-bounds.top;
       active=target.x>=0&&target.x<=bounds.width&&target.y>=0&&target.y<=bounds.height;

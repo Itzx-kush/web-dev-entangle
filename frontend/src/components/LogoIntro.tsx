@@ -1,13 +1,31 @@
 import {useEffect,useState} from 'react';
+import {isReducedMotionActive} from './motion/usePointerMotion';
 
 export function LogoIntro(){
-  const [visible,setVisible]=useState(true);
+  const [visible,setVisible]=useState(()=>{
+    try{
+      if(
+        typeof window!=='undefined'&&(
+          window.sessionStorage?.getItem('qhealth-logo-intro-seen')==='1'||
+          window.localStorage?.getItem('qhealth-logo-intro-seen')==='1'||
+          Boolean(window.sessionStorage?.getItem('qhealth_guest_session_v1'))||
+          (window.location.pathname&&window.location.pathname!=='/')
+        )
+      ){
+        return false;
+      }
+    }catch{
+      /* ignore storage errors */
+    }
+    return true;
+  });
   const [exiting,setExiting]=useState(false);
 
   useEffect(()=>{
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const exitDelay=reduced?80:1680;
-    const removeDelay=reduced?220:2080;
+    if(!visible)return;
+    const reduced=isReducedMotionActive();
+    const exitDelay=reduced?60:1450;
+    const removeDelay=reduced?180:1800;
 
     document.documentElement.classList.add('brand-intro-active');
     document.body.classList.add('brand-intro-active');
@@ -20,6 +38,11 @@ export function LogoIntro(){
     const exitTimer=window.setTimeout(()=>setExiting(true),exitDelay);
     const removeTimer=window.setTimeout(()=>{
       releaseScrollLock();
+      try{
+        window.sessionStorage?.setItem('qhealth-logo-intro-seen','1');
+      }catch{
+        /* ignore storage errors */
+      }
       setVisible(false);
     },removeDelay);
 
@@ -28,7 +51,7 @@ export function LogoIntro(){
       window.clearTimeout(removeTimer);
       releaseScrollLock();
     };
-  },[]);
+  },[visible]);
 
   if(!visible)return null;
 

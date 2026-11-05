@@ -1,5 +1,17 @@
 import {useEffect,type RefObject} from 'react';
 
+export function isReducedMotionActive():boolean{
+  if(typeof window==='undefined')return true;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return true;
+  if(typeof document!=='undefined'&&document.documentElement?.dataset?.motion==='reduced')return true;
+  try{
+    if(window.localStorage?.getItem('qhealth-motion')==='reduced')return true;
+  }catch{
+    /* ignore storage access errors */
+  }
+  return false;
+}
+
 /**
  * Motion-primitives-style pointer spring.
  *
@@ -23,7 +35,7 @@ export function usePointerMotion<T extends HTMLElement>(rootRef:RefObject<T|null
     let energy=0;
 
     const write=()=>{
-      const reduced=reducedQuery.matches;
+      const reduced=isReducedMotionActive();
       const easing=reduced?1:.075;
       currentX+=(targetX-currentX)*easing;
       currentY+=(targetY-currentY)*easing;
@@ -40,7 +52,7 @@ export function usePointerMotion<T extends HTMLElement>(rootRef:RefObject<T|null
       if(!frame)frame=requestAnimationFrame(write);
     };
     const move=(event:PointerEvent)=>{
-      if(reducedQuery.matches||coarseQuery.matches||event.pointerType==='touch')return;
+      if(isReducedMotionActive()||coarseQuery.matches||event.pointerType==='touch')return;
       targetX=Math.max(-1,Math.min(1,(event.clientX/window.innerWidth-.5)*2));
       targetY=Math.max(-1,Math.min(1,(event.clientY/window.innerHeight-.5)*2));
       active=true;
@@ -55,7 +67,7 @@ export function usePointerMotion<T extends HTMLElement>(rootRef:RefObject<T|null
     const motionChange=()=>{
       cancelAnimationFrame(frame);
       frame=0;
-      if(reducedQuery.matches){
+      if(isReducedMotionActive()){
         currentX=0;
         currentY=0;
         energy=0;

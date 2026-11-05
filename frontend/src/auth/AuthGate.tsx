@@ -1,5 +1,5 @@
 import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
-import {ArrowLeft,ArrowRight,Atom,FlaskConical,Github,ShieldCheck,TriangleAlert} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Atom,FlaskConical,Github,Moon,ShieldCheck,Sun,TriangleAlert} from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
 import {useAuth} from './AuthProvider';
 import {useGuestMigration} from './GuestMigrationProvider';
@@ -16,6 +16,10 @@ function applyStoredTheme(){
   const dark=stored==='dark'||(stored==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark',dark);
   document.documentElement.dataset.theme=dark?'dark':'research';
+  const motion=localStorage.getItem('qhealth-motion')||'standard';
+  const density=localStorage.getItem('qhealth-density')||'comfortable';
+  document.documentElement.dataset.motion=motion;
+  document.documentElement.dataset.density=density;
 }
 
 function GoogleMark(){
@@ -82,9 +86,32 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
   const preservingGuestWork=Boolean(migration&&migration.status!=='completed');
   const [authenticating,setAuthenticating]=useState<'google'|'github'|null>(null);
   const [enteringGuest,setEnteringGuest]=useState(false);
+  const [isDark,setIsDark]=useState(()=>{
+    if(typeof document==='undefined')return true;
+    return document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark';
+  });
   const guestTimer=useRef<number|null>(null);
   const sceneRef=useRef<HTMLElement|null>(null);
   usePointerMotion(sceneRef);
+
+  const toggleAuthTheme=()=>{
+    const nextDark=!isDark;
+    setIsDark(nextDark);
+    const nextTheme=nextDark?'dark':'research';
+    localStorage.setItem('qhealth-theme',nextTheme);
+    document.documentElement.classList.toggle('dark',nextDark);
+    document.documentElement.dataset.theme=nextTheme;
+    window.dispatchEvent(new Event('qhealth-settings-changed'));
+  };
+
+  useEffect(()=>{
+    const syncTheme=()=>{
+      const darkNow=document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark';
+      setIsDark(darkNow);
+    };
+    window.addEventListener('qhealth-settings-changed',syncTheme);
+    return()=>window.removeEventListener('qhealth-settings-changed',syncTheme);
+  },[]);
 
   useEffect(()=>{
     if(error)setAuthenticating(null);
@@ -116,9 +143,21 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
     </div>
 
     <section className="auth-brand" data-motion-depth="back" aria-labelledby="auth-title">
-      <button className="auth-back" type="button" onClick={onBack}><ArrowLeft size={14}/> Back to public experience</button>
+      <div className="auth-top-bar">
+        <button className="auth-back" type="button" onClick={onBack}><ArrowLeft size={14}/> Back to public experience</button>
+        <button
+          className="auth-theme-toggle"
+          type="button"
+          onClick={toggleAuthTheme}
+          aria-label={isDark?'Switch to light theme':'Switch to dark theme'}
+          title={isDark?'Switch to light theme':'Switch to dark theme'}
+        >
+          {isDark?<Sun size={14}/>:<Moon size={14}/>}
+          <span>{isDark?'Light':'Dark'}</span>
+        </button>
+      </div>
       <div className="auth-brand-lockup">
-        <img src="/entanglex-logo-dark.svg" alt="EntangleX"/>
+        <img src={isDark?'/entanglex-logo-dark.svg':'/entanglex-logo-light.svg'} alt="EntangleX"/>
         <ShinyText className="auth-product-label">Q-HEALTH</ShinyText>
       </div>
       <div className="auth-research-identity" aria-label="Research access environment">

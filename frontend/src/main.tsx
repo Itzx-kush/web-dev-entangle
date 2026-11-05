@@ -27,6 +27,7 @@ import './styles/workspace-premium.css';
 import './styles/quantum-lab.css';
 import './styles/layer3-final-polish.css';
 import './styles/dark-theme-consistency.css';
+import './styles/visual-transformation.css';
 
 const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:3000,retry:1}}});
 
