@@ -16,6 +16,8 @@ import {
   FlaskConical,
   Database,
   Sliders,
+  History,
+  ShieldCheck,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -274,10 +276,19 @@ export function ExperimentNotesPage() {
           title="Guest mode is active"
           description="Sign in to your account to record, search, and manage persistent observations alongside your quantum and classical ML experiments."
         >
-          <Button onClick={leaveGuestMode}>
-            <LogIn size={14} />
-            Sign in with Google or GitHub
-          </Button>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Badge tone="amber">Guest Session</Badge>
+            <Badge tone="blue"><ShieldCheck size={12}/> Local Prototype Active</Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={leaveGuestMode}>
+              <LogIn size={14} />
+              Sign in with Google or GitHub
+            </Button>
+            <Link className="btn btn-outline" to="/demo">
+              Explore Verified Demo
+            </Link>
+          </div>
         </Card>
       </div>
     );
@@ -319,7 +330,12 @@ export function ExperimentNotesPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Link className="btn btn-outline" to="/my-research">
+              <History size={14} />
               Research activity
+            </Link>
+            <Link className="btn btn-outline" to="/my-research/reports">
+              <FileText size={14} />
+              Research reports
             </Link>
             {!isCreating && !editingNote && (
               <Button onClick={handleStartCreate}>

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Atom,Brain,ChevronLeft,ChevronRight,Database,FlaskConical,History,LogIn,RefreshCw,Sparkles} from 'lucide-react';
+import {Atom,BookOpen,Brain,ChevronLeft,ChevronRight,Database,FileText,FlaskConical,History,LogIn,RefreshCw,ShieldCheck,Sparkles} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuth} from '../auth/AuthProvider';
 import {useGuestMigration} from '../auth/GuestMigrationProvider';
@@ -112,11 +112,34 @@ export function ResearchHistoryPage(){
 
   if(!isAuthenticated)return <div className="layer3-final-workspace layer3-history-page">
     <PageHeader eyebrow="Personal research" title="My Research" description="Private cloud research history is available only to an authenticated EntangleX account."/>
-    <div className="research-history-empty"><span><History size={22}/></span><h2>Guest mode is active</h2><p>The existing research prototype remains fully available. Guest actions do not write private cloud history.</p><Button onClick={beginUpgrade}><LogIn size={15}/>{hasMigratableState?'Sign in to save this work':'Go to sign in'}</Button></div>
+    <div className="research-history-empty">
+      <span><History size={22}/></span>
+      <div className="flex flex-wrap justify-center gap-2 mb-1">
+        <Badge tone="amber">Guest Session</Badge>
+        <Badge tone="blue"><ShieldCheck size={12}/> Local Prototype Active</Badge>
+      </div>
+      <h2>Guest mode is active</h2>
+      <p>The existing research prototype remains fully available. Guest actions do not write private cloud history until you sign in.</p>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button onClick={beginUpgrade}><LogIn size={15}/>{hasMigratableState?'Sign in to save this work':'Go to sign in'}</Button>
+        <Link className="btn btn-outline" to="/demo">Explore Verified Demo</Link>
+      </div>
+    </div>
   </div>;
 
   return <div className="layer3-final-workspace layer3-history-page research-history-page">
-    <PageHeader eyebrow="Personal research" title="My Research" description="Your private record of meaningful EntangleX research actions, linked back to the existing scientific workspace." actions={<div className="flex flex-wrap gap-2"><Link className="btn btn-outline" to="/my-research/reports">My Research Reports</Link><Link className="btn btn-outline" to="/my-research/notes">Experiment Notes</Link><Link className="btn btn-primary" to="/training">New experiment</Link></div>}/>
+    <PageHeader
+      eyebrow="Personal research"
+      title="My Research"
+      description="Your private record of meaningful EntangleX research actions, linked back to the existing scientific workspace."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Link className="btn btn-outline" to="/my-research/reports"><FileText size={14}/> My Research Reports</Link>
+          <Link className="btn btn-outline" to="/my-research/notes"><BookOpen size={14}/> Experiment Notes</Link>
+          <Link className="btn btn-primary" to="/training"><FlaskConical size={14}/> New experiment</Link>
+        </div>
+      }
+    />
 
     <section className="research-history-intro">
       <div><span className="account-kicker">User-owned metadata</span><h2>Recent activity</h2><p>References and concise research metadata are stored here. Raw health inputs and full scientific result payloads are not.</p></div>

@@ -1,9 +1,10 @@
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
-import {ArrowDown,ArrowRight,ArrowUpRight,Atom,BrainCircuit,Database,Menu,ShieldCheck,X} from 'lucide-react';
+import {ArrowDown,ArrowRight,ArrowUpRight,Atom,BrainCircuit,Database,Menu,Moon,ShieldCheck,Sun,X} from 'lucide-react';
+import gsap from 'gsap';
 import {InteractiveQuantumField} from './InteractiveQuantumField';
 import {ParticleText} from './ParticleText';
-import {usePointerMotion} from './motion/usePointerMotion';
-import {BorderGlow,DecryptedText,GlareHover,OuterAurora,OuterMagnet,OuterSpotlight,PixelTrail,ShinyText,SplitReveal} from './reactbits';
+import {isReducedMotionActive,usePointerMotion} from './motion/usePointerMotion';
+import {BorderGlow,DecryptedText,GlareHover,OuterAurora,OuterMagnet,OuterSpotlight,ShinyText,SplitReveal} from './reactbits';
 
 type PublicExperienceProps={
   onRequestAccess:(destination?:string)=>void;
@@ -39,12 +40,68 @@ const platformFlow=[
 
 export function PublicExperience({onRequestAccess,exiting=false}:PublicExperienceProps){
   const [menuOpen,setMenuOpen]=useState(false);
+  const [isDark,setIsDark]=useState(()=>{
+    if(typeof document==='undefined')return true;
+    return document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark';
+  });
   const sceneRef=useRef<HTMLDivElement|null>(null);
   usePointerMotion(sceneRef);
 
+  const togglePublicTheme=()=>{
+    const nextDark=!isDark;
+    setIsDark(nextDark);
+    const nextTheme=nextDark?'dark':'research';
+    localStorage.setItem('qhealth-theme',nextTheme);
+    document.documentElement.classList.toggle('dark',nextDark);
+    document.documentElement.dataset.theme=nextTheme;
+    window.dispatchEvent(new Event('qhealth-settings-changed'));
+  };
+
+  useEffect(()=>{
+    const syncTheme=()=>{
+      const darkNow=document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark';
+      setIsDark(darkNow);
+    };
+    window.addEventListener('qhealth-settings-changed',syncTheme);
+    return()=>window.removeEventListener('qhealth-settings-changed',syncTheme);
+  },[]);
+
+  useEffect(()=>{
+    const root=sceneRef.current;
+    if(!root||isReducedMotionActive())return;
+    const ctx=gsap.context(()=>{
+      gsap.fromTo(
+        '.public-hero-copy > *',
+        {opacity:0,y:14},
+        {
+          opacity:1,
+          y:0,
+          duration:0.52,
+          stagger:0.065,
+          ease:'power2.out',
+          clearProps:'transform,opacity',
+        }
+      );
+      gsap.fromTo(
+        '.public-hero-system',
+        {opacity:0,scale:0.97,y:12},
+        {
+          opacity:1,
+          scale:1,
+          y:0,
+          duration:0.65,
+          delay:0.12,
+          ease:'power2.out',
+          clearProps:'transform,opacity',
+        }
+      );
+    },root);
+    return()=>ctx.revert();
+  },[]);
+
   useEffect(()=>{
     const elements=Array.from(document.querySelectorAll<HTMLElement>('[data-public-reveal]'));
-    if(!('IntersectionObserver'in window)){
+    if(!('IntersectionObserver'in window)||isReducedMotionActive()){
       elements.forEach(element=>element.classList.add('is-visible'));
       return;
     }
@@ -106,7 +163,7 @@ export function PublicExperience({onRequestAccess,exiting=false}:PublicExperienc
 
     <header className="public-header">
       <a className="public-brand" href="#top" aria-label="EntangleX Q-Health home" onClick={()=>setMenuOpen(false)}>
-        <img src="/entanglex-logo-dark.svg" alt="EntangleX"/>
+        <img src={isDark?'/entanglex-logo-dark.svg':'/entanglex-logo-light.svg'} alt="EntangleX"/>
         <span>Q-HEALTH</span>
       </a>
       <nav className="public-nav" aria-label="Public navigation">
@@ -115,9 +172,21 @@ export function PublicExperience({onRequestAccess,exiting=false}:PublicExperienc
         <a href="#demonstration">Demonstration</a>
         <a href="#about">About</a>
       </nav>
-      <OuterMagnet className="public-header-magnet"><button className="public-header-cta" type="button" onClick={()=>requestAccess('/')}>
-        Sign in <ArrowUpRight size={14}/>
-      </button></OuterMagnet>
+      <div className="public-header-actions">
+        <button
+          className="public-theme-toggle"
+          type="button"
+          onClick={togglePublicTheme}
+          aria-label={isDark?'Switch to light theme':'Switch to dark theme'}
+          title={isDark?'Switch to light theme':'Switch to dark theme'}
+        >
+          {isDark?<Sun size={15}/>:<Moon size={15}/>}
+          <span>{isDark?'Light':'Dark'}</span>
+        </button>
+        <OuterMagnet className="public-header-magnet"><button className="public-header-cta" type="button" onClick={()=>requestAccess('/')}>
+          Sign in <ArrowUpRight size={14}/>
+        </button></OuterMagnet>
+      </div>
       <button
         className="public-menu-toggle"
         type="button"
@@ -133,13 +202,16 @@ export function PublicExperience({onRequestAccess,exiting=false}:PublicExperienc
         <a href="#platform" onClick={()=>setMenuOpen(false)}>Platform</a>
         <a href="#demonstration" onClick={()=>setMenuOpen(false)}>Demonstration</a>
         <a href="#about" onClick={()=>setMenuOpen(false)}>About</a>
+        <button type="button" className="public-mobile-theme-btn" onClick={togglePublicTheme}>
+          {isDark?'Switch to Light Theme':'Switch to Dark Theme'}
+          {isDark?<Sun size={15}/>:<Moon size={15}/>}
+        </button>
         <button type="button" onClick={()=>requestAccess('/')}>Sign in <ArrowRight size={15}/></button>
       </nav>}
     </header>
 
     <main id="top">
       <section className="public-hero public-shell" aria-labelledby="public-hero-title">
-        <PixelTrail/>
         <div className="public-hero-copy" data-public-reveal="hero" data-motion-depth="front">
           <p className="public-eyebrow"><span><DecryptedText text="ENTANGLEX"/></span> Biomedical research platform</p>
           <ParticleText id="public-hero-title" text="Hybrid quantum–classical intelligence for biomedical research."/>
@@ -282,7 +354,7 @@ export function PublicExperience({onRequestAccess,exiting=false}:PublicExperienc
     </main>
 
     <footer className="public-footer public-shell">
-      <div className="public-brand"><img src="/entanglex-logo-dark.svg" alt="EntangleX"/><span>Q-HEALTH</span></div>
+      <div className="public-brand"><img src={isDark?'/entanglex-logo-dark.svg':'/entanglex-logo-light.svg'} alt="EntangleX"/><span>Q-HEALTH</span></div>
       <p>Hybrid quantum–classical biomedical research platform.</p>
       <p>Research prototype · no clinical diagnosis</p>
     </footer>

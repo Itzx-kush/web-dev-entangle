@@ -1,4 +1,5 @@
 import {useEffect,useRef} from 'react';
+import {isReducedMotionActive} from './motion/usePointerMotion';
 
 type Point={ox:number;oy:number;x:number;y:number;vx:number;vy:number;a:number};
 
@@ -32,7 +33,7 @@ export function ParticleText({text,id}:{text:string;id:string}){
       top=rect.top;
       width=Math.max(1,Math.round(rect.width));
       height=Math.max(1,Math.round(rect.height));
-      if(motion.matches||coarse.matches||width<520){
+      if(isReducedMotionActive()||motion.matches||coarse.matches||width<520){
         points=[];
         context.clearRect(0,0,canvas.width,canvas.height);
         return;
@@ -91,6 +92,8 @@ export function ParticleText({text,id}:{text:string;id:string}){
       host.style.setProperty('--particle-x',`${pointer.x}px`);
       host.style.setProperty('--particle-y',`${pointer.y}px`);
       host.style.setProperty('--particle-energy',pointer.energy.toFixed(3));
+      const isDark=document.documentElement.classList.contains('dark')||document.documentElement.dataset.theme==='dark';
+      const rgb=isDark?'244,242,248':'15,23,42';
       points.forEach(point=>{
         if(pointer.active){
           const dx=point.x-pointer.x;
@@ -111,7 +114,7 @@ export function ParticleText({text,id}:{text:string;id:string}){
         point.vy*=damping;
         point.x+=point.vx*step;
         point.y+=point.vy*step;
-        context.fillStyle=`rgba(244,242,248,${point.a})`;
+        context.fillStyle=`rgba(${rgb},${point.a})`;
         context.fillRect(point.x,point.y,2,2);
       });
       frame=requestAnimationFrame(draw);

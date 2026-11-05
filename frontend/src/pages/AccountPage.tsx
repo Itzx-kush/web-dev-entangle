@@ -1,4 +1,4 @@
-import {CalendarClock,CheckCircle2,Github,KeyRound,LogIn,LogOut,Palette,ShieldCheck,UserRound} from 'lucide-react';
+import {BookOpen,CalendarClock,CheckCircle2,FileText,Github,History,KeyRound,LogIn,LogOut,Palette,ShieldCheck,UserRound} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {AccountAvatar,accountEmail,accountName,accountProvider} from '../auth/AccountIdentity';
 import {useAuth} from '../auth/AuthProvider';
@@ -17,18 +17,43 @@ export function AccountPage(){
   const {user,profile,isAuthenticated,error,signingOut,signOut}=useAuth();
   const {beginUpgrade,hasMigratableState}=useGuestMigration();
 
+  const theme=localStorage.getItem('qhealth-theme')==='dark'?'Deep research':'Research light';
+  const density=localStorage.getItem('qhealth-density')==='compact'?'Compact':'Comfortable';
+  const motion=localStorage.getItem('qhealth-motion')==='reduced'?'Reduced':'Full';
+
   if(!isAuthenticated)return <div className="layer3-final-workspace layer3-account-page">
     <PageHeader eyebrow="Workspace identity" title="Guest research workspace" description="You are using the full current EntangleX research prototype without an account."/>
     <div className="account-guest-panel">
       <div className="account-guest-icon"><UserRound size={24}/></div>
-      <div><h2>Guest mode is active</h2><p>Your current prototype workflow remains available. Sign in when you want to establish a personal EntangleX identity; persistent research records are not enabled yet.</p></div>
+      <div>
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <Badge tone="amber">Guest Session Active</Badge>
+          <Badge tone="blue">Full Prototype Access</Badge>
+        </div>
+        <h2>Guest mode is active</h2>
+        <p>Your current prototype workflow remains available. Sign in when you want to establish a personal EntangleX identity and persist research history, saved reports, and experiment notes.</p>
+      </div>
       <Button onClick={beginUpgrade}><LogIn size={15}/>{hasMigratableState?'Sign in to save this work':'Go to sign in'}</Button>
     </div>
-  </div>;
 
-  const theme=localStorage.getItem('qhealth-theme')==='dark'?'Deep research':'Research light';
-  const density=localStorage.getItem('qhealth-density')==='compact'?'Compact':'Comfortable';
-  const motion=localStorage.getItem('qhealth-motion')==='reduced'?'Reduced':'Full';
+    <div className="account-content-grid mt-6">
+      <Card title="Guest session capabilities" description="Available immediately in this browser session without authentication.">
+        <dl className="account-details">
+          <div><dt><ShieldCheck size={15}/>Session scope</dt><dd>Local browser session</dd></div>
+          <div><dt><FileText size={15}/>Benchmark & demo access</dt><dd>Verified SIH Diabetes & UCI datasets enabled</dd></div>
+          <div><dt><History size={15}/>Private cloud persistence</dt><dd>Requires Google or GitHub sign-in</dd></div>
+        </dl>
+      </Card>
+      <Card title="Interface preferences" description="These settings remain local to this browser.">
+        <div className="account-preference-list">
+          <div><Palette size={16}/><span><strong>Theme</strong><small>{theme}</small></span></div>
+          <div><span className="account-density-icon" aria-hidden="true">Aa</span><span><strong>Density</strong><small>{density}</small></span></div>
+          <div><span className="account-motion-icon" aria-hidden="true">↝</span><span><strong>Motion</strong><small>{motion}</small></span></div>
+        </div>
+        <Link className="btn btn-outline mt-4" to="/settings">Open workspace preferences</Link>
+      </Card>
+    </div>
+  </div>;
 
   return <div className="layer3-final-workspace layer3-account-page account-page">
     <PageHeader
@@ -74,7 +99,11 @@ export function AccountPage(){
           <div><span className="account-density-icon" aria-hidden="true">Aa</span><span><strong>Density</strong><small>{density}</small></span></div>
           <div><span className="account-motion-icon" aria-hidden="true">↝</span><span><strong>Motion</strong><small>{motion}</small></span></div>
         </div>
-        <Link className="btn btn-outline mt-4" to="/settings">Open workspace preferences</Link>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Link className="btn btn-outline" to="/settings">Open workspace preferences</Link>
+          <Link className="btn btn-outline" to="/my-research/reports"><FileText size={14}/> Saved Reports</Link>
+          <Link className="btn btn-outline" to="/my-research/notes"><BookOpen size={14}/> Experiment Notes</Link>
+        </div>
       </Card>
     </div>
 
@@ -85,7 +114,7 @@ export function AccountPage(){
 
     <section className="account-foundation-note">
       <div><span className="account-kicker">Workspace foundation</span><h2>Your account is ready for the next research layer.</h2></div>
-      <p>Research history and user-owned records are not stored in this phase. The existing EntangleX backend remains the source of truth for current research workflows.</p>
+      <p>Research history and user-owned records are scoped to your authenticated identity while the existing EntangleX backend remains the source of truth for current research workflows.</p>
     </section>
   </div>;
 }

@@ -124,7 +124,7 @@ export function RedisLab() {
   const statusState = status?.status ?? 'loading';
   const StatusIcon = statusState === 'online' ? CheckCircle2 : statusState === 'offline' ? WifiOff : statusState === 'disabled' ? AlertTriangle : LoaderCircle;
 
-  return <div className="redis-lab-page">
+  return <div className="layer3-final-workspace redis-lab-page">
     <header className="redis-lab-heading">
       <div>
         <p className="redis-lab-eyebrow"><Database size={14}/> SYSTEMS / OPTIONAL SERVICE</p>
