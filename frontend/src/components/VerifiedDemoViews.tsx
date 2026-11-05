@@ -6,7 +6,7 @@ import {EmptyState,ErrorBanner,JsonDisclosure,Loading,MetricCard,Notice,PageHead
 import {ProbabilityBand,PipelineFlow,StatusStrip,WorkbenchRail} from './TremorWorkbench';
 import {TremorBarChart} from './TremorUI';
 import {InfluenceBars,MetricBars,RocChart,ThresholdTradeoffChart,ValueBars} from './Charts';
-import {StageNav} from '../pages/ResearchPagesCore';
+import {StageNav} from './StageNav';
 import {metric,modelLabels,seconds} from '../utils/format';
 import {useFlagshipData} from '../hooks/useVerifiedDemo';
 import {ResearchResultsCenter} from './ResearchResultsCenter';

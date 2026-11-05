@@ -4,7 +4,7 @@ import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
 import {ArrowLeft,BookmarkPlus,Copy,Download,ExternalLink,GitBranch,History,LogIn,RotateCcw,Trash2} from 'lucide-react';
 import {Button,Card,Select,Badge} from '../components/ui';
 import {EmptyState,ErrorBanner,JsonDisclosure,Loading,MetricCard,Notice,PageHeader,StatusBadge} from '../components/Shared';
-import {StageNav} from './ResearchPagesCore';
+import {StageNav} from '../components/StageNav';
 import {qh} from '../lib/api';
 import {useDraft} from '../hooks/useDraft';
 import {dateTime,metric,modelLabels,seconds,shortId} from '../utils/format';

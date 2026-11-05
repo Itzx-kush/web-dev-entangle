@@ -5,7 +5,7 @@ import {ArrowRight,FileText,Play,ShieldAlert,SlidersHorizontal} from 'lucide-rea
 import {Button,Card,Badge,Input,Select} from '../components/ui';
 import {ErrorBanner,EmptyState,Loading,MetricCard,ModelSelect,Notice,PageHeader,StatusBadge,JsonDisclosure,metricNames} from '../components/Shared';
 import {InfluenceBars} from '../components/Charts';
-import {StageNav} from './ResearchPagesCore';
+import {StageNav} from '../components/StageNav';
 import {qh} from '../lib/api';
 import {useDraft} from '../hooks/useDraft';
 import {dateTime,metric,modelLabels,seconds,shortId,isHybridModel,isQiskitQuantumModel,isQuantumFamilyModel} from '../utils/format';

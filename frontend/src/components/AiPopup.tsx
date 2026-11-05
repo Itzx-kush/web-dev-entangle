@@ -2,7 +2,7 @@ import {useEffect,useRef} from 'react';
 import {AlertCircle,Bot,Loader2,Maximize2,RefreshCcw,Send,User,X} from 'lucide-react';
 import {useLocation,useNavigate} from 'react-router-dom';
 import {Button} from './ui';
-import {EXAMPLE_PROMPTS} from '../pages/AiAssistantPage';
+import {EXAMPLE_PROMPTS} from '../constants/aiPrompts';
 import {useAi} from '../contexts/AiContext';
 
 function assistantLines(text:string){

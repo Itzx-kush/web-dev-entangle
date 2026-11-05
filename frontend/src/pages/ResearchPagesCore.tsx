@@ -1,5 +1,5 @@
 import {Link} from 'react-router-dom';
-import {useState} from 'react';
+import {useState,lazy,Suspense} from 'react';
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
 import {ArrowRight,Atom,BarChart3,Brain,Database,FlaskConical,GitCompareArrows,Play,RefreshCw,ShieldCheck,Trash2,Upload} from 'lucide-react';
 import {MolecularBackground} from '../components/MolecularBackground';
@@ -14,12 +14,13 @@ import type {Dataset,DatasetInspection,Preview} from '../types/qhealth';
 import {AnimatedSection,BlurText,BorderGlow,ClickSpark,GlareHover,GradientText,Magnet,QuantumVisual,Reveal,ShinyText,SpotlightPanel} from '../components/reactbits';
 import {TremorBarChart,TremorDonut,TremorMetric,TremorProgressBar,TremorTracker} from '../components/TremorUI';
 import {DistributionStrip,PipelineFlow,StatusStrip,WorkbenchRail} from '../components/TremorWorkbench';
-import {VerifiedPipeline,VerifiedQuality} from '../components/VerifiedDemoViews';
+const VerifiedQuality=lazy(()=>import('../components/VerifiedDemoViews').then(m=>({default:m.VerifiedQuality})));
+const VerifiedPipeline=lazy(()=>import('../components/VerifiedDemoViews').then(m=>({default:m.VerifiedPipeline})));
 import {DatasetQualityScorecardView} from './DatasetQualityScorecard';
 import {useFlagshipData,useVerifiedDemo} from '../hooks/useVerifiedDemo';
 
-export const stages=[['Data','/datasets'],['Quality','/quality'],['Preprocess','/preprocessing'],['Features','/features'],['PCA','/pca'],['Train','/training'],['Compare','/comparison'],['Robustness','/robustness'],['Explain','/explainability'],['Predict','/prediction'],['Experiments','/experiments']] as const;
-export function StageNav({current}:{current:string}){return <AnimatedSection className="flex flex-wrap gap-2 border-y py-3"><span className="stage-chip border-primary/20 text-primary"><ShinyText>RESEARCH PATHWAY</ShinyText></span>{stages.map((s,i)=><Link key={s[1]} to={s[1]} aria-current={current===s[1]?'page':undefined} className={'stage-chip ' + (current===s[1]?'bg-primary/10 text-primary border-primary/20 is-current':'border-border text-muted-foreground')} style={{animationDelay:`${i*35}ms`}}>{s[0]} <ArrowRight size={10}/></Link>)}</AnimatedSection>}
+import {stages,StageNav} from '../components/StageNav';
+export {stages,StageNav};
 
 export function Overview(){
  const flagship=useFlagshipData();
@@ -265,7 +266,7 @@ function DatasetSelectionRequired(){
 
 function ActiveDataset({children}:{children:(d:Dataset)=>React.ReactNode}){const {draft}=useDraft();const q=useQuery({queryKey:['dataset',draft.dataset_id],queryFn:()=>qh.dataset(draft.dataset_id),enabled:Boolean(draft.dataset_id)});if(q.isLoading)return <Loading/>;if(!q.data)return q.error?<ErrorBanner error={(q.error as Error).message}/>:<DatasetSelectionRequired/>;return <>{children(q.data)}</>}
 
-export function Quality(){const demo=useVerifiedDemo();return demo.active?<VerifiedQuality/>:<LiveQuality/>}
+export function Quality(){const demo=useVerifiedDemo();return demo.active?<Suspense fallback={<Loading/>}><VerifiedQuality/></Suspense>:<LiveQuality/>}
 function LiveQuality(){
   const {draft}=useDraft();
   const [tab,setTab]=useState<'scorecard'|'quick'>('scorecard');
@@ -303,7 +304,7 @@ function LiveQuality(){
 
 export function PipelineStage({endpoint,title,eyebrow,description}:{endpoint:string;title:string;eyebrow:string;description:string}){
  const demo=useVerifiedDemo();
- if(demo.active)return <VerifiedPipeline stage={endpoint.includes('preprocessing')?'preprocessing':endpoint.includes('feature-selection')?'features':'pca'}/>;
+ if(demo.active)return <Suspense fallback={<Loading/>}><VerifiedPipeline stage={endpoint.includes('preprocessing')?'preprocessing':endpoint.includes('feature-selection')?'features':'pca'}/></Suspense>;
  return <LivePipelineStage endpoint={endpoint} title={title} eyebrow={eyebrow} description={description}/>;
 }
 function LivePipelineStage({endpoint,title,eyebrow,description}:{endpoint:string;title:string;eyebrow:string;description:string}){

@@ -3,12 +3,8 @@ import {AlertCircle,Atom,Bot,Cpu,Database,Loader2,MessageSquare,RefreshCcw,Send,
 import {Badge,Button} from '../components/ui';
 import {useAi} from '../contexts/AiContext';
 
-export const EXAMPLE_PROMPTS=[
-  'What is EntangleX Q-Health?',
-  'How does the hybrid quantum-classical model work?',
-  'Explain the VQC workflow.',
-  'What is the role of PCA in this prototype?'
-];
+import {EXAMPLE_PROMPTS} from '../constants/aiPrompts';
+export {EXAMPLE_PROMPTS};
 
 const PROMPT_META:Record<string,{category:string;icon:ReactNode}>={
   'What is EntangleX Q-Health?':{category:'Platform Overview',icon:<Sparkles size={14} className="text-primary"/>},
