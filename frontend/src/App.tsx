@@ -4,12 +4,10 @@ import {useQuery} from '@tanstack/react-query';
 import {ResearchShell} from './components/ResearchShell';
 import {ThemeToggle} from './components/ThemeToggle';
 import {Loading} from './components/Shared';
-import {VerifiedPipeline,VerifiedQuality} from './components/VerifiedDemoViews';
 import {AiProvider} from './contexts/AiContext';
 import {AiPopup} from './components/AiPopup';
 import {qh} from './lib/api';
 import {useDraft} from './hooks/useDraft';
-import {useVerifiedDemo} from './hooks/useVerifiedDemo';
 
 const Overview=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.Overview})));
 const Datasets=lazy(()=>import('./pages/ResearchPagesCore').then(m=>({default:m.Datasets})));
@@ -101,10 +99,10 @@ function ActiveDatasetGuard(){
 }
 
 function DatasetsRoute(){ return <Datasets/>; }
-function QualityRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedQuality/>:<Quality/>; }
-function PreprocessingRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="preprocessing"/>:<PipelineStage endpoint="/preprocessing/preview" eyebrow="03 / Prepare" title="Preprocessing" description="Configure leakage-safe transformations that are fitted within the backend research pipeline and carried into every model comparison."/>; }
-function FeaturesRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="features"/>:<PipelineStage endpoint="/feature-selection/preview" eyebrow="04 / Select" title="Feature selection" description="Inspect training-only feature selection decisions without converting benchmark association into biological causation."/>; }
-function PcaRoute(){ const demo=useVerifiedDemo(); return demo.active?<VerifiedPipeline stage="pca"/>:<PipelineStage endpoint="/pca/preview" eyebrow="05 / Reduce" title="PCA / dimensions" description="Fit a compact training representation before classical and quantum learning while preserving the held-out evaluation boundary."/>; }
+function QualityRoute(){ return <Quality/>; }
+function PreprocessingRoute(){ return <PipelineStage endpoint="/preprocessing/preview" eyebrow="03 / Prepare" title="Preprocessing" description="Configure leakage-safe transformations that are fitted within the backend research pipeline and carried into every model comparison."/>; }
+function FeaturesRoute(){ return <PipelineStage endpoint="/feature-selection/preview" eyebrow="04 / Select" title="Feature selection" description="Inspect training-only feature selection decisions without converting benchmark association into biological causation."/>; }
+function PcaRoute(){ return <PipelineStage endpoint="/pca/preview" eyebrow="05 / Reduce" title="PCA / dimensions" description="Fit a compact training representation before classical and quantum learning while preserving the held-out evaluation boundary."/>; }
 function QuantumRoute(){
   // Verified mode uses the same Quantum Lab workspace so the enhanced
   // circuit/evidence surface is never bypassed by a legacy demo-only route.

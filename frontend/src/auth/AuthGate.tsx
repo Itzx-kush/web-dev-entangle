@@ -1,10 +1,10 @@
-import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
+import {lazy,Suspense,useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import {ArrowLeft,ArrowRight,Atom,FlaskConical,Github,Moon,ShieldCheck,Sun,TriangleAlert} from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
 import {useAuth} from './AuthProvider';
 import {useGuestMigration} from './GuestMigrationProvider';
 import {LogoIntro} from '../components/LogoIntro';
-import {PublicExperience} from '../components/PublicExperience';
+const PublicExperience=lazy(()=>import('../components/PublicExperience').then(m=>({default:m.PublicExperience})));
 import {QuantumNetworkBackground} from '../components/QuantumNetworkBackground';
 import {usePointerMotion} from '../components/motion/usePointerMotion';
 import {ResearchWorkspaceTransition} from '../components/ResearchWorkspaceTransition';
@@ -277,7 +277,7 @@ export function AuthGate({children}:{children:ReactNode}){
       window.scrollTo({top:0,behavior:'auto'});
     };
     const showResearchEntryTransition=publicExiting||publicTransitionPhase!=='idle';
-    return <>{intro}{showAccess?<Welcome onBack={backToPublic} onOAuthStart={setAccessKind}/>:<PublicExperience exiting={publicExiting} onRequestAccess={requestAccess}/>}
+    return <>{intro}{showAccess?<Welcome onBack={backToPublic} onOAuthStart={setAccessKind}/>:<Suspense fallback={<AuthLoading/>}><PublicExperience exiting={publicExiting} onRequestAccess={requestAccess}/></Suspense>}
       {showResearchEntryTransition&&publicTransitionPhase!=='idle'&&<ResearchEntryTransition phase={publicTransitionPhase}/>}
     </>;
   }
