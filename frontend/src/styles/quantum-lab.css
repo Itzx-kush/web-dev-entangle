@@ -43,3 +43,13 @@
 
 .ql-verified-banner{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:-2px 0 12px;padding:8px 10px;border:1px solid var(--wb-line);border-left:2px solid var(--wb-green);border-radius:7px;background:color-mix(in srgb,var(--wb-green) 4%,var(--tremor-card));color:var(--tremor-muted);font-size:9px;line-height:1.45}
 @media(max-width:700px){.ql-verified-banner{align-items:flex-start}}
+
+/* Dark mode contrast & responsive polish for Quantum Lab */
+.dark .ql-bloch-ring{stroke:hsl(var(--primary) / .45);fill:hsl(var(--card))}
+.dark .ql-bloch-axis,.dark .ql-bloch-latitude,.dark .ql-bloch-longitude{stroke:hsl(var(--muted-foreground) / .45)}
+.dark .ql-bloch-mark{fill:hsl(var(--foreground));font-weight:700}
+.dark .ql-gate-box{fill:hsl(var(--card));stroke:hsl(var(--primary) / .55)}
+.dark .ql-qubit-wire{stroke:hsl(var(--primary) / .4)}
+.dark .ql-qubit-label{fill:hsl(var(--foreground))}
+.ql-linked-selection{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--wb-purple) 35%,var(--wb-line));border-left:3px solid var(--wb-purple);border-radius:10px;background:color-mix(in srgb,var(--wb-purple) 6%,var(--tremor-card));font-size:11px}
+.ql-linked-selection strong{padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--wb-purple) 14%,var(--tremor-card));color:var(--tremor-text);font-family:var(--qh-font-mono,ui-monospace);font-size:10px}

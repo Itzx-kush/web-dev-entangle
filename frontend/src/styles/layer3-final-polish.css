@@ -783,3 +783,65 @@
   .command-list button.is-highlighted,.layer3-settings-workspace .settings-option{transform:none!important}
 }
 [data-motion="reduced"] .research-skeleton,[data-motion="reduced"] .command-overlay,[data-motion="reduced"] .config-overlay,[data-motion="reduced"] .mobile-more-overlay,[data-motion="reduced"] .command-dialog,[data-motion="reduced"] .config-drawer,[data-motion="reduced"] .mobile-more-sheet{animation:none!important}
+
+/* ========================================================================
+   MASTER PROMPT 3 — Page-Level Scientific Tables, Workflow Track & AI Trigger
+   ======================================================================== */
+
+.sticky-col-table th:first-child,
+.sticky-col-table td:first-child{
+  position:sticky;
+  left:0;
+  z-index:2;
+  background:hsl(var(--card));
+  box-shadow:1px 0 0 hsl(var(--border) / .75);
+}
+
+.sticky-col-table thead th:first-child{
+  z-index:4;
+  background:hsl(var(--muted));
+}
+
+.dark .sticky-col-table th:first-child,
+.dark .sticky-col-table td:first-child{
+  background:hsl(var(--card));
+}
+
+.dark .sticky-col-table thead th:first-child{
+  background:hsl(var(--muted));
+}
+
+.research-pipeline-steps{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  overflow-x:auto;
+  padding-bottom:6px;
+  scrollbar-width:thin;
+  gap:6px;
+}
+
+.research-pipeline-step-wrap{
+  flex:0 0 auto;
+}
+
+.ai-popup-trigger{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:65;
+}
+
+.ai-popup-overlay{
+  position:fixed;
+  inset:0;
+  z-index:88;
+}
+
+@media(max-width:767px){
+  .ai-popup-trigger{
+    right:16px;
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    width:48px!important;
+    height:48px!important;
+  }
+}
