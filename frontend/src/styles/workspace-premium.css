@@ -35,7 +35,7 @@
 
 /* Sidebar */
 .research-sidebar{
-  width:252px!important;
+  width:248px;
   border-color:color-mix(in srgb,var(--qh-sidebar-border,var(--tremor-border)) 86%,transparent)!important;
   background:
     radial-gradient(circle at 35% 0,rgba(135,107,237,.1),transparent 16rem),
@@ -52,7 +52,7 @@
 [data-layout="icon"] .research-workspace{
   margin-left:76px!important;
 }
-.research-workspace{margin-left:252px}
+.research-workspace{margin-left:248px}
 .sidebar-brand{
   min-height:78px!important;
   padding:0 18px!important;
@@ -272,7 +272,7 @@
 .tremor-tabs button.is-active{color:var(--tremor-accent-2)!important;border-bottom-color:var(--tremor-accent-2)!important}
 
 /* Inspector, feedback, account/history integration */
-.context-inspector{top:94px!important;padding-top:22px!important}
+.context-inspector{top:94px;padding-top:22px}
 .inspector-card{
   border-color:var(--workspace-line)!important;
   border-radius:9px!important;

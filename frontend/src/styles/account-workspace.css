@@ -29,10 +29,10 @@
 .account-menu-auth button svg{color:var(--qh-color-danger)}
 .account-menu-error{margin:5px 9px 2px;color:var(--qh-color-danger);font-size:10px;line-height:1.45}
 
-.guest-account-control{display:flex;align-items:center;gap:7px;padding-left:8px;border-left:1px solid var(--qh-color-border)}
+.guest-account-control{display:flex;align-items:center;gap:7px;padding-left:8px;border-left:1px solid var(--qh-color-border);flex-shrink:0}
 .guest-account-control>span{display:flex;align-items:center;gap:6px;color:var(--qh-color-muted-foreground);font-size:10px;font-weight:700;white-space:nowrap}
 .guest-account-dot{width:7px;height:7px;border-radius:50%;background:var(--qh-color-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--qh-color-accent) 14%,transparent)}
-.guest-account-control button{display:flex;align-items:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid var(--qh-color-border);border-radius:8px;background:var(--qh-color-surface-raised);color:var(--qh-color-primary);font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.guest-account-control button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:0 11px;border:1px solid var(--qh-color-border);border-radius:8px;background:var(--qh-color-surface-raised);color:var(--qh-color-primary);font:inherit;font-size:11px;font-weight:750;white-space:nowrap;flex-shrink:0;cursor:pointer}
 .guest-account-control button:hover{border-color:var(--qh-color-primary);background:var(--qh-color-surface-hover)}
 
 .account-page{padding-bottom:10px}
@@ -75,10 +75,10 @@
 @media(max-width:767px){
   .research-topbar .topbar-actions>.icon-button,.research-topbar .topbar-actions>.command-trigger{display:none}
   .account-menu-root{position:static}
-  .account-trigger{min-height:38px;padding:3px;border-radius:50%}.account-trigger .account-avatar{box-shadow:none}.account-trigger-copy,.account-trigger>svg{display:none}
+  .account-trigger{min-width:44px;min-height:44px;padding:3px;border-radius:50%;justify-content:center}.account-trigger .account-avatar{box-shadow:none}.account-trigger-copy,.account-trigger>svg{display:none}
   .account-menu-scrim{display:block;position:fixed;inset:0;z-index:84;border:0;background:rgba(7,12,23,.46);backdrop-filter:blur(2px)}
   .account-menu{position:fixed;z-index:85;top:auto;right:10px;bottom:calc(76px + env(safe-area-inset-bottom));left:10px;width:auto;max-height:min(520px,calc(100svh - 110px));overflow:auto;padding:12px;border-radius:16px;animation:account-sheet-in var(--qh-motion-moderate) var(--qh-ease-emphasis) both}
-  .guest-account-control>span{display:none}.guest-account-control{padding-left:0;border-left:0}.guest-account-control button{width:36px;padding:0;justify-content:center}.guest-account-control button{font-size:0}.guest-account-control button svg{width:16px;height:16px}
+  .guest-account-control>span{display:none}.guest-account-control{padding-left:0;border-left:0}.guest-account-control button{width:44px;min-width:44px;min-height:44px;padding:0;justify-content:center}.guest-account-control button{font-size:0}.guest-account-control button svg{width:16px;height:16px}
   .account-identity-panel{grid-template-columns:auto minmax(0,1fr);gap:16px;padding:20px}.account-session-seal{grid-column:1/-1}
   .account-foundation-note{grid-template-columns:1fr;gap:10px}
   .account-research-heading{align-items:start;flex-direction:column}.account-research-heading .btn{width:100%}

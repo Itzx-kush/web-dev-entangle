@@ -5,112 +5,7 @@
  * runtime vocabulary drives surfaces, type, spacing, borders and motion while
  * Q-Health keeps its research IA, routes and API-backed content.
  */
-:root {
-  /* qBraid-inspired Q-Health palette: cool, quiet, and research-first. */
-  --qh-font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --qh-page-bg: #f8f9fc;
-  --qh-page-bg-soft: #f1f3f9;
-  --qh-page-text: #171b26;
-  --qh-page-muted: #667085;
-  --qh-surface: #ffffff;
-  --qh-surface-raised: #fbfcff;
-  --qh-surface-muted: #f4f5fa;
-  --qh-on-surface: #171b26;
-  --qh-on-surface-muted: #667085;
-  --qh-sidebar-bg: #241544;
-  --qh-sidebar-raised: #2d1b52;
-  --qh-sidebar-text: #d9d2ed;
-  --qh-sidebar-foreground: #f7f5ff;
-  --qh-sidebar-muted: #c8bee6;
-  --qh-sidebar-active-accent: #a29dff;
-  --qh-sidebar-border: rgba(255, 255, 255, .12);
-  --qh-sidebar-hover: rgba(255, 255, 255, .07);
-  --qh-sidebar-active-border: rgba(162, 157, 255, .34);
-  --qh-sidebar-active: rgba(138, 131, 255, .18);
-  --qh-border: #e2e6ef;
-  --qh-border-on-surface: rgba(23, 27, 38, .11);
-  --qh-input-bg: #f8f9fc;
-  --qh-accent: #5b5bd6;
-  --qh-accent-strong: #4949b8;
-  --qh-accent-soft: rgba(91, 91, 214, .10);
-  --qh-quantum: #7c4dff;
-  --qh-success: #18865c;
-  --qh-warning: #b97913;
-  --qh-danger: #cf4f55;
-  --qh-radius-control: 9px;
-  --qh-radius-card: 14px;
-  --qh-radius-panel: 18px;
-  --qh-shadow-card: 0 10px 30px rgba(31, 39, 66, .06);
-  --qh-shadow-panel: 0 22px 60px rgba(31, 39, 66, .14);
-  --qh-progress-fill: #3b82f6;
-  --qh-progress-track: #edf0f5;
-  --qh-space-page: clamp(18px, 2.5vw, 32px);
-
-  /* Existing Q-Health utility CSS consumes the hsl variables below. */
-  --background: 225 33% 98%;
-  --foreground: 228 24% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 228 24% 12%;
-  --primary: 240 58% 59%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 225 25% 95%;
-  --secondary-foreground: 228 20% 20%;
-  --muted: 225 24% 95%;
-  --muted-foreground: 220 12% 46%;
-  --accent: 188 72% 42%;
-  --accent-foreground: 0 0% 100%;
-  --border: 222 22% 90%;
-  --input: 222 22% 84%;
-  --ring: 240 58% 59%;
-  --radius: var(--qh-radius-control);
-}
-
-:root.dark,
-.dark {
-  --qh-page-bg: #080a0d;
-  --qh-page-bg-soft: #0d1117;
-  --qh-page-text: #f4f7fb;
-  --qh-page-muted: #98a3b3;
-  --qh-surface: #11161d;
-  --qh-surface-raised: #151c25;
-  --qh-surface-muted: #1d2631;
-  --qh-on-surface: #f4f7fb;
-  --qh-on-surface-muted: #a6b0bf;
-  --qh-sidebar-bg: #0b0e12;
-  --qh-sidebar-raised: #121923;
-  --qh-sidebar-text: #9aa7b7;
-  --qh-sidebar-active: rgba(138, 131, 255, .18);
-  --qh-border: #202b38;
-  --qh-border-on-surface: rgba(202, 213, 225, .14);
-  --qh-input-bg: #0e141b;
-  --qh-accent: #8a83ff;
-  --qh-accent-strong: #a29dff;
-  --qh-accent-soft: rgba(138, 131, 255, .16);
-  --qh-quantum: #a996ff;
-  --qh-success: #53d48f;
-  --qh-warning: #f0bc6e;
-  --qh-danger: #ff8f8f;
-  --qh-shadow-card: 0 10px 30px rgba(0, 0, 0, .22);
-  --qh-shadow-panel: 0 24px 70px rgba(0, 0, 0, .42);
-  --qh-progress-fill: #3b82f6;
-  --qh-progress-track: #1b2430;
-
-  --background: 216 29% 5%;
-  --foreground: 216 27% 96%;
-  --card: 215 24% 9%;
-  --card-foreground: 216 27% 96%;
-  --primary: 243 100% 76%;
-  --primary-foreground: 216 29% 5%;
-  --secondary: 215 23% 14%;
-  --secondary-foreground: 216 24% 95%;
-  --muted: 215 22% 13%;
-  --muted-foreground: 216 14% 69%;
-  --accent: 188 80% 54%;
-  --accent-foreground: 216 29% 5%;
-  --border: 215 25% 18%;
-  --input: 215 24% 16%;
-  --ring: 243 100% 76%;
-}
+/* Authoritative tokens inherited from tokens.css */
 
 html,
 body,
@@ -135,9 +30,8 @@ body {
 }
 
 .research-sidebar {
-  background: var(--qh-sidebar-bg) !important;
-  border-color: var(--qh-border-on-surface) !important;
-  box-shadow: 10px 0 34px rgba(31, 39, 66, .08);
+  background: var(--qh-sidebar-bg);
+  border-color: var(--qh-sidebar-border);
 }
 
 .sidebar-brand,
@@ -430,13 +324,9 @@ body {
   color: var(--qh-on-surface) !important;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1520px) {
   .research-body {
     grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .context-inspector {
-    display: none;
   }
 }
 
@@ -890,11 +780,4 @@ html:not(.dark) .research-sidebar .collapse-button {
   transition: width 180ms ease;
 }
 
-/* Desktop geometry only: keep the approved inset sidebar flush to the viewport. */
-@media (min-width: 901px) {
-  .research-shell .research-sidebar.variant-inset {
-    margin: 0;
-    height: 100vh;
-    border-radius: 0;
-  }
-}
+/* Sidebar variants are controlled by sidebar-layout-fix.css */

@@ -4,10 +4,10 @@ import {ArrowRight,Atom,Database,LoaderCircle,RefreshCw} from 'lucide-react';
 import {Card,Badge,Select} from './ui';
 import {modelLabels,metric,shortId} from '../utils/format';
 import type {Dataset,ModelRecord,Metrics,MetricName} from '../types/qhealth';
-import {AnimatedSection,BlurText,GradientText,Reveal,ShinyText} from './reactbits';
+import {AnimatedSection,Reveal} from './reactbits';
 import {TremorAccordion,TremorCallout,TremorMetric} from './TremorUI';
 
-export function PageHeader({eyebrow,title,description,actions}:{eyebrow:string;title:string;description:string;actions?:ReactNode}){return <AnimatedSection className="page-hero"><div className="flex flex-wrap items-end justify-between gap-5"><div><div className="eyebrow"><ShinyText>{eyebrow}</ShinyText></div><h1 className="headline"><BlurText>{title}</BlurText></h1><p className="subhead"><GradientText>{description}</GradientText></p></div>{actions&&<div className="flex flex-wrap gap-2">{actions}</div>}</div></AnimatedSection>}
+export function PageHeader({eyebrow,title,description,actions}:{eyebrow:string;title:string;description:string;actions?:ReactNode}){return <AnimatedSection className="page-hero"><div className="flex flex-wrap items-end justify-between gap-5"><div><div className="eyebrow">{eyebrow}</div><h1 className="headline">{title}</h1><p className="subhead">{description}</p></div>{actions&&<div className="flex flex-wrap gap-2">{actions}</div>}</div></AnimatedSection>}
 export function StatusBadge({value}:{value:string}){const tone=['ready','succeeded','completed'].includes(value)?'green':['failed','cancelled','interrupted'].includes(value)?'red':value==='running'||value==='queued'?'amber':'blue';return <Badge tone={tone}>{value.replaceAll('_',' ')}</Badge>}
 export function MetricCard({label,value,detail,icon}:{label:string;value:ReactNode;detail?:string;icon?:ReactNode}){return <TremorMetric label={label} value={value} detail={detail} icon={icon}/>}
 function errorTitle(error:string){

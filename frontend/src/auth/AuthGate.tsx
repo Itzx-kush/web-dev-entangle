@@ -8,7 +8,7 @@ import {PublicExperience} from '../components/PublicExperience';
 import {QuantumNetworkBackground} from '../components/QuantumNetworkBackground';
 import {usePointerMotion} from '../components/motion/usePointerMotion';
 import {ResearchWorkspaceTransition} from '../components/ResearchWorkspaceTransition';
-import {BorderGlow,DecryptedText,OuterAurora,OuterMagnet,OuterSpotlight,ShinyText,SplitReveal} from '../components/reactbits';
+import {BorderGlow,DecryptedText,OuterAurora,OuterSpotlight,ShinyText,SplitReveal} from '../components/reactbits';
 import './auth.css';
 
 function applyStoredTheme(){
@@ -101,11 +101,8 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
   const beginGuest=()=>{
     if(enteringGuest)return;
     setEnteringGuest(true);
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    guestTimer.current=window.setTimeout(()=>{
-      if(preservingGuestWork)continueGuestSession();
-      else continueAsGuest();
-    },reduced?80:520);
+    if(preservingGuestWork)continueGuestSession();
+    else continueAsGuest();
   };
 
   return <main ref={sceneRef} className="auth-entry">
@@ -119,7 +116,7 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
     </div>
 
     <section className="auth-brand" data-motion-depth="back" aria-labelledby="auth-title">
-      <OuterMagnet className="auth-back-magnet"><button className="auth-back" type="button" onClick={onBack}><ArrowLeft size={14}/> Back to public experience</button></OuterMagnet>
+      <button className="auth-back" type="button" onClick={onBack}><ArrowLeft size={14}/> Back to public experience</button>
       <div className="auth-brand-lockup">
         <img src="/entanglex-logo-dark.svg" alt="EntangleX"/>
         <ShinyText className="auth-product-label">Q-HEALTH</ShinyText>
@@ -153,25 +150,25 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
       </div>
 
       <div className="auth-oauth-actions">
-        <OuterMagnet><button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='google'} onClick={()=>void beginOAuth('google')}>
+        <button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='google'} onClick={()=>void beginOAuth('google')}>
           <GoogleMark/>
           <span>{authenticating==='google'?'Connecting to Google…':'Continue with Google'}</span>
           {authenticating==='google'?<i className="auth-button-progress" aria-hidden="true"/>:<ArrowRight size={17} aria-hidden="true"/>}
-        </button></OuterMagnet>
-        <OuterMagnet><button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='github'} onClick={()=>void beginOAuth('github')}>
+        </button>
+        <button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='github'} onClick={()=>void beginOAuth('github')}>
           <Github className="auth-github-mark" aria-hidden="true"/>
           <span>{authenticating==='github'?'Connecting to GitHub…':'Continue with GitHub'}</span>
           {authenticating==='github'?<i className="auth-button-progress" aria-hidden="true"/>:<ArrowRight size={17} aria-hidden="true"/>}
-        </button></OuterMagnet>
+        </button>
       </div>
       <p className="auth-action-copy">{preservingGuestWork?'Continue with Google or GitHub to add eligible research metadata to My Research.':'Sign in to keep research activity in your private workspace.'}</p>
 
       <div className="auth-divider"><span>or</span></div>
 
-      <OuterMagnet className="auth-guest-magnet"><button className="auth-guest-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={enteringGuest} onClick={beginGuest}>
+      <button className="auth-guest-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={enteringGuest} onClick={beginGuest}>
         <span>{enteringGuest?'Entering research workspace…':preservingGuestWork?'Return to guest research':'Continue as Guest'}</span>
         {!enteringGuest&&<ArrowRight size={16} aria-hidden="true"/>}
-      </button></OuterMagnet>
+      </button>
       <p className="auth-action-copy">{preservingGuestWork?'Nothing will be removed from this guest session.':'Explore the research prototype without signing in.'}</p>
 
       {!isConfigured&&!error&&<div className="auth-notice" role="status">
@@ -192,7 +189,7 @@ export function AuthGate({children}:{children:ReactNode}){
   const {loading,isAuthenticated,isGuest,error}=useAuth();
   const navigate=useNavigate();
   const [showAccess,setShowAccess]=useState(false);
-  const [workspaceReady,setWorkspaceReady]=useState(false);
+  const [workspaceReady,setWorkspaceReady]=useState(true);
   const [accessKind,setAccessKind]=useState<'google'|'github'|'guest'|null>(null);
   const [publicExiting,setPublicExiting]=useState(false);
   const [publicTransitionPhase,setPublicTransitionPhase]=useState<PublicTransitionPhase>('idle');
@@ -209,11 +206,10 @@ export function AuthGate({children}:{children:ReactNode}){
   },[error]);
   useEffect(()=>{
     if(!isAuthenticated&&!isGuest){
-      setWorkspaceReady(false);
       return;
     }
     if(isGuest)setAccessKind(current=>current||'guest');
-    setWorkspaceReady(false);
+    setWorkspaceReady(true);
   },[isAuthenticated,isGuest]);
   useEffect(()=>()=>{publicTransitionTimers.current.forEach(timer=>window.clearTimeout(timer));publicTransitionTimers.current=[]},[]);
 
@@ -226,37 +222,10 @@ export function AuthGate({children}:{children:ReactNode}){
       publicTransitionTimers.current.forEach(timer=>window.clearTimeout(timer));
       publicTransitionTimers.current=[];
       if(destination!==window.location.pathname)navigate(destination);
-      setPublicExiting(true);
-      setPublicTransitionPhase('intent');
-      const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if(reduced){
-        publicTransitionTimers.current=[
-          window.setTimeout(()=>setPublicTransitionPhase('handoff'),60),
-          window.setTimeout(()=>{
-            setShowAccess(true);
-            window.scrollTo({top:0,behavior:'auto'});
-          },120),
-          window.setTimeout(()=>{
-            setPublicExiting(false);
-            setPublicTransitionPhase('idle');
-          },220),
-        ];
-        return;
-      }
-      publicTransitionTimers.current=[
-        window.setTimeout(()=>setPublicTransitionPhase('accelerate'),100),
-        window.setTimeout(()=>setPublicTransitionPhase('converge'),270),
-        window.setTimeout(()=>setPublicTransitionPhase('core'),440),
-        window.setTimeout(()=>setPublicTransitionPhase('handoff'),590),
-        window.setTimeout(()=>{
-          setShowAccess(true);
-          window.scrollTo({top:0,behavior:'auto'});
-        },650),
-        window.setTimeout(()=>{
-          setPublicExiting(false);
-          setPublicTransitionPhase('idle');
-        },820),
-      ];
+      setShowAccess(true);
+      setPublicExiting(false);
+      setPublicTransitionPhase('idle');
+      window.scrollTo({top:0,behavior:'auto'});
     };
     const backToPublic=()=>{
       publicTransitionTimers.current.forEach(timer=>window.clearTimeout(timer));
