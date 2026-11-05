@@ -13,7 +13,7 @@ export const createExperimentNotesController = (
     async create(req, res, next) {
       try {
         const validated = createNoteSchema.parse(req.body);
-        const note = await service.createNote(req.user.id, validated, req.supabase);
+        const note = await service.createNote(req.user.id, validated);
         return res.status(201).json(note);
       } catch (err) {
         return next(err);
@@ -23,7 +23,7 @@ export const createExperimentNotesController = (
     async list(req, res, next) {
       try {
         const query = queryNotesSchema.parse(req.query);
-        const result = await service.listNotes(req.user.id, query, req.supabase);
+        const result = await service.listNotes(req.user.id, query);
         return res.status(200).json({
           notes: result.notes,
           data: result.notes,
@@ -37,7 +37,7 @@ export const createExperimentNotesController = (
     async getById(req, res, next) {
       try {
         const id = objectIdSchema.parse(req.params.id);
-        const note = await service.getNoteById(req.user.id, id, req.supabase);
+        const note = await service.getNoteById(req.user.id, id);
         if (!note) {
           return res.status(404).json({
             error: 'Not Found',
@@ -54,7 +54,7 @@ export const createExperimentNotesController = (
       try {
         const id = objectIdSchema.parse(req.params.id);
         const updateData = updateNoteSchema.parse(req.body);
-        const updatedNote = await service.updateNote(req.user.id, id, updateData, req.supabase);
+        const updatedNote = await service.updateNote(req.user.id, id, updateData);
         if (!updatedNote) {
           return res.status(404).json({
             error: 'Not Found',
@@ -70,7 +70,7 @@ export const createExperimentNotesController = (
     async remove(req, res, next) {
       try {
         const id = objectIdSchema.parse(req.params.id);
-        const deleted = await service.deleteNote(req.user.id, id, req.supabase);
+        const deleted = await service.deleteNote(req.user.id, id);
         if (!deleted) {
           return res.status(404).json({
             error: 'Not Found',

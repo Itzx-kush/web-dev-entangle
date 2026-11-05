@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
-import { env } from '../config/env.js';
+import { env, isValidMongoUri } from '../config/env.js';
 
 let cachedConnection = null;
 let connectionPromise = null;
 
-const sanitizeMongoUri = (uri) => {
-  if (!uri) return '';
-  return uri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
+export const sanitizeMongoUri = (text) => {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/mongodb(?:\+srv)?:\/\/[^\s"',;)]+/gi, '[REDACTED_MONGODB_URI]')
+    .replace(/\/\/([^:\s]+):([^@\s]+)@/g, '//[REDACTED_CREDENTIALS]@');
 };
 
 export const isDbConnected = () => {
@@ -34,7 +36,10 @@ export const connectMongo = async (uri = env.mongodbUri) => {
 
   connectionPromise = (async () => {
     try {
-      const sanitizedUri = sanitizeMongoUri(uri);
+      if (!uri || !isValidMongoUri(uri)) {
+        throw new Error('Invalid or missing MONGODB_URI configuration');
+      }
+
       // Bind connection events once
       if (mongoose.connection.listenerCount('disconnected') === 0) {
         mongoose.connection.on('disconnected', () => {
@@ -51,7 +56,7 @@ export const connectMongo = async (uri = env.mongodbUri) => {
         });
         mongoose.connection.on('error', (err) => {
           if (!env.isTest) {
-            console.error('[MongoDB] Connection error:', err.message);
+            console.error('[MongoDB] Connection error:', sanitizeMongoUri(err?.message));
           }
         });
       }
@@ -63,16 +68,19 @@ export const connectMongo = async (uri = env.mongodbUri) => {
 
       cachedConnection = conn;
       if (!env.isTest) {
-        console.info(`[MongoDB] Successfully connected to ${sanitizedUri}`);
+        console.info('[MongoDB] Successfully connected to database');
       }
       return conn;
     } catch (error) {
       cachedConnection = null;
-      const sanitizedErrorMsg = sanitizeMongoUri(error.message);
+      const sanitizedErrorMsg = sanitizeMongoUri(error?.message || 'Unknown error');
       if (!env.isTest) {
         console.error(`[MongoDB] Failed to connect: ${sanitizedErrorMsg}`);
       }
-      throw new Error(`Database connection failed: ${sanitizedErrorMsg}`);
+      const dbError = new Error(`Database connection failed: ${sanitizedErrorMsg}`);
+      dbError.name = 'MongooseServerSelectionError';
+      dbError.status = 503;
+      throw dbError;
     } finally {
       connectionPromise = null;
     }
@@ -101,8 +109,8 @@ export const ensureDbConnected = async (req, res, next) => {
     if (!isDbConnected()) {
       await connectMongo();
     }
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };

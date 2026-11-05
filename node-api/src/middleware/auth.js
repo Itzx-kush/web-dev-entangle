@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../config/env.js';
-import { createUserScopedSupabaseClient } from '../db/supabase.js';
 
 let supabaseClient = null;
 
@@ -20,7 +19,9 @@ export const defaultTokenVerifier = async (token) => {
   }
 
   const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) return null;
+  if (error || !data?.user) {
+    return null;
+  }
 
   return {
     id: data.user.id,
@@ -56,9 +57,6 @@ export const createAuthMiddleware = (verifier = defaultTokenVerifier) => {
       }
 
       req.user = user;
-      // Forward only the verified user's JWT to Postgres so RLS is evaluated as
-      // that user. No service-role key or client-supplied owner ID is used.
-      req.supabase = createUserScopedSupabaseClient(token);
       return next();
     } catch (err) {
       if (err.message === 'Supabase client is not configured') {

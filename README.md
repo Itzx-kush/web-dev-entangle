@@ -1,465 +1,384 @@
 # EntangleX Q-Health
 
-**A research-oriented hybrid quantum-classical machine-learning platform for evaluating biomedical disease-risk prediction and managing structured experiment notes.**
+**A full-stack hybrid quantum-classical biomedical machine-learning research platform and MongoDB-backed experiment notes management system.**
+
+- **GitHub Repository:** [https://github.com/Itzx-kush/web-dev-entangle](https://github.com/Itzx-kush/web-dev-entangle)
+- **Live Application Deployment (Vercel):** [https://web-dev-entangle.vercel.app](https://web-dev-entangle.vercel.app)
+- **Hosted Python Research API (Render):** [https://entanglex-q-health-api.onrender.com](https://entanglex-q-health-api.onrender.com)
 
 > [!IMPORTANT]
 > **Research Prototype Disclaimer:** EntangleX Q-Health is designed for educational, research, and algorithmic evaluation purposes. Model predictions and risk estimates are based on benchmark and user-provided datasets; they do not constitute professional medical diagnosis, clinical prognosis, or treatment recommendations. The Experiment Notes feature provides qualitative research observation storage and is not an Electronic Health Record (EHR) or clinical record management system.
 
 ---
 
-## 1. Overview and Problem Statement
+## 1. Real-World Problem Statement
 
-### The Biomedical Machine Learning Challenge
-Biomedical classification research demands reproducible data validation, leakage-safe preprocessing, isolated train/test evaluation, and traceable record-keeping. When evaluating classical algorithms alongside simulated quantum machine-learning models (such as Variational Quantum Classifiers and Quantum Neural Networks), researchers must systematically compare diagnostic accuracy, sensitivity, and calibration without unfounded presumptions of quantum advantage.
+Biomedical disease-risk classification research requires reproducible dataset quality auditing, leakage-safe preprocessing, isolated train/test evaluation, and systematic comparison between classical machine-learning baselines (Logistic Regression, Support Vector Machines, Random Forest) and simulated quantum machine-learning architectures (Variational Quantum Classifiers, Quantum Support Vector Classifiers, and Quantum Neural Networks).
 
-Furthermore, computational researchers require a dedicated, structured environment to document exploratory hypotheses, dataset anomalies, hyperparameter choices, and operational findings without mixing informal notes into formal prediction payloads or static PDF exports.
-
-### The EntangleX Q-Health Solution
-EntangleX Q-Health addresses these requirements through an integrated full-stack architecture:
-
-1. **Interactive Research Interface:** A React-based single-page application providing responsive dataset visualization, data-quality auditing, feature selection, pipeline configuration, model training, comparison, and explainability.
-2. **Specialized Machine-Learning Backend:** A Python FastAPI service responsible for executing scikit-learn pipelines, Qiskit/PennyLane quantum simulation, SHAP explainability, and SQLite-backed experiment tracking.
-3. **Dedicated Experiment Notes Microservice:** An authenticated Node.js and Express REST API backed by the existing Supabase Postgres project, enabling researchers to create, search, update, and manage personal research notes with owner-level row security.
+In day-to-day computational research, investigators also face a critical workflow gap: while quantitative metrics, confusion matrices, and SHAP feature attributions are captured by training pipelines, qualitative research context—such as exploratory hypotheses, circuit ansatz convergence anomalies, feature-engineering rationale, and dataset observations—is frequently lost in scattered local text files or mixed inappropriately into prediction payloads. Researchers need a secure, searchable, user-scoped cloud notebook integrated directly alongside their interactive modeling workbench.
 
 ---
 
-## 2. College Assignment Requirements
+## 2. Project Objectives
 
-This project fulfills all requirements of the full-stack web development assignment by demonstrating modern frontend, backend, database, and DevOps practices:
+This project is designed, developed, and deployed to fulfill both the biomedical research management problem and the full-stack web development theory assignment requirements:
+
+1. **Address a Real-World Biomedical Research Problem:** Provide an end-to-end platform for evaluating classical and quantum disease-risk prediction models alongside persistent qualitative experiment notes.
+2. **Demonstrate Full-Stack Web Technologies:** Integrate **HTML5**, **CSS3**, **JavaScript (ES Modules)**, **React.js (React 19)**, **Node.js**, **Express.js**, and **MongoDB (MongoDB Atlas with Mongoose)** in a cohesive production architecture.
+3. **Deliver Responsive UI Design:** Support desktop, tablet, and mobile viewports with adaptive grids, collapsible navigation, accessible forms, and multi-theme styling.
+4. **Implement RESTful API & MongoDB CRUD Operations:** Expose authenticated Express endpoints (`POST`, `GET`, `PATCH`, `DELETE`) backed by Mongoose models, compound indexes, and strict per-user ownership isolation (`ownerId`).
+5. **Maintain Clear Architectural Separation of Storage & Identity:**
+   - **Supabase Auth:** User identity management and Bearer JWT verification.
+   - **MongoDB Atlas (via Mongoose):** Persistent cloud document storage for Experiment Notes CRUD operations.
+   - **SQLite:** Embedded local storage used by the Python FastAPI backend for ML training jobs, model bundles, and quantitative experiment lineage.
+
+---
+
+## 3. Solution Overview
+
+EntangleX Q-Health unites three coordinated tiers:
+
+1. **Interactive React Research Frontend (`frontend/`):** A responsive single-page application built with React 19, Vite, and React Query covering dataset exploration, data-quality scorecards, feature selection, classical/quantum training, SHAP explainability, and the dedicated **Experiment Notes** workspace (`/my-research/notes`).
+2. **Node.js & Express Experiment Notes REST API (`node-api/`):** An authenticated microservice that verifies Supabase JWT access tokens, validates payloads with Zod, manages serverless MongoDB Atlas connections via Mongoose, and executes owner-scoped CRUD operations on `ExperimentNote` documents.
+3. **Python FastAPI Research Backend (`backend/`):** A scientific computing service executing scikit-learn pipelines, Qiskit/PennyLane quantum circuit simulations, SHAP explainability, and SQLite-backed experiment tracking.
 
 | Assignment Requirement | Project Implementation & Source Mapping |
 | :--- | :--- |
-| **HTML5** | Semantic HTML structure, accessible forms, dialogue modals, and root template in [`frontend/index.html`](frontend/index.html). |
-| **CSS3** | Modern responsive design, CSS custom properties, light/dark/research themes, accessible focus states, and flexbox/grid layouts in [`frontend/src/index.css`](frontend/src/index.css). |
-| **JavaScript** | Native ES modules runtime in the Node.js API ([`node-api/src/`](node-api/src/)) and browser scripting; the frontend is authored in TypeScript ([`frontend/src/`](frontend/src/)), which compiles to standard JavaScript. |
-| **React.js** | Interactive user interface built with React 19, functional components, custom hooks, context providers, and dynamic lazy-loaded routing in [`frontend/src/App.tsx`](frontend/src/App.tsx). |
-| **Vite** | Modern frontend tooling, rapid hot-module reloading in development, and optimized production bundling configured in [`frontend/vite.config.ts`](frontend/vite.config.ts). |
-| **Node.js** | Microservice runtime running on Node.js (version 22.x LTS pinned via [`.nvmrc`](.nvmrc)), executing the Experiment Notes backend. |
-| **Express.js** | REST API framework handling HTTP routing, security headers (`helmet`), cross-origin policies (`cors`), input validation, and error management in [`node-api/src/app.js`](node-api/src/app.js). |
-| **Supabase Postgres** | Persistent Experiment Notes storage with Postgres row-level security, indexes, and an updated-at trigger defined in [`supabase/migrations/20261017_create_experiment_notes.sql`](supabase/migrations/20261017_create_experiment_notes.sql). |
-| **RESTful API Integration** | Typed asynchronous frontend client ([`frontend/src/lib/experimentNotesApi.ts`](frontend/src/lib/experimentNotesApi.ts)) executing standard HTTP methods against Express endpoints. |
-| **Experiment Notes CRUD** | Complete Create, Read, Update, and Delete operations for user-scoped experiment notes with server-side validation, search filters, and database-enforced row-level security. |
-| **Responsive UI Design** | Mobile-first and desktop-optimized layouts featuring collapsible sidebars, adaptive data grids, and responsive charts across all screen viewports. |
-| **GitHub Source Code** | Managed in Git with branch isolation, automated test verification, and pull requests targeting [`Itzx-kush/web-dev-entangle`](https://github.com/Itzx-kush/web-dev-entangle). |
-| **Vercel Deployment Readiness** | Shared frontend and Express service routing in [`vercel.json`](vercel.json); research API requests are proxied to the existing persistent FastAPI deployment. See [`docs/vercel-multi-service-deployment.md`](docs/vercel-multi-service-deployment.md) for routes and required environment variables. |
-| **README Documentation** | Comprehensive project documentation covering problem formulation, architecture, technology stack, CRUD endpoints, setup, testing, and deployment. |
+| **HTML5** | Semantic HTML structure, accessible forms, landmarks, and root entry document in [`frontend/index.html`](frontend/index.html). |
+| **CSS3** | Responsive layouts, CSS custom properties, light/dark/research themes, and flexbox/grid systems in [`frontend/src/index.css`](frontend/src/index.css). |
+| **JavaScript** | Native ES modules in the Node.js API ([`node-api/src/`](node-api/src/)) and browser runtime; TypeScript ([`frontend/src/`](frontend/src/)) compiles to standard ES JavaScript. |
+| **React.js** | React 19 functional components, custom hooks, context providers, and lazy-loaded routing in [`frontend/src/App.tsx`](frontend/src/App.tsx) and [`frontend/src/research/ExperimentNotesPage.tsx`](frontend/src/research/ExperimentNotesPage.tsx). |
+| **Node.js** | Asynchronous JavaScript runtime (pinned to Node `22.12.0` via [`.nvmrc`](.nvmrc)) powering the Experiment Notes service. |
+| **Express.js** | REST API framework with `helmet`, `cors`, `express-rate-limit`, authentication middleware, and centralized error handling in [`node-api/src/app.js`](node-api/src/app.js). |
+| **MongoDB & Mongoose** | MongoDB Atlas connection manager ([`node-api/src/db/mongodb.js`](node-api/src/db/mongodb.js)), Mongoose schema/indexes ([`node-api/src/models/ExperimentNote.js`](node-api/src/models/ExperimentNote.js)), and CRUD service ([`node-api/src/services/experimentNotes.service.js`](node-api/src/services/experimentNotes.service.js)). |
+| **RESTful API Integration** | Typed frontend client ([`frontend/src/lib/experimentNotesApi.ts`](frontend/src/lib/experimentNotesApi.ts)) communicating with `/api/experiment-notes` and `/health`. |
 
 ---
 
-## 3. Technology Stack
+## 4. Technology Stack
 
-The platform employs a multi-tier architecture uniting specialized services:
-
-| Technology | Where It Is Used | Purpose & Responsibilities |
-| :--- | :--- | :--- |
-| **React 19** | Frontend (`frontend/src/`) | Declarative, component-driven UI for research workflows and experiment note management. |
-| **TypeScript 5.9** | Frontend (`frontend/src/`) | Static typing, interface contracts, and compile-time safety across frontend modules. |
-| **Vite 7** | Frontend (`frontend/`) | High-performance build tool, development server, and asset optimizer. |
-| **React Query (@tanstack)** | Frontend (`frontend/src/`) | Asynchronous server-state management, automated cache invalidation, and optimistic mutations. |
-| **Lucide React** | Frontend (`frontend/src/`) | Accessible, scalable SVG iconography across application navigation and data views. |
-| **Node.js (>=20.x, 22.x LTS)** | Backend API (`node-api/`) | High-efficiency asynchronous JavaScript runtime for the Experiment Notes microservice. |
-| **Express 4** | Backend API (`node-api/src/`) | Robust web framework providing RESTful routing, middleware pipelines, and HTTP controllers. |
-| **Supabase Postgres + RLS** | Backend API (`node-api/src/db/supabase.js`) | Durable note persistence with authenticated-user policies and no service-role key in request handling. |
-| **Zod 3** | Backend API (`node-api/src/validation/`) | Runtime type validation safeguarding API endpoints against malformed or injected payloads. |
-| **Supabase Auth** | Frontend & Node API | User identity provider issuing JWT access tokens verified on protected API routes. |
-| **Python 3.11** | Research Backend (`backend/`) | Execution engine for scientific computing, statistical analysis, and machine learning. |
-| **FastAPI & Pydantic 2** | Research Backend (`backend/app/`) | High-performance Python REST APIs for dataset inspection, model training, and predictions. |
-| **scikit-learn & NumPy** | Research Backend (`backend/app/ml/`) | Classical ML algorithms (Logistic Regression, SVM, Random Forest), PCA, and evaluation metrics. |
-| **Qiskit & PennyLane** | Research Backend (`backend/app/quantum/`) | Quantum circuit synthesis, parameterized ansatz evaluation, and simulator execution. |
-| **SQLite 3** | Research Backend (`backend/`) | Embedded storage for Python training jobs, model bundles, and experiment lineage. |
-| **Vitest & Node Test Runner** | Testing (`frontend/`, `node-api/`) | Automated unit and integration test suites validating client and server contracts. |
+| Layer | Technology | Location | Role in Application |
+| :--- | :--- | :--- | :--- |
+| **Frontend Structure & Style** | HTML5, CSS3 | `frontend/index.html`, `frontend/src/index.css` | Semantic markup, responsive grid/flexbox layouts, custom theme tokens, and accessibility states. |
+| **Frontend Application** | React 19, TypeScript 5.9, Vite 7 | `frontend/src/` | Component-driven SPA, client-side routing (`react-router-dom`), and optimized asset bundling. |
+| **Frontend State & Fetching** | TanStack React Query 5 | `frontend/src/research/ExperimentNotesPage.tsx` | Server-state caching, pagination, search debouncing, and mutation invalidation. |
+| **Notes Backend Runtime** | Node.js (>=20.0.0, 22.12.0 LTS) | `node-api/` | Non-blocking ES module server runtime for the Experiment Notes REST API. |
+| **Notes Web Framework** | Express 4, Helmet, CORS, Rate Limit | `node-api/src/app.js` | REST routing, HTTP security headers, origin allowlist enforcement, and abuse protection. |
+| **Notes Database & ODM** | MongoDB Atlas, Mongoose 8 | `node-api/src/db/mongodb.js`, `node-api/src/models/ExperimentNote.js` | Persistent document storage, schema validation, ObjectId serialization, and compound indexing. |
+| **Payload Validation** | Zod 3 | `node-api/src/validation/experimentNotes.schema.js` | Strict request body, query parameter, and 24-hex ObjectId validation. |
+| **Authentication** | Supabase Auth (`@supabase/supabase-js`) | `frontend/src/auth/`, `node-api/src/middleware/auth.js` | OAuth/email user sign-in and server-side Bearer JWT verification. |
+| **ML & Quantum Backend** | Python 3.11, FastAPI, scikit-learn, Qiskit, PennyLane, SQLite | `backend/` | Classical/quantum model training, dataset auditing, SHAP explainability, and SQLite job persistence. |
+| **Automated Testing** | Node Test Runner (`node:test`), Supertest, Vitest, Testing Library | `node-api/test/`, `frontend/src/tests/` | Automated unit, component, schema, and HTTP integration test suites. |
 
 ---
 
-## 4. Full-Stack System Architecture
+## 5. System Architecture
 
-The following diagram illustrates the decoupled separation of concerns across the client, services, and persistence layers:
+The following diagram illustrates the active request flow across the React client, Supabase authentication, the Express + Mongoose notes microservice, MongoDB Atlas, and the Python FastAPI research backend:
 
 ```mermaid
 flowchart TD
-    subgraph Client["Browser Client (React / Vite SPA)"]
-        UI["Research Shell & Workspace Navigation"]
-        NotesPage["Experiment Notes Page (/my-research/notes)"]
-        ResearchLabs["Data Lab / Quantum Lab / Model Studio"]
+    subgraph Client["React 19 Frontend (frontend/)"]
+        UI["Responsive Research Shell & Navigation"]
+        NotesUI["Experiment Notes Page (/my-research/notes)"]
+        ResearchUI["Data Lab / Quantum Lab / Model Studio"]
     end
 
-    subgraph Identity["Identity Provider"]
-        Supabase["Supabase Auth (JWT Bearer Tokens)"]
+    subgraph Auth["Authentication Provider"]
+        SupabaseAuth["Supabase Auth (Issues & Verifies User JWTs)"]
     end
 
-    subgraph NodeService["Node.js / Express Microservice (node-api)"]
-        ExpressRouter["Express REST Router (/api/experiment-notes)"]
-        AuthMiddleware["JWT Token Verifier (Supabase Client)"]
-        ZodValidator["Zod Schema Validation & Sanitization"]
-        NotesController["Experiment Notes Controller & Service"]
+    subgraph NodeAPI["Node.js + Express API (node-api/)"]
+        AuthMW["Auth Middleware (Bearer JWT -> req.user.id)"]
+        DbMW["MongoDB Connection Middleware (ensureDbConnected)"]
+        NotesCtrl["Controller + Zod Schema Validation"]
+        NotesSvc["Mongoose CRUD Service (experimentNotes.service.js)"]
     end
 
-    subgraph PythonService["Python / FastAPI Backend (backend)"]
-        FastApiRouter["FastAPI Application (/api/...)"]
-        MlEngine["scikit-learn & Qiskit / PennyLane Engine"]
-        SqliteStore[("SQLite Storage (Jobs, Models, Experiments)")]
+    subgraph MongoAtlas["MongoDB Atlas Cloud"]
+        MongoCollection[("ExperimentNote Collection (Mongoose ODM)")]
     end
 
-    subgraph SupabaseCloud["Supabase Postgres"]
-        NotesDB[("Supabase Postgres (Experiment Notes)")]
+    subgraph PythonAPI["Python FastAPI Backend (backend/)"]
+        FastAPI["FastAPI Endpoints (/api/...)"]
+        MLQuantum["scikit-learn + Qiskit / PennyLane"]
+        SQLite[("SQLite Storage (ML Jobs, Models, Lineage)")]
     end
 
-    UI --> Identity
-    NotesPage -- "Bearer JWT + JSON" --> ExpressRouter
-    ResearchLabs -- "REST HTTP /api" --> FastApiRouter
+    UI --> SupabaseAuth
+    NotesUI -- "REST API + Bearer JWT" --> AuthMW
+    AuthMW -- "Verify Token" --> SupabaseAuth
+    AuthMW --> DbMW
+    DbMW --> NotesCtrl
+    NotesCtrl --> NotesSvc
+    NotesSvc -- "Mongoose Queries (ownerId scoped)" --> MongoCollection
 
-    ExpressRouter --> AuthMiddleware
-    AuthMiddleware --> ZodValidator
-    ZodValidator --> NotesController
-    NotesController -- "Supabase client + RLS" --> NotesDB
-
-    FastApiRouter --> MlEngine
-    MlEngine --> SqliteStore
+    ResearchUI -- "REST API" --> FastAPI
+    FastAPI --> MLQuantum
+    MLQuantum --> SQLite
 ```
 
-### Architectural Division of Labor
-- **Frontend Routing:** Client-side navigation is orchestrated by `react-router-dom`. Standard research workflows communicate with the Python backend via `/api/*` proxies. The Experiment Notes interface communicates directly with the Express REST API.
-- **Node.js Express API (`node-api/`):** Manages qualitative research observations. It operates independently of the Python ML engine. All write operations enforce user authentication, input sanitization, and strict ownership isolation.
-- **Python FastAPI Backend (`backend/`):** Dedicated entirely to heavy computational tasks: dataset normalization, ANOVA/PCA feature transforms, quantum simulator evaluation, and model artifact serialization.
-- **Database Partitioning:** SQLite stores local training job queues and model artifact metadata. Supabase Postgres stores user-authored Experiment Notes with owner-scoped RLS.
+### Storage and Identity Responsibilities
+- **Supabase Auth:** Used strictly for user identity and Bearer JWT verification (`supabase.auth.getUser(token)`). It is **not** used as the Experiment Notes persistence database.
+- **MongoDB Atlas:** The active CRUD database for Experiment Notes, accessed through Mongoose (`node-api/src/models/ExperimentNote.js` and `node-api/src/services/experimentNotes.service.js`).
+- **SQLite:** Used exclusively by the Python FastAPI research backend (`backend/`) to store dataset registrations, training runs, and model artifacts.
+- *(Historical note: `supabase/migrations/20261017_create_experiment_notes.sql` is retained in the repository for historical reference only and is explicitly marked as superseded by the MongoDB Atlas + Mongoose implementation).*
 
 ---
 
-## 5. Experiment Notes REST API & Supabase Postgres CRUD
+## 6. Frontend Implementation
 
-The Experiment Notes microservice implements full CRUD capabilities through standard REST conventions:
+The frontend in [`frontend/`](frontend/) is a React 19 single-page application:
 
-| Operation | HTTP Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :--- | :--- |
-| **Health Check** | `GET` | `/health` or `/api/health` | Returns service status, uptime, and Supabase table connectivity state. | No |
-| **Create Note** | `POST` | `/api/experiment-notes` | Creates a new research note associated with the authenticated user. | Yes (Bearer JWT) |
-| **List Notes** | `GET` | `/api/experiment-notes` | Retrieves a paginated list of notes owned by the caller with optional filters. | Yes (Bearer JWT) |
-| **Get Single Note** | `GET` | `/api/experiment-notes/:id` | Retrieves a specific note by its UUID. | Yes (Bearer JWT) |
-| **Update Note** | `PATCH` | `/api/experiment-notes/:id` | Partially updates mutable fields of an existing owned note. | Yes (Bearer JWT) |
-| **Delete Note** | `DELETE` | `/api/experiment-notes/:id` | Permanently deletes a note owned by the authenticated caller. | Yes (Bearer JWT) |
+- **Entry & HTML Metadata:** [`frontend/index.html`](frontend/index.html) defines semantic document metadata, viewport rules, and the `#root` mount container.
+- **Experiment Notes Workspace ([`frontend/src/research/ExperimentNotesPage.tsx`](frontend/src/research/ExperimentNotesPage.tsx)):**
+  - Provides a complete interface to **create**, **list/search**, **edit**, and **delete** research notes.
+  - Supports real-time character counters (`200` chars for title, `10,000` chars for content), optional metadata fields (`datasetName`, `modelName`, `experimentReference`), and comma-separated `tags`.
+  - Includes debounced keyword search (300ms), pagination controls (`Previous` / `Next`), and deep links from `experimentReference` badges directly to `/experiments/:id`.
+  - Renders explicit UI states for **loading** (`<Loading />`), **empty results** (`<EmptyState />`), **mutation success** (`<Notice tone="green" />`), **API/validation errors** (`<ErrorBanner />`), and **guest/unauthenticated prompts**.
+- **Typed REST Client ([`frontend/src/lib/experimentNotesApi.ts`](frontend/src/lib/experimentNotesApi.ts)):**
+  - Attaches `Authorization: Bearer <access_token>` to every protected request.
+  - Normalizes development (`http://localhost:5000/api`) and production (`/api/notes` or HTTPS origin) base URLs.
+  - Translates HTTP `400`, `401`, `404`, `429`, `500`, and `503` responses into structured `NodeApiError` instances.
 
-### Data Model Schema (`ExperimentNote`)
+---
 
-Managed by Postgres and row-level security in [`supabase/migrations/20261017_create_experiment_notes.sql`](supabase/migrations/20261017_create_experiment_notes.sql):
+## 7. Backend Implementation
 
-| Field | Type | Required | Constraints & Description |
+The backend layer comprises two specialized services:
+
+1. **Node.js & Express Experiment Notes Service ([`node-api/`](node-api/)):**
+   - [`node-api/src/app.js`](node-api/src/app.js): Configures proxy trust (`app.set('trust proxy', 1)`), `helmet` security headers, origin-checked `cors`, `express.json({ limit: '1mb' })`, `/api/` rate limiting, `/health` routes, and `/api/experiment-notes` routes.
+   - [`node-api/src/routes/experimentNotes.routes.js`](node-api/src/routes/experimentNotes.routes.js): Enforces middleware ordering so `authMiddleware` executes first, `ensureDbConnected` executes second, and CRUD controller handlers execute only after authentication and database readiness succeed.
+   - [`node-api/src/controllers/experimentNotes.controller.js`](node-api/src/controllers/experimentNotes.controller.js): Validates incoming request bodies, query strings, and `:id` parameters using Zod schemas before invoking the Mongoose service with `req.user.id`.
+   - [`node-api/src/middleware/errorHandler.js`](node-api/src/middleware/errorHandler.js): Maps malformed JSON (`400`), Zod validation errors (`400`), Mongoose `CastError`/`ValidationError` (`400`), CORS rejections (`403`), and MongoDB connection/timeout errors (`503`) to sanitized JSON responses without leaking stack traces or connection strings.
+2. **Python FastAPI Research Service ([`backend/`](backend/)):**
+   - Preserved untouched for biomedical dataset management, classical ML pipelines, Qiskit/PennyLane quantum simulation, and SHAP explainability.
+
+---
+
+## 8. Express REST API Specification
+
+| Operation | HTTP Method | Endpoint | Auth Required | Success Status | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Create Note** | `POST` | `/api/experiment-notes` | Yes (`Bearer JWT`) | `201 Created` | Creates a new note in MongoDB with `ownerId = req.user.id`. |
+| **Get All Notes** | `GET` | `/api/experiment-notes` | Yes (`Bearer JWT`) | `200 OK` | Lists authenticated user's notes with pagination, search, and filters. |
+| **Get One Note** | `GET` | `/api/experiment-notes/:id` | Yes (`Bearer JWT`) | `200 OK` | Retrieves a single note by 24-hex ObjectId if owned by caller. |
+| **Update Note** | `PATCH` | `/api/experiment-notes/:id` | Yes (`Bearer JWT`) | `200 OK` | Partially updates allowed fields on an owned note. |
+| **Delete Note** | `DELETE` | `/api/experiment-notes/:id` | Yes (`Bearer JWT`) | `200 OK` | Deletes an owned note permanently from MongoDB. |
+| **Health Check** | `GET` | `/health` (and `/api/health`) | No | `200 OK` | Reports service status, uptime, and Mongoose connection state. |
+
+### Query Parameters for `GET /api/experiment-notes`
+- `page` (integer, default `1`, min `1`)
+- `limit` (integer, default `10`, min `1`, max `100`)
+- `datasetName` (optional exact filter)
+- `modelName` (optional exact filter)
+- `experimentReference` (optional exact filter)
+- `tag` (optional tag inclusion filter)
+- `search` (optional case-insensitive regex-escaped search matching `title` or `content`)
+
+---
+
+## 9. MongoDB Atlas Integration
+
+MongoDB connectivity is implemented in [`node-api/src/db/mongodb.js`](node-api/src/db/mongodb.js) and [`node-api/src/config/env.js`](node-api/src/config/env.js):
+
+- **Environment Validation:** `MONGODB_URI` is defined in `env.mongodbUri` and validated by `validateEnv()` and `isValidMongoUri()` to ensure it uses `mongodb://` or `mongodb+srv://` (and is strictly required when `NODE_ENV=production`).
+- **Serverless Connection Caching:** `connectMongo()` caches both the active Mongoose connection (`cachedConnection`) and the in-flight connection promise (`connectionPromise`). Concurrent requests share the same connection attempt, and warm serverless invocations reuse the existing connection instead of opening a new connection per request.
+- **Lifecycle & Reconnection Handling:** Registers `disconnected`, `reconnected`, and `error` listeners once on `mongoose.connection` to clear stale cache state on disconnect and restore it on reconnect.
+- **Credential-Safe Logging:** `sanitizeMongoUri()` strips any `mongodb://` or `mongodb+srv://` URIs and `username:password` pairs before logging or constructing error messages. Full connection strings and database passwords are never printed to application logs.
+- **Graceful Degradation (HTTP 503):** When MongoDB is unreachable, `connectMongo()` throws a sanitized `MongooseServerSelectionError` with status `503`, which `errorHandler` translates into `503 Service Unavailable`.
+
+---
+
+## 10. Experiment Notes Data Model
+
+Defined in [`node-api/src/models/ExperimentNote.js`](node-api/src/models/ExperimentNote.js):
+
+| Field | Mongoose Type | Required | Validation & Constraints |
 | :--- | :--- | :--- | :--- |
-| `id` | String | Auto | Unique UUID generated by Postgres. |
-| `title` | String | Yes | Trimmed, 1 to 200 characters. Descriptive summary of the note. |
-| `content` | String | Yes | 1 to 10,000 characters. Detailed observations, parameters, or findings. |
-| `datasetName` | String | No | Max 100 characters. Associated dataset (e.g., `Breast Cancer Wisconsin`, `Diabetes UCI`). |
-| `modelName` | String | No | Max 100 characters. Associated model (e.g., `Random Forest`, `VQC`, `QNN`). |
-| `experimentReference`| String | No | Max 100 characters. Identifier linking to a specific experiment snapshot. |
-| `tags` | Array of Strings | No | Categorical tags (max 50 chars each) for indexing and filtering. |
-| `ownerId` | String | System | Extracted from verified Supabase JWT; immutable; indexed for data isolation. |
-| `createdAt` | Date | System | ISO 8601 creation timestamp managed by Postgres. |
-| `updatedAt` | Date | System | ISO 8601 last-updated timestamp; indexed with `ownerId` for fast sorting. |
+| `id` | String (Virtual) | Auto | Serialized from MongoDB `_id` (`ObjectId.toString()`); `_id` and `__v` are stripped in `toJSON`/`toObject`. |
+| `title` | `String` | Yes | Trimmed; max `200` characters (`required: [true, 'Title is required']`). |
+| `content` | `String` | Yes | Trimmed; max `10000` characters (`required: [true, 'Content is required']`). |
+| `datasetName` | `String` | No | Trimmed; default `''`; max `100` characters. |
+| `modelName` | `String` | No | Trimmed; default `''`; max `100` characters. |
+| `experimentReference` | `String` | No | Trimmed; default `''`; max `100` characters. |
+| `tags` | `[String]` | No | Default `[]`; max `20` tags; each tag trimmed and max `50` characters. |
+| `ownerId` | `String` | Yes | Trimmed; single-field index (`index: true`); set from verified `req.user.id`. |
+| `createdAt` | `Date` | System | Automatically managed via Mongoose `timestamps: true`. |
+| `updatedAt` | `Date` | System | Automatically managed via Mongoose `timestamps: true`. |
 
-### Sample Request and Response
-
-#### Creating a Note (`POST /api/experiment-notes`)
-
-**Request Headers:**
-```http
-Authorization: Bearer <valid_supabase_access_token>
-Content-Type: application/json
-```
-
-**Request Payload:**
-```json
-{
-  "title": "VQC Angle Embedding Convergence",
-  "content": "Observed 89.2% test accuracy when using 4 PCA components with ZZFeatureMap. Gradient variance decreased significantly after increasing sample budget to 160.",
-  "datasetName": "Breast Cancer Wisconsin Diagnostic",
-  "modelName": "VQC",
-  "experimentReference": "exp-vqc-wdbc-01",
-  "tags": ["quantum", "vqc", "pca", "wdbc"]
-}
-```
-
-**Response (`201 Created`):**
-```json
-{
-  "id": "67114dfa8b13d2459a123456",
-  "title": "VQC Angle Embedding Convergence",
-  "content": "Observed 89.2% test accuracy when using 4 PCA components with ZZFeatureMap. Gradient variance decreased significantly after increasing sample budget to 160.",
-  "datasetName": "Breast Cancer Wisconsin Diagnostic",
-  "modelName": "VQC",
-  "experimentReference": "exp-vqc-wdbc-01",
-  "tags": ["quantum", "vqc", "pca", "wdbc"],
-  "ownerId": "usr-8a21f4bc-91e3-4d05-b16f",
-  "createdAt": "2026-10-17T18:30:00.000Z",
-  "updatedAt": "2026-10-17T18:30:00.000Z"
-}
-```
-
-### Security & Cross-User Data Isolation
-- **Ownership Scoping:** All database queries (`find`, `findOne`, `findOneAndUpdate`, `findOneAndDelete`) enforce `{ ownerId: req.user.id }`. Users cannot read, modify, or delete notes belonging to other researchers.
-- **Payload Sanitization:** System fields (`ownerId`, `_id`, `id`, `createdAt`, `updatedAt`) cannot be provided or altered by client requests. Zod validation strips or rejects unauthorized keys before handlers execute.
-- **CORS Protection:** In production, requests from unapproved origins are blocked with HTTP `403 Forbidden`. Wildcard origins (`*`) are strictly rejected when credentials are enabled.
+### Database Indexes
+- `{ ownerId: 1 }` (single-field owner index)
+- `{ ownerId: 1, updatedAt: -1 }` (compound index for default chronological listing)
+- `{ ownerId: 1, datasetName: 1 }` (compound index for dataset filtering)
+- `{ ownerId: 1, modelName: 1 }` (compound index for model filtering)
+- `{ ownerId: 1, tags: 1 }` (compound multikey index for tag filtering)
+- `{ ownerId: 1, experimentReference: 1 }` (compound index for experiment reference lookup)
 
 ---
 
-## 6. Repository Structure
+## 11. MongoDB CRUD Operations
 
-```
-web-dev-entangle/
-├── .env.example                 # Root configuration template for Python backend
-├── .nvmrc                       # Pinned Node.js version (22.12.0)
-├── NOTICE.md                    # Legal notices and third-party dataset attribution
-├── SOURCE_MANIFEST.json         # Checksum manifest of baseline source files
-├── render.yaml                  # Production deployment blueprint for Render
-├── docs/                        # Technical specifications & deployment runbooks
-│   ├── final-assignment-verification.md # Final full-stack verification report & evidence
-│   ├── deployment-setup.md      # Production service routing and setup notes
-│   ├── deployment.md            # Render & Docker architectural deployment specs
-│   ├── api.md                   # Python FastAPI endpoint reference
-│   ├── architecture.md          # In-depth system design & component diagrams
-│   └── testing.md               # Test coverage and validation documentation
-├── frontend/                    # React 19 + TypeScript Single-Page Application
-│   ├── .env.example             # Frontend environment variables template
-│   ├── .nvmrc                   # Pinned frontend Node.js version (22.12.0)
-│   ├── package.json             # Frontend dependencies, scripts, and Vitest configuration
-│   ├── vercel.json              # Vercel routing configuration for SPA deep-linking
-│   ├── vite.config.ts           # Vite bundler configuration and dev proxy settings
-│   └── src/
-│       ├── App.tsx              # Application root, lazy route definitions, and providers
-│       ├── components/          # Reusable UI components (ResearchShell, Navigation, etc.)
-│       ├── lib/                 # API clients (experimentNotesApi.ts, api.ts)
-│       ├── pages/               # Core view components (Overview, Datasets, Training, etc.)
-│       ├── research/            # ExperimentNotesPage.tsx and research history views
-│       └── tests/               # Vitest suite covering UI, state, and API clients
-├── node-api/                    # Node.js + Express + Supabase-backed Notes API
-│   ├── .env.example             # Express API environment variables template
-│   ├── .nvmrc                   # Pinned API Node.js version (22.12.0)
-│   ├── package.json             # Node microservice dependencies and test scripts
-│   ├── vercel.json              # Vercel serverless function rewrites configuration
-│   ├── api/
-│   │   └── index.js             # Serverless handler export for Vercel deployment
-│   ├── src/
-│   │   ├── app.js               # Express app factory, CORS, helmet, and route wiring
-│   │   ├── index.js             # Public service exports and default app instance
-│   │   ├── local.js             # Local standalone development listener
-│   │   ├── config/env.js        # Environment validation and parsing
-│   │   ├── db/supabase.js       # User-scoped Supabase client and health probe
-│   │   ├── validation/           # Request payload and UUID validation
-│   │   ├── routes/              # Express routers (experimentNotes.routes.js, health)
-│   │   └── middleware/          # JWT auth, centralized error handler, 404 handler
-│   └── test/                    # Integration and deployment test suites
-└── backend/                     # Python 3.11 FastAPI Research Backend
-    ├── requirements.txt         # Pinned Python dependencies
-    ├── app/                     # FastAPI routers, ML pipelines, and quantum modules
-    └── tests/                   # Pytest test suite for ML and quantum workflows
-```
+Implemented in [`node-api/src/services/experimentNotes.service.js`](node-api/src/services/experimentNotes.service.js):
+
+1. **CREATE (`createNote(ownerId, data)`):**
+   - Calls `ExperimentNote.create({ title, content, datasetName, modelName, experimentReference, tags, ownerId })`.
+   - Returns the serialized JSON document with `id`, `ownerId`, `createdAt`, and `updatedAt`.
+2. **READ — List & Search (`listNotes(ownerId, query)`):**
+   - Builds an owner-scoped filter `{ ownerId }` plus optional `datasetName`, `modelName`, `experimentReference`, `tags`, and regex-escaped `$or` search across `title` and `content`.
+   - Executes `ExperimentNote.countDocuments(filter)` and `ExperimentNote.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).exec()` concurrently via `Promise.all`.
+   - Returns `{ notes, pagination: { total, page, limit, totalPages } }`.
+3. **READ — Single Record (`getNoteById(ownerId, noteId)`):**
+   - Executes `ExperimentNote.findOne({ _id: noteId, ownerId }).exec()`.
+   - Returns the serialized note or `null` (which the controller maps to `404 Not Found`).
+4. **UPDATE (`updateNote(ownerId, noteId, updateData)`):**
+   - Strips any system/immutable keys (`ownerId`, `_id`, `id`, `createdAt`, `updatedAt`).
+   - Executes `ExperimentNote.findOneAndUpdate({ _id: noteId, ownerId }, { $set: cleanData }, { new: true, runValidators: true }).exec()`.
+   - Returns the updated serialized note or `null` (`404 Not Found`).
+5. **DELETE (`deleteNote(ownerId, noteId)`):**
+   - Executes `ExperimentNote.deleteOne({ _id: noteId, ownerId }).exec()`.
+   - Returns `true` when `result.deletedCount === 1`, or `false` (`404 Not Found`).
 
 ---
 
-## 7. Local Prerequisites & Step-by-Step Installation
+## 12. Authentication and Data Ownership
+
+- **Bearer Token Verification:** [`node-api/src/middleware/auth.js`](node-api/src/middleware/auth.js) extracts the `Authorization: Bearer <token>` header, verifies the token with Supabase Auth (`supabase.auth.getUser(token)`), and populates `req.user = { id, email }`.
+- **Pre-Database Auth Gate:** Protected routes execute `authMiddleware` before `ensureDbConnected`, ensuring unauthenticated requests are immediately rejected with `401 Unauthorized` without touching MongoDB.
+- **Strict Ownership Isolation:** Every Mongoose query includes `ownerId: req.user.id`. A user can never read, update, or delete another user's note by supplying a different document's ObjectId; non-matching ownership returns `404 Not Found` without leaking whether the ID exists.
+- **Payload Tamper Protection:** Both Zod (`checkForbiddenFields`) and the service layer forbid client payloads from setting or mutating `ownerId`, `_id`, `id`, `createdAt`, or `updatedAt`.
+
+---
+
+## 13. Responsive UI Implementation
+
+- **Adaptive Layouts:** Built in [`frontend/src/index.css`](frontend/src/index.css) and component layouts using responsive CSS Grid and Flexbox breakpoints (`sm:`, `lg:`) that adapt from single-column mobile views to multi-column desktop research dashboards.
+- **Collapsible Navigation & Workspace Shell:** The sidebar and header navigation collapse cleanly on smaller screens while preserving keyboard accessibility and focus indicators.
+- **Theme Support:** Supports Light, Dark, and High-Contrast Research themes via CSS custom properties.
+
+---
+
+## 14. Installation Instructions
 
 ### Prerequisites
-- **Node.js:** `v22.12.0` (or `v20.x`+ LTS) and **npm** (`v10.x`+)
-- **Python:** `CPython 3.11` (64-bit)
-- **Supabase:** The existing Supabase project URL and public anon/publishable key, available to the Node API as `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-- **Git:** Standard Git command-line client
-- **Web Browser:** Any modern evergreen desktop browser (Chrome, Edge, Firefox, Safari)
+- **Node.js:** `v22.12.0` LTS (or `>= 20.0.0`) and **npm**
+- **MongoDB:** A **MongoDB Atlas** cluster URI (`mongodb+srv://...`) or local MongoDB server (`mongodb://localhost:27017/entanglex`)
+- **Supabase Project:** Public `SUPABASE_URL` and `SUPABASE_ANON_KEY` for user authentication
+- **Python (Optional, for local ML/Quantum backend):** Python `3.11`
 
----
-
-### Step 1: Clone the Repository
 ```bash
+# 1. Clone the repository
 git clone https://github.com/Itzx-kush/web-dev-entangle.git
 cd web-dev-entangle
+
+# 2. Install Node.js Express API dependencies
+cd node-api
+npm ci
+
+# 3. Install React frontend dependencies
+cd ../frontend
+npm ci
 ```
 
 ---
 
-### Step 2: Configure Environment Files
+## 15. Environment Variable Configuration
 
-Create local configuration files from the provided templates:
+Copy the example environment templates and populate your local values (never commit real `.env` files):
 
-```powershell
-# In project root
-Copy-Item .env.example .env
-
-# In node-api directory
-Copy-Item node-api\.env.example node-api\.env
-
-# In frontend directory
-Copy-Item frontend\.env.example frontend\.env
+```bash
+cp .env.example .env
+cp node-api/.env.example node-api/.env
+cp frontend/.env.example frontend/.env
 ```
 
-*(On macOS/Linux, substitute `cp` for `Copy-Item`)*.
+### `node-api/.env`
+```dotenv
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://your-db-user:your-db-password@your-cluster.mongodb.net/entanglex?retryWrites=true&w=majority
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+### `frontend/.env`
+```dotenv
+VITE_API_BASE=/api
+VITE_NODE_API_BASE=http://localhost:5000/api
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
 ---
 
-### Step 3: Set Up and Run the Node.js Express API
+## 16. How to Run the Application Locally
 
-Open **Terminal 1**:
+### Terminal 1 — Start the Node.js & Express Notes API
 ```bash
 cd node-api
-npm install
 npm run dev
 ```
-*The service will start on `http://localhost:5000` and use Supabase Postgres with the signed-in user's JWT for row-level-secured note access.*
-- Verify health: `http://localhost:5000/health` (returns `{ "status": "ok", "database": "connected" }`).
+- Runs on `http://localhost:5000`
+- Health check: `http://localhost:5000/health`
 
----
-
-### Step 4: Set Up and Run the React Frontend
-
-Open **Terminal 2**:
+### Terminal 2 — Start the React Frontend
 ```bash
 cd frontend
-npm ci
 npm run dev
 ```
-*The Vite development server will start on `http://localhost:5173`.*
+- Runs on `http://localhost:5173`
+- Navigate to **Studio → Experiment Notes** (`http://localhost:5173/my-research/notes`) after signing in.
 
----
-
-### Step 5: (Optional) Set Up the Python Research Backend
-
-If you wish to run classical and quantum ML training pipelines locally alongside the notes service, open **Terminal 3**:
-
-```powershell
-# Windows PowerShell
+### Terminal 3 (Optional) — Start the Python FastAPI Research Backend
+```bash
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
+# Windows PowerShell:
 .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 .\.venv\Scripts\python.exe scripts\init_db.py
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-*(For classical-only lightweight installation without Qiskit, install `backend/requirements-core.txt`)*.
-
 ---
 
-### Step 6: Verify the Application in Your Browser
+## 17. Testing Instructions
 
-1. Open `http://localhost:5173` in your browser.
-2. Sign in with your researcher credentials or activate guest access via the navigation menu.
-3. Navigate to **Studio** → **Experiment notes** (`/my-research/notes`).
-4. Click **Create New Note**, provide a title, content, and optional tags, and save.
-5. Search, filter, update, and delete notes to verify full Supabase Postgres CRUD integration.
-
----
-
-## 8. Environment Variables Specification
-
-| Service | Variable Name | Purpose | Example / Default |
-| :--- | :--- | :--- | :--- |
-| **Frontend** | `VITE_API_BASE` | URL of the Python FastAPI backend | `/api` (local proxy) or `https://...onrender.com/api` |
-| **Frontend** | `VITE_NODE_API_BASE` | URL of the Node.js Express Notes API | `http://localhost:5000/api` or `https://...vercel.app/api` |
-| **Frontend** | `VITE_SUPABASE_URL` | Public Supabase project endpoint | `https://your-project.supabase.co` |
-| **Frontend** | `VITE_SUPABASE_ANON_KEY` | Public Supabase anonymous client key | `eyJhbGciOi...` |
-| **Node API** | `PORT` | Local HTTP listener port | `5000` |
-| **Node API** | `NODE_ENV` | Application environment state | `development` or `production` |
-| **Node API** | `SUPABASE_URL` | Supabase project URL | `https://your-project.supabase.co` |\n| **Node API** | `SUPABASE_ANON_KEY` | Public Supabase anon/publishable key | Set from Supabase project settings |
-| **Node API** | `SUPABASE_URL` | Supabase endpoint for JWT verification | `https://your-project.supabase.co` |
-| **Node API** | `SUPABASE_ANON_KEY` | Supabase client key for auth checks | `eyJhbGciOi...` |
-| **Node API** | `CORS_ORIGINS` | Permitted frontend origins (comma-separated) | `http://localhost:5173,http://localhost:3000` |
-| **Python** | `QHEALTH_STORAGE_ROOT` | Filesystem root for SQLite and artifacts | `.` |
-| **Python** | `QHEALTH_CORS_ORIGINS` | Permitted origins for Python API | `http://localhost:5173` |
-
-> [!WARNING]
-> **Client-Side Security:** Variables prefixed with `VITE_*` are compiled directly into public browser bundles. Never place server secrets, service-role API keys, or database passwords in `frontend/.env`. Supabase's public anon key may be used by authenticated client/server requests under RLS; never place a service-role key in the browser or the notes API.
-
----
-
-## 9. Deployment Architecture
-
-The application is structured for cloud deployment:
-
-```
-┌────────────────────────────────┐         ┌────────────────────────────────┐
-│   Vercel Project 1: Frontend   │         │   Vercel Project 2: Node API   │
-│   • Root: frontend/            │         │   • Root: node-api/            │
-│   • Framework: Vite Static SPA │         │   • Framework: Serverless      │
-│   • Clean URLs & Deep Rewrites │         │   • api/index.js Express App   │
-└────────────────┬───────────────┘         └────────────────┬───────────────┘
-                 │                                          │
-                 ▼                                          ▼
-     ┌──────────────────────┐                   ┌──────────────────────┐
-     │  Supabase Auth (JWT) │                   │ Supabase Postgres DB │
-     └──────────────────────┘                   └──────────────────────┘
-                 │
-                 ▼
-┌────────────────────────────────┐
-│  Render Service: Python API    │
-│  • Root: backend/ (render.yaml)│
-│  • ML, Quantum, & Datasets     │
-└────────────────────────────────┘
-```
-
-1. **Frontend Static SPA (Vercel Project 1):**
-   - Root directory: `frontend/`
-   - Build command: `npm run build` (outputs to `dist/`)
-   - [`frontend/vercel.json`](frontend/vercel.json) rewrites all incoming routes (`/(.*)`) to `/index.html` to allow direct access and browser refreshes on deep paths like `/my-research/notes`.
-2. **Node.js Express Serverless API (Vercel Project 2):**
-   - Root directory: `node-api/`
-   - Configured via [`node-api/vercel.json`](node-api/vercel.json) to route all requests to the serverless function export in [`node-api/api/index.js`](node-api/api/index.js).
-   - Each notes request uses its verified user's JWT; Postgres RLS enforces ownership without a separate database connection string.
-3. **Python FastAPI Backend (Render):**
-   - Managed via [`render.yaml`](render.yaml) as an independent web service with persistent disk storage for model artifacts and training job state.
-4. **Deployment Status:**
-   - **Repository Deployment Readiness:** Complete. All configuration manifests, serverless handlers, CORS boundaries, and runbooks are committed.
-   - **Live URLs:** Pending individual deployment linking by the repository maintainer. Refer to [`docs/deployment-setup.md`](docs/deployment-setup.md) for step-by-step instructions.
-
----
-
-## 10. Automated Testing & Verification
-
-The codebase maintains rigorous automated test suites across all tiers:
+Run the automated test suites and production build checks across the repository:
 
 ```bash
-# 1. Run Node.js API test suite (44 tests covering CRUD, Auth, CORS, & Serverless)
+# 1. Node.js Express API & Mongoose Test Suite (56 tests across 20 suites)
 cd node-api
+npm ci
 npm test
 
-# 2. Run React frontend test suite (33 test files, 177 unit & component tests)
+# 2. React Frontend Unit & Integration Test Suite (180 tests across 34 test files)
 cd ../frontend
+npm ci
 npm test -- --run
 
-# 3. Run frontend production build check
+# 3. Frontend Production Build Check (TypeScript + Vite bundle)
 npm run build
+
+# 4. Python Backend Source & Syntax Integrity Check
+cd ..
+python scripts/check_source.py
 ```
 
-### Verified Test Coverage Summary
-- **Node.js API Tests (44 passed):**
-  - Health check and database connection state reporting.
-  - Authenticated note creation (`POST`), pagination and listing (`GET`), single fetch (`GET`), partial update (`PATCH`), and deletion (`DELETE`).
-  - Strict input validation via Zod (rejection of empty titles, oversized content, and injected system fields).
-  - Cross-user data isolation ensuring users cannot access or mutate records belonging to others.
-  - Production CORS enforcement (permitting designated origins with credentials, returning 403 on unpermitted domains).
-  - Cold-start database connection middleware and error handling.
-- **Frontend Tests (177 passed):**
-  - Typed API client URL resolution, query construction, Bearer token attachment, and transport error parsing.
-  - Interactive research dashboard, dataset inspection, and pipeline controls.
-  - Safe client-side routing, navigation state, and theme switching.
-- **Production Build:**
-  - Zero TypeScript compile errors (`tsc --noEmit`).
-  - Vite static assets successfully compiled into `frontend/dist/`.
+### Distinction Between Automated Tests and Live MongoDB Atlas Integration
+- **Automated Test Verification (Executed & Passing):** All 56 Node API tests (covering Mongoose model validation, `ExperimentNote` schema indexes and `toJSON` transforms, `createExperimentNotesService` CRUD operations, owner isolation, 24-hex ObjectId validation, auth middleware ordering, serverless connection reuse, credential sanitization, and 503 outage handling) and all 180 frontend tests run deterministically in CI/local environments using isolated mocks.
+- **Live MongoDB Atlas Integration:** Executing live CRUD requests against a cloud MongoDB Atlas cluster requires private runtime credentials (`MONGODB_URI=mongodb+srv://...` and live Supabase Auth credentials) configured in `.env` or Vercel environment settings. No live Atlas connection results are fabricated in automated test runs.
 
 ---
 
-## 11. Scientific Limitations & Responsible Research Use
+## 18. GitHub Repository Link
 
-- **Diagnostic Boundary:** EntangleX Q-Health is an algorithmic research workbench. Predictions are probabilistic outputs generated from benchmark datasets (such as the UCI Breast Cancer Wisconsin Diagnostic and Early Stage Diabetes datasets). They are not medical diagnoses and must not be used for clinical decision-making.
-- **Quantum Simulation:** Quantum machine learning models (VQC, QSVC, QNN) execute via local mathematical simulation on classical CPUs using Qiskit Aer and PennyLane. Simulation demonstrates circuit mechanics, parameter optimization, and ansatz representations; it does not demonstrate quantum supremacy or advantage over optimized classical baselines.
-- **Dataset Provenance & Privacy:** Uploaded datasets are stored locally with UUID-derived filenames and SHA-256 integrity hashes. Raw records are never transmitted to external APIs or exposed publicly.
+- **Repository:** [https://github.com/Itzx-kush/web-dev-entangle](https://github.com/Itzx-kush/web-dev-entangle)
 
 ---
 
-## 12. Documentation Index & Reference Links
+## 19. Live Deployment Link
 
-- **Final Verification Report:** [`docs/final-assignment-verification.md`](docs/final-assignment-verification.md) — Comprehensive verification evidence, test results, and deployment readiness audit.
-- **Deployment Runbook:** [`docs/deployment-setup.md`](docs/deployment-setup.md) — Guide for the shared Vercel deployment and Supabase-backed notes persistence.
-- **Node API Specification:** [`node-api/README.md`](node-api/README.md) — Microservice architectural details, schema reference, and test scenarios.
-- **Architecture Design:** [`docs/architecture.md`](docs/architecture.md) — In-depth architectural breakdown and component contracts.
-- **Python Backend API Reference:** [`docs/api.md`](docs/api.md) — FastAPI endpoints for ML, datasets, and predictions.
-- **Machine Learning Pipeline:** [`docs/ml_pipeline.md`](docs/ml_pipeline.md) — Preprocessing, ANOVA/MI feature selection, and CV fold evaluation boundaries.
-- **Quantum Machine Learning:** [`docs/quantum_pipeline.md`](docs/quantum_pipeline.md) — Variational quantum circuits, quantum kernels, and ansatz configurations.
-- **Testing Documentation:** [`docs/testing.md`](docs/testing.md) — Verification protocols and test harness specifications.
-- **Security & Privacy:** [`docs/security.md`](docs/security.md) — Authentication, storage hardening, and privacy boundaries.
-- **Dataset Provenance:** [`docs/data_provenance.md`](docs/data_provenance.md) — UCI benchmark citations and transformation records.
-- **Legal Notices:** [`NOTICE.md`](NOTICE.md) — Attribution and third-party license notices.
+- **Live Web Application (Vercel):** [https://web-dev-entangle.vercel.app](https://web-dev-entangle.vercel.app)
+- **Live Python Research Backend API (Render):** [https://entanglex-q-health-api.onrender.com](https://entanglex-q-health-api.onrender.com)
+- **Deployment Documentation:** See [`docs/deployment-setup.md`](docs/deployment-setup.md) and [`docs/vercel-multi-service-deployment.md`](docs/vercel-multi-service-deployment.md) for Vercel environment variable requirements (including configuring `MONGODB_URI` in Vercel project settings once merged).
