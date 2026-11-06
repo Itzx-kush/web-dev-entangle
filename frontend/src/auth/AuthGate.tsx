@@ -119,7 +119,7 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
   useEffect(()=>()=>{if(guestTimer.current!==null)window.clearTimeout(guestTimer.current)},[]);
 
   const beginOAuth=async(provider:'google'|'github')=>{
-    if(authenticating)return;
+    if(!isConfigured||authenticating)return;
     setAuthenticating(provider);
     onOAuthStart(provider);
     await (provider==='google'?signInWithGoogle():signInWithGitHub());
@@ -131,6 +131,8 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
     if(preservingGuestWork)continueGuestSession();
     else continueAsGuest();
   };
+
+  const oauthDisabled=!isConfigured||Boolean(authenticating)||enteringGuest;
 
   return <main ref={sceneRef} className="auth-entry">
     <QuantumNetworkBackground/>
@@ -185,35 +187,64 @@ function Welcome({onBack,onOAuthStart}:{onBack:()=>void;onOAuthStart:(provider:'
       <div className="auth-panel-heading">
         <span className="auth-step"><DecryptedText text="ENTANGLEX Q-HEALTH"/></span>
         <h2><SplitReveal text={preservingGuestWork?'Save this research to your workspace':'Enter your research workspace'}/></h2>
-        <p>{preservingGuestWork?'Your current guest session will remain available during sign-in.':'Choose how you would like to continue.'}</p>
+        <p>{preservingGuestWork?'Your current guest session will remain available during sign-in.':isConfigured?'Choose how you would like to continue.':'Continue with Guest access in this deployment. Account sign-in requires configured OAuth credentials.'}</p>
       </div>
 
-      <div className="auth-oauth-actions">
-        <button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='google'} onClick={()=>void beginOAuth('google')}>
+      {!isConfigured&&!error&&<div className="auth-notice" role="status">
+        <TriangleAlert size={16} aria-hidden="true"/>
+        <span>Account sign-in is unavailable in the current deployment. Continue as Guest to access all verified research workflows.</span>
+      </div>}
+
+      <div className={`auth-oauth-actions ${!isConfigured?'is-unconfigured':''}`}>
+        <button
+          className={`auth-oauth-button ${!isConfigured?'is-unavailable':''}`}
+          type="button"
+          disabled={oauthDisabled}
+          aria-disabled={oauthDisabled}
+          aria-busy={authenticating==='google'}
+          title={!isConfigured?'Account sign-in is unavailable in this deployment':undefined}
+          onClick={()=>void beginOAuth('google')}
+        >
           <GoogleMark/>
-          <span>{authenticating==='google'?'Connecting to Google…':'Continue with Google'}</span>
+          <span>{authenticating==='google'?'Connecting to Google…':isConfigured?'Continue with Google':'Continue with Google (Unavailable)'}</span>
           {authenticating==='google'?<i className="auth-button-progress" aria-hidden="true"/>:<ArrowRight size={17} aria-hidden="true"/>}
         </button>
-        <button className="auth-oauth-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={authenticating==='github'} onClick={()=>void beginOAuth('github')}>
+        <button
+          className={`auth-oauth-button ${!isConfigured?'is-unavailable':''}`}
+          type="button"
+          disabled={oauthDisabled}
+          aria-disabled={oauthDisabled}
+          aria-busy={authenticating==='github'}
+          title={!isConfigured?'Account sign-in is unavailable in this deployment':undefined}
+          onClick={()=>void beginOAuth('github')}
+        >
           <Github className="auth-github-mark" aria-hidden="true"/>
-          <span>{authenticating==='github'?'Connecting to GitHub…':'Continue with GitHub'}</span>
+          <span>{authenticating==='github'?'Connecting to GitHub…':isConfigured?'Continue with GitHub':'Continue with GitHub (Unavailable)'}</span>
           {authenticating==='github'?<i className="auth-button-progress" aria-hidden="true"/>:<ArrowRight size={17} aria-hidden="true"/>}
         </button>
       </div>
-      <p className="auth-action-copy">{preservingGuestWork?'Continue with Google or GitHub to add eligible research metadata to My Research.':'Sign in to keep research activity in your private workspace.'}</p>
+      <p className="auth-action-copy">
+        {!isConfigured
+          ?'Google and GitHub sign-in are disabled because Supabase authentication is not configured in this deployment.'
+          :preservingGuestWork
+            ?'Continue with Google or GitHub to add eligible research metadata to My Research.'
+            :'Sign in to keep research activity in your private workspace.'}
+      </p>
 
-      <div className="auth-divider"><span>or</span></div>
+      <div className="auth-divider"><span>{isConfigured?'or':'recommended in this deployment'}</span></div>
 
-      <button className="auth-guest-button" type="button" disabled={Boolean(authenticating)||enteringGuest} aria-busy={enteringGuest} onClick={beginGuest}>
+      <button
+        className={`auth-guest-button ${!isConfigured?'is-primary-action':''}`}
+        type="button"
+        disabled={Boolean(authenticating)||enteringGuest}
+        aria-busy={enteringGuest}
+        onClick={beginGuest}
+      >
         <span>{enteringGuest?'Entering research workspace…':preservingGuestWork?'Return to guest research':'Continue as Guest'}</span>
         {!enteringGuest&&<ArrowRight size={16} aria-hidden="true"/>}
       </button>
       <p className="auth-action-copy">{preservingGuestWork?'Nothing will be removed from this guest session.':'Explore the research prototype without signing in.'}</p>
 
-      {!isConfigured&&!error&&<div className="auth-notice" role="status">
-        <TriangleAlert size={16} aria-hidden="true"/>
-        <span>Account sign-in is not configured here yet. Guest access remains available.</span>
-      </div>}
       {error&&<div className="auth-error" role="alert">
         <TriangleAlert size={17} aria-hidden="true"/>
         <div><strong>Sign-in unavailable</strong><p>{error}</p><button type="button" onClick={clearError}>Dismiss</button></div>

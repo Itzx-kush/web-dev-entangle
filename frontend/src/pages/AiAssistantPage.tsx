@@ -1,6 +1,7 @@
 import {useEffect,useRef,type ReactNode} from 'react';
 import {AlertCircle,Atom,Bot,Cpu,Database,Loader2,MessageSquare,RefreshCcw,Send,ShieldCheck,Sparkles,User} from 'lucide-react';
 import {Badge,Button} from '../components/ui';
+import {isReducedMotionActive} from '../components/motion/usePointerMotion';
 import {useAi} from '../contexts/AiContext';
 
 import {EXAMPLE_PROMPTS} from '../constants/aiPrompts';
@@ -107,7 +108,11 @@ export function AiAssistantPage(){
   const endRef=useRef<HTMLDivElement>(null);
   const textareaRef=useRef<HTMLTextAreaElement>(null);
 
-  useEffect(()=>{if(messages.length)endRef.current?.scrollIntoView({behavior:'smooth'});},[messages,loading]);
+  useEffect(()=>{
+    if(messages.length){
+      endRef.current?.scrollIntoView({behavior:isReducedMotionActive()?'auto':'smooth'});
+    }
+  },[messages,loading]);
 
   const onKeyDown=(event:React.KeyboardEvent<HTMLTextAreaElement>)=>{
     if(event.key==='Enter'&&!event.shiftKey){
@@ -203,6 +208,7 @@ export function AiAssistantPage(){
         maxLength={2000}
       />
       <Button
+        type="button"
         onClick={()=>void handleSend(input)}
         disabled={!input.trim()||loading}
         aria-label="Send message"

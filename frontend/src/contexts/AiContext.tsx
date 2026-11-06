@@ -44,7 +44,6 @@ export function AiProvider({children}:{children:ReactNode}){
       const response=await qh.aiChat({message:trimmed,conversation});
       setMessages(prev=>[...prev,{role:'model',content:response.reply}]);
     }catch(error){
-      console.error('AI Chat Error:',error);
       setMessages(prev=>prev.slice(0,-1));
       setError(error instanceof Error?error.message:'AI Assistant is temporarily unavailable.');
     }finally{

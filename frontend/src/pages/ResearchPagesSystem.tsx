@@ -6,6 +6,15 @@ import {Badge,Button,Card,Select} from '../components/ui';
 import {ErrorBanner,Notice,PageHeader,StatusBadge} from '../components/Shared';
 import {deriveDemoState,type DemoStageKey,type DemoStageStatus} from '../lib/demoState';
 import {qh} from '../lib/api';
+import {
+  SHARED_STALE_TIMES,
+  adaptivePollInterval,
+  sharedAlignmentQueryOptions,
+  sharedDatasetLibraryQueryOptions,
+  sharedExperimentsQueryOptions,
+  sharedHealthQueryOptions,
+  sharedJobsQueryOptions,
+} from '../lib/sharedQueries';
 import {useDraft} from '../hooks/useDraft';
 import {modelLabels,shortId} from '../utils/format';
 import {PipelineFlow,StatusStrip,WorkbenchRail} from '../components/TremorWorkbench';
@@ -41,12 +50,12 @@ export function DemoCenter(){
 export function LegacyDemoCenter(){
   const {draft,selectDataset}=useDraft();
   const qc=useQueryClient();
-  const health=useQuery({queryKey:['health'],queryFn:qh.health,refetchInterval:15000});
-  const jobs=useQuery({queryKey:['jobs'],queryFn:qh.jobs,refetchInterval:5000});
-  const models=useQuery({queryKey:['models'],queryFn:qh.models,refetchInterval:10000});
-  const experiments=useQuery({queryKey:['experiments'],queryFn:qh.experiments,refetchInterval:10000});
-  const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,staleTime:300000});
-  const alignment=useQuery({queryKey:['alignment'],queryFn:qh.alignment,staleTime:300000});
+  const health=useQuery(sharedHealthQueryOptions());
+  const jobs=useQuery(sharedJobsQueryOptions());
+  const models=useQuery({queryKey:['models'],queryFn:qh.models,staleTime:SHARED_STALE_TIMES.experiments,refetchInterval:adaptivePollInterval(10000)});
+  const experiments=useQuery(sharedExperimentsQueryOptions());
+  const library=useQuery(sharedDatasetLibraryQueryOptions());
+  const alignment=useQuery(sharedAlignmentQueryOptions());
   const selectedDataset=useQuery({
     queryKey:['dataset',draft.dataset_id],
     queryFn:()=>qh.dataset(draft.dataset_id),
@@ -130,7 +139,7 @@ export function LegacyDemoCenter(){
     </Card>
 
     <div className="two-grid mt-5">
-      <Card title="Live backend readiness"><div className="space-y-3"><div className="readiness-row"><span><span className={'status-dot '+(health.data?'is-live':'is-offline')}/>Backend</span><strong>{health.data?'Connected':'Unavailable'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(dataset?'is-live':'is-offline')}/>Active dataset</span><strong>{dataset?dataset.name:'Not selected'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(health.data?.quantum.available?'is-live':'is-offline')}/>Quantum capability</span><strong>{health.data?.quantum.available?'Local simulation available':'Not available'}</strong></div></div><Notice tone="amber">Present only a backend-verified packaged result or a completed live experiment. This page never manufactures readiness.</Notice></Card>
+      <Card title="Live backend readiness"><div className="space-y-3"><div className="readiness-row"><span><span className={'status-dot '+(health.isLoading&&!health.data&&!health.isError?'is-loading':health.data?'is-live':'is-offline')}/>Backend</span><strong>{health.isLoading&&!health.data&&!health.isError?'Checking readiness…':health.data?'Connected':'Unavailable'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(dataset?'is-live':'is-offline')}/>Active dataset</span><strong>{dataset?dataset.name:'Not selected'}</strong></div><div className="readiness-row"><span><span className={'status-dot '+(health.data?.quantum.available?'is-live':'is-offline')}/>Quantum capability</span><strong>{health.data?.quantum.available?'Local simulation available':'Not available'}</strong></div></div><Notice tone="amber">Present only a backend-verified packaged result or a completed live experiment. This page never manufactures readiness.</Notice></Card>
       <Card title="Scientific guardrails"><div className="space-y-3"><p className="text-sm muted"><ShieldCheck size={15} className="mr-2 inline text-emerald-600"/>Measured benchmark outputs are research evidence, not clinical validation.</p><p className="text-sm muted"><Zap size={15} className="mr-2 inline text-purple-600"/>Quantum execution is local simulation unless the backend explicitly reports otherwise; no advantage is claimed.</p><p className="text-sm muted"><Sparkles size={15} className="mr-2 inline text-amber-600"/>Predictions are research outputs, never diagnoses, treatment guidance or medical recommendations.</p></div></Card>
     </div>
   </div>;
