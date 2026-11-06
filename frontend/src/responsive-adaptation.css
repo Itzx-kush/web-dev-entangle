@@ -32,15 +32,15 @@
   box-sizing: border-box;
 }
 
-/* Narrow laptop / tablet: use a deliberate compact rail rather than
+/* Narrow laptop / tablet: use a deliberate compact rail (72px) rather than
    squeezing or off-canvas hiding the desktop sidebar. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .research-sidebar,
   .research-shell.is-collapsed .research-sidebar,
   [data-layout="icon"] .research-sidebar {
-    width: 76px !important;
+    width: 72px !important;
     margin: 0 !important;
-    height: 100vh !important;
+    height: 100dvh !important;
     border-radius: 0 !important;
     transform: none !important;
   }
@@ -48,13 +48,13 @@
   .research-workspace,
   .research-shell.is-collapsed .research-workspace,
   [data-layout="icon"] .research-workspace {
-    margin-left: 76px !important;
+    margin-left: 72px !important;
   }
 
   .research-sidebar .brand-copy,
   .research-sidebar .sidebar-context,
   .research-sidebar .sidebar-label,
-  .research-sidebar .sidebar-link span,
+  .research-sidebar .sidebar-link span:not(.sidebar-pulse),
   .research-sidebar .sidebar-link kbd,
   .research-sidebar .collapse-button span {
     display: none !important;
@@ -385,7 +385,8 @@
     place-items: center;
     gap: 3px;
     min-height: 48px;
-    padding: 6px 3px;
+    min-width: 0;
+    padding: 6px 2px;
     border: 0;
     border-radius: 10px;
     background: transparent;
@@ -393,8 +394,17 @@
     font: inherit;
     font-size: 9px;
     font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
     text-decoration: none;
     cursor: pointer;
+  }
+
+  .mobile-nav-link span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .mobile-nav-link.active,

@@ -8,6 +8,14 @@ import {Button,Card,Badge,Input,Select} from '../components/ui';
 import {ErrorBanner,EmptyState,Loading,MetricCard,Notice,PageHeader,StatusBadge,JsonDisclosure,ResearchPipeline} from '../components/Shared';
 import {ClassBalance,ValueBars} from '../components/Charts';
 import {api,qh} from '../lib/api';
+import {
+  sharedDatasetLibraryQueryOptions,
+  sharedDatasetsQueryOptions,
+  sharedExperimentsQueryOptions,
+  sharedHealthQueryOptions,
+  sharedSummaryQueryOptions,
+  sharedSystemStatusQueryOptions,
+} from '../lib/sharedQueries';
 import {useDraft} from '../hooks/useDraft';
 import {shortId,dateTime} from '../utils/format';
 import type {Dataset,DatasetInspection,Preview} from '../types/qhealth';
@@ -25,12 +33,12 @@ export {stages,StageNav};
 export function Overview(){
  const flagship=useFlagshipData();
  const {draft}=useDraft();
- const summary=useQuery({queryKey:['summary'],queryFn:qh.summary,refetchInterval:7000});
- const health=useQuery({queryKey:['health'],queryFn:qh.health,refetchInterval:15000});
- const datasets=useQuery({queryKey:['datasets'],queryFn:qh.datasets,refetchInterval:15000});
- const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,refetchInterval:30000});
- const experiments=useQuery({queryKey:['experiments'],queryFn:qh.experiments,refetchInterval:12000});
- const system=useQuery({queryKey:['system-status'],queryFn:qh.systemStatus,refetchInterval:15000});
+ const summary=useQuery(sharedSummaryQueryOptions());
+ const health=useQuery(sharedHealthQueryOptions());
+ const datasets=useQuery(sharedDatasetsQueryOptions({poll:true}));
+ const library=flagship.library;
+ const experiments=useQuery(sharedExperimentsQueryOptions({poll:true}));
+ const system=useQuery(sharedSystemStatusQueryOptions());
  const datasetScale=(library.data??[]).slice(0,7).map(item=>({name:item.name.length>18?item.name.slice(0,17)+'…':item.name,samples:item.row_count,features:item.feature_count}));
  const registered=datasets.data??[];
  const statusCounts=Object.entries((experiments.data??[]).reduce<Record<string,number>>((acc,e)=>{acc[e.status]=(acc[e.status]??0)+1;return acc},{})).map(([name,value])=>({name:name.replaceAll('_',' '),value}));
@@ -44,6 +52,10 @@ export function Overview(){
  const readinessLabel=flagship.isLoading?'CHECKING READINESS':flagship.available?'VERIFIED DEMO · READY':'VERIFIED DEMO UNAVAILABLE';
  const readinessTone=flagship.isLoading?'blue':flagship.available?'green':'red';
  const modelCount=flagship.models.length||flagship.item?.demo_readiness.model_ids.length||0;
+ const datasetStatValue=flagship.item?.name||'Early Stage Diabetes';
+ const modelsStatValue=String(modelCount||'—');
+ const evidenceStatValue=flagship.available?'Verified package':'Readiness check';
+ const executionStatValue=flagship.available?'Precomputed':'Unavailable';
  return <div className="tremor-dashboard">
   <section className="flagship-hero">
    <div className="flagship-hero-copy">
@@ -55,10 +67,10 @@ export function Overview(){
     <h1>{flagship.item?.name||flagship.alignment.data?.showcase.display_name||'Early Stage Diabetes Risk Prediction'}</h1>
     <p>Primary SIH26139 demonstration: start with the verified Early Stage Diabetes experience, trace the hybrid quantum-classical pipeline, review the controlled model comparison, then inspect prediction and SHAP evidence.</p>
     <div className="flagship-stats">
-     <div><span>DATASET</span><strong>{flagship.item?.name||'Early Stage Diabetes'}</strong></div>
-     <div><span>MODELS</span><strong>{modelCount||'—'}</strong></div>
-     <div><span>EVIDENCE</span><strong>{flagship.available?'Verified package':'Readiness check'}</strong></div>
-     <div><span>EXECUTION</span><strong>{flagship.available?'Precomputed':'Unavailable'}</strong></div>
+     <div title={datasetStatValue}><span>DATASET</span><strong title={datasetStatValue}>{datasetStatValue}</strong></div>
+     <div title={modelsStatValue}><span>MODELS</span><strong title={modelsStatValue}>{modelsStatValue}</strong></div>
+     <div title={evidenceStatValue}><span>EVIDENCE</span><strong title={evidenceStatValue}>{evidenceStatValue}</strong></div>
+     <div title={executionStatValue}><span>EXECUTION</span><strong title={executionStatValue}>{executionStatValue}</strong></div>
     </div>
     <div className="flex flex-wrap gap-2 mt-6">
      <Link className="btn btn-primary" to="/demo">Launch Verified Demo <ArrowRight size={14}/></Link>
@@ -153,8 +165,8 @@ export function Overview(){
 export function Datasets(){
  const {draft,selectDataset,clearDataset}=useDraft();
  const demo=useVerifiedDemo();
- const datasets=useQuery({queryKey:['datasets'],queryFn:qh.datasets,retry:2,refetchOnReconnect:true});
- const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,retry:2,refetchOnReconnect:true});
+ const datasets=useQuery(sharedDatasetsQueryOptions());
+ const library=useQuery(sharedDatasetLibraryQueryOptions());
  const qc=useQueryClient();
  const [selected,setSelected]=useState<Dataset|null>(null);
  const [file,setFile]=useState<File|null>(null);
@@ -256,7 +268,7 @@ export function Datasets(){
 }
 
 function DatasetSelectionRequired(){
- const datasets=useQuery({queryKey:['datasets'],queryFn:qh.datasets});
+ const datasets=useQuery(sharedDatasetsQueryOptions());
  const count=datasets.data?.length;
  return <EmptyState title="Select a dataset">
   <span>{count===undefined?'Choose an input in Data Lab first.':`${count} registered dataset${count===1?' is':'s are'} available, but none is active.`}</span>

@@ -527,3 +527,20 @@
   .public-final::before{animation:none!important}
   .public-experience .public-model-panel .public-model-list span{transition:none}
 }
+
+
+@media(prefers-reduced-motion:reduce){
+  .public-hero-copy[data-public-reveal="hero"]>*{
+    opacity:1!important;
+    transform:none!important;
+    filter:none!important;
+  }
+}
+html[data-motion="reduced"] .public-hero-copy[data-public-reveal="hero"]>*,
+html[data-motion="reduced"] [data-public-reveal]{
+  animation:none!important;
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+  transition:none!important;
+}

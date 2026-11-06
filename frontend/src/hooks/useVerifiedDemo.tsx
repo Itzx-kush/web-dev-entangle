@@ -1,6 +1,7 @@
 import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {qh} from '../lib/api';
+import {sharedAlignmentQueryOptions,sharedDatasetLibraryQueryOptions} from '../lib/sharedQueries';
 import type {Dataset,DatasetLibraryItem,ModelRecord,VerifiedEvidencePackage} from '../types/qhealth';
 import {selectFlagshipDataset} from '../lib/verifiedDemoReadiness';
 
@@ -39,8 +40,9 @@ export function useVerifiedDemo(){
 
 export function useFlagshipData(requireActive=false){
   const context=useVerifiedDemo();
-  const alignment=useQuery({queryKey:['alignment'],queryFn:qh.alignment,staleTime:300000});
-  const library=useQuery({queryKey:['dataset-library'],queryFn:qh.datasetLibrary,staleTime:30000});
+  const shouldFetchMetadata=!requireActive||context.active;
+  const alignment=useQuery(sharedAlignmentQueryOptions(shouldFetchMetadata));
+  const library=useQuery(sharedDatasetLibraryQueryOptions({poll:!requireActive,enabled:shouldFetchMetadata}));
   const slug=alignment.data?.showcase.featured_dataset_slug;
   const item=useMemo<DatasetLibraryItem|undefined>(()=>selectFlagshipDataset(library.data,slug),[library.data,slug]);
   // The verified package is selected from the backend readiness catalogue, so a slow or failed

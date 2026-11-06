@@ -2,7 +2,7 @@ import {useEffect,type RefObject} from 'react';
 
 export function isReducedMotionActive():boolean{
   if(typeof window==='undefined')return true;
-  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return true;
+  if(typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return true;
   if(typeof document!=='undefined'&&document.documentElement?.dataset?.motion==='reduced')return true;
   try{
     if(window.localStorage?.getItem('qhealth-motion')==='reduced')return true;
@@ -22,7 +22,7 @@ export function isReducedMotionActive():boolean{
 export function usePointerMotion<T extends HTMLElement>(rootRef:RefObject<T|null>){
   useEffect(()=>{
     const root=rootRef.current;
-    if(!root)return;
+    if(!root||typeof window==='undefined'||typeof window.matchMedia!=='function')return;
 
     const reducedQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
     const coarseQuery=window.matchMedia('(pointer: coarse)');
